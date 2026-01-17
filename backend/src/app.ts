@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import { securityHeaders } from '@middlewares/helmet';
+import { globalRateLimiter } from '@middlewares/rate-limiter';
 import { requestId } from '@middlewares/request-id';
 import { requestLogger } from '@middlewares/request-logger';
 import { errorHandler } from '@errors/error-handler';
@@ -8,23 +10,84 @@ import { healthRouter } from '@modules/health/health.route';
 
 export const app = express();
 
-/** Request ID — MUST be first */
-app.use(requestId);
+/**
+ * ------------------------------
+ * Global security headers
+ * ------------------------------
+ * - Protects against common web vulnerabilities
+ * - Must be registered FIRST
+ */
+app.use(securityHeaders);
 
-/** CORS */
+/**
+ * ------------------------------
+ * Global security headers
+ * ------------------------------
+ * - Protects against common web vulnerabilities
+ * - Must be registered FIRST
+ */
+app.use(globalRateLimiter);
+
+/**
+ * ------------------------------
+ * CORS configuration
+ * ------------------------------
+ * - Enables cross-origin requests
+ * - Can be restricted later per origin
+ */
 app.use(cors());
 
-/** Body parser */
+/**
+ * ------------------------------
+ * Body parser
+ * ------------------------------
+ * - Parses incoming JSON payloads
+ * - Required before controllers
+ */
 app.use(express.json());
 
-/** Request logger */
+/**
+ * ------------------------------
+ * Request ID
+ * ------------------------------
+ * - Assigns a unique ID to each request
+ * - Used for tracing logs and errors
+ * - MUST run before logger
+ */
+app.use(requestId);
+
+/**
+ * ------------------------------
+ * Request logger
+ * ------------------------------
+ * - Logs method, URL, request ID
+ * - Helps debug issues in production
+ */
 app.use(requestLogger);
 
-/** Swagger */
+/**
+ * ------------------------------
+ * Swagger documentation
+ * ------------------------------
+ * - Enabled based on environment
+ * - Protected in production
+ */
 app.use('/docs', swaggerRouter);
 
-/** Routes */
+/**
+ * ------------------------------
+ * Application routes
+ * ------------------------------
+ * - Business domain APIs
+ */
 app.use('/health', healthRouter);
 
-/** Always LAST */
+/**
+ * ------------------------------
+ * Global error handler
+ * ------------------------------
+ * - MUST be registered last
+ * - Catches all unhandled errors
+ * - Returns standardized error response
+ */
 app.use(errorHandler);
