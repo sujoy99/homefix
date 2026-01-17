@@ -8,7 +8,8 @@
     "dev": "cross-env NODE_ENV=development TS_NODE_FILES=true nodemon -r tsconfig-paths/register src/server.ts",
     "build": "tsc && tsc-alias",
     "start": "cross-env NODE_ENV=production node dist/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "docs:tree": "tree -L 4 -I \"node_modules|.git|dist\" > docs/structure.txt"
   },
   "engines": {
     "node": ">=20"
@@ -24,6 +25,8 @@
     "ioredis": "^5.9.2",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "tsconfig-paths": "^4.2.0",
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0",
@@ -35,6 +38,8 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.0.9",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "@typescript-eslint/eslint-plugin": "^8.53.0",
     "@typescript-eslint/parser": "^8.53.0",
     "cross-env": "^10.1.0",
@@ -42,6 +47,7 @@
     "eslint-config-prettier": "^10.1.8",
     "nodemon": "^3.1.11",
     "prettier": "^3.8.0",
+    "tree-node-cli": "^1.6.0",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.8.16",
     "typescript": "^5.9.3"

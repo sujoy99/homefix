@@ -1,0 +1,49 @@
+backend
+├── README.md
+├── docs
+│   └── structure.txt
+├── logs
+│   ├── 2026-01-16.log
+│   ├── 2026-01-17.log
+│   ├── exceptions-2026-01-16.log
+│   ├── exceptions-2026-01-17.log
+│   ├── rejections-2026-01-16.log
+│   └── rejections-2026-01-17.log
+├── package-lock.json
+├── package.json
+├── src
+│   ├── app.ts
+│   ├── common
+│   ├── config
+│   │   ├── env.ts
+│   │   └── swagger.ts
+│   ├── errors
+│   │   ├── app-error.ts
+│   │   ├── error-handler.ts
+│   │   └── http-errors.ts
+│   ├── http
+│   │   ├── response.ts
+│   │   └── response.types.ts
+│   ├── logger
+│   │   ├── log-mask.ts
+│   │   └── logger.ts
+│   ├── middlewares
+│   │   ├── request-id.ts
+│   │   └── request-logger.ts
+│   ├── modules
+│   │   └── health
+│   │       ├── health.controller.ts
+│   │       ├── health.route.ts
+│   │       └── health.service.ts
+│   ├── routes
+│   │   └── swagger.route.ts
+│   ├── server.ts
+│   ├── types
+│   │   └── express
+│   │       └── index.d.ts
+│   └── utils
+│       ├── async-handler.ts
+│       ├── index.ts
+│       └── number.util.ts
+├── tsconfig.json
+└── uploads

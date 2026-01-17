@@ -57,6 +57,50 @@ LOG_RETENTION_DAYS=3
 ```
 ---
 
+## Project Structure
+```text
+homefix/
+├── README.md
+├── .gitignore
+├──  backend
+│    ├── README.md
+│    ├── docs
+│    ├── logs
+│    ├── package-lock.json
+│    ├── package.json
+│    ├── src                               # Application source
+│    │   ├── app.ts                        
+│    │   ├── config                        # App configuration
+│    │   ├── errors                        # Global error handler
+│    │   ├── http                          # Response contracts
+│    │   ├── logger                        # Observability
+│    │   ├── middlewares                   # Cross-cutting concerns
+│    │   ├── modules                       # Business domain
+│    │   │   └── health
+│    │   │       ├── health.controller.ts
+│    │   │       ├── health.route.ts
+│    │   │       └── health.service.ts
+│    │   ├── routes                        # System / platform routes
+│    │   ├── server.ts
+│    │   ├── types
+│    │   └── utils                         # Helper function
+│    ├── tsconfig.json
+│    └── uploads                           # File storage
+├── frontend
+└── docs/
+```
+
+## Roadmap
+
+| Layer | Responsibility |
+|--------|------------|
+| `modules/` | Business logic |
+| `middlewares/`   | Cross-cutting concerns |
+| `config/`  | App configuration |
+| `routes/`  | System / platform routes |
+| `http/`  | Response contracts |
+| `logger/`  | Observability |
+
 ## API Response Standard
 #### Success Response
 ``` bash
