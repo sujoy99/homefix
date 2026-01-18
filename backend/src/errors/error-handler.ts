@@ -18,6 +18,7 @@ export const errorHandler = (
       requestId,
       statusCode: err.statusCode,
       message: err.message,
+      errors: err.errors,
       path: req.originalUrl,
       method: req.method,
     });
@@ -25,7 +26,8 @@ export const errorHandler = (
     return HttpResponse.error(
       res,
       err.message,
-      err.statusCode
+      err.statusCode,
+      err.errors,
     );
   }
 

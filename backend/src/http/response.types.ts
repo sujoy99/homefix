@@ -1,7 +1,13 @@
+export interface FieldError {
+  field: string;
+  message: string;
+}
+
 export interface ApiResponse<T = unknown> {
   http_code: number;
   message: string;
   body: T | null;
+  errors?: ReadonlyArray<FieldError>;
 }
 
 export interface PaginationMeta {

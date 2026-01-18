@@ -7,6 +7,8 @@ import { requestLogger } from '@middlewares/request-logger';
 import { errorHandler } from '@errors/error-handler';
 import { swaggerRouter } from '@routes/swagger.route';
 import { healthRouter } from '@modules/health/health.route';
+import { authRouter } from '@modules/auth/auth.route';
+import { userRouter } from '@modules/users/user.route';
 
 export const app = express();
 
@@ -81,6 +83,8 @@ app.use('/docs', swaggerRouter);
  * - Business domain APIs
  */
 app.use('/health', healthRouter);
+app.use('/auth', authRouter);
+app.use('/users', userRouter);          // Protected user routes
 
 /**
  * ------------------------------

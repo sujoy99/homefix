@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { ApiResponse, PaginatedBody } from './response.types';
+import { ApiResponse, FieldError, PaginatedBody } from './response.types';
 
 export class HttpResponse {
   static success<T>(
@@ -45,12 +45,14 @@ export class HttpResponse {
   static error(
     res: Response,
     message: string,
-    statusCode: number
+    statusCode: number,
+    errors?: ReadonlyArray<FieldError>
   ) {
     const response: ApiResponse<null> = {
       http_code: statusCode,
       message,
       body: null,
+      ...(errors ? { errors } : {}),
     };
 
     return res.status(statusCode).json(response);
