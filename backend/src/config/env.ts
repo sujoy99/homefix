@@ -23,6 +23,11 @@ export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   port: toNumber(process.env.PORT, 3000),
 
+  /** Default Admin */
+  enableSeed: process.env.ENABLE_SEED,
+  defaultAdminEmail: required('DEFAULT_ADMIN_EMAIL'),
+  defaultAdminPassword: required('DEFAULT_ADMIN_PASSWORD'),
+
   /** Logging */
   logLevel: process.env.LOG_LEVEL ?? 'info',
   logDir: process.env.LOG_DIR ?? 'logs',

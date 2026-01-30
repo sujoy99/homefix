@@ -1,7 +1,6 @@
 import { randomUUID } from 'crypto';
 import { User, CreateUserInput } from '@modules/users/user.types';
-
-const users = new Map<string, User>();
+import { users, UserStore } from '@modules/users/user.store';
 
 export class AuthRepository {
   /**
@@ -35,9 +34,10 @@ export class AuthRepository {
     const user: User = {
       id: randomUUID(),
       ...data,
+      tokenVersion: 1
     };
 
-    users.set(user.id, user);
+    UserStore.save(user.id, user);
     return user;
   }
 }

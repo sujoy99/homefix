@@ -35,6 +35,7 @@ export type User = {
   email: string;
   password: string; // hashed only
   role: UserRole;
+  tokenVersion: number;
 };
 
 /**

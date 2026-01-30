@@ -1,3 +1,5 @@
+import { ErrorCode } from '@errors/error-code';
+
 export interface FieldError {
   field: string;
   message: string;
@@ -5,6 +7,7 @@ export interface FieldError {
 
 export interface ApiResponse<T = unknown> {
   http_code: number;
+  error_code?: ErrorCode;
   message: string;
   body: T | null;
   errors?: ReadonlyArray<FieldError>;

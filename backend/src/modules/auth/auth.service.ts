@@ -1,11 +1,18 @@
 import bcrypt from 'bcrypt';
 import { User } from '@modules/users/user.types';
-import { AppError } from '@errors/app-error';
 import { LoginDTO, RegisterDTO } from './auth.dto';
 import { AuthRepository } from './auth.repository';
-import { UnauthorizedError } from '@errors/http-errors';
-import { generateAccessToken, generateJwtPayload, generateRefreshToken, sanitizeUser, }
-  from '@modules/auth/auth.jwt';
+import { DuplicateError, UnauthorizedError } from '@errors/http-errors';
+import {
+  generateAccessToken,
+  generateJwtPayload,
+  generateRefreshToken,
+  sanitizeUser,
+  verifyRefreshToken,
+} from '@modules/auth/auth.jwt';
+import { RefreshTokenStore } from '@modules/auth/token.store';
+import { UserStore } from '@modules/users/user.store';
+import { ErrorCode } from '@errors/error-code';
 
 /**
  * ============================
@@ -43,7 +50,10 @@ export class AuthService {
      */
     const existingUser = await AuthRepository.findByEmail(email);
     if (existingUser) {
-      throw new AppError('User already exists with this email', 409);
+      throw new DuplicateError(
+        ErrorCode.ALREADY_EXISTS,
+        'User already exists with this email'
+      );
     }
 
     /**
@@ -70,9 +80,9 @@ export class AuthService {
      * - Access token → short lived
      * - Refresh token → long lived
      */
-    const jwtPayload = generateJwtPayload(user);
-    const accessToken = generateAccessToken(jwtPayload);
-    const refreshToken = generateRefreshToken(jwtPayload);
+    // const jwtPayload = generateJwtPayload(user);
+    // const accessToken = generateAccessToken(jwtPayload);
+    // const refreshToken = generateRefreshToken(jwtPayload);
 
     /**
      * 5. Return safe response
@@ -80,10 +90,10 @@ export class AuthService {
      */
     return {
       user: sanitizeUser(user),
-      tokens: {
-        accessToken,
-        refreshToken,
-      },
+      // tokens: {
+      //   accessToken,
+      //   refreshToken,
+      // },
     };
   }
 
@@ -97,14 +107,14 @@ export class AuthService {
    * 3. Generate tokens
    */
   static async login(data: LoginDTO) {
-    const { email, password } = data;
+    const { email, password, deviceId } = data;
 
     /**
      * 1. Find user
      */
     const user = await AuthRepository.findByEmail(email);
     if (!user) {
-      throw new UnauthorizedError('Invalid email or password');
+      throw new UnauthorizedError(ErrorCode.INVALID_CREDENTIALS,'Invalid email or password');
     }
 
     /**
@@ -114,15 +124,23 @@ export class AuthService {
     const isPasswordValid = await this.comparePassword(password, user.password);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedError('Invalid email or password');
+      throw new UnauthorizedError(ErrorCode.INVALID_CREDENTIALS,'Invalid email or password');
     }
 
     /**
      * 3. Generate tokens
      */
-    const jwtPayload = generateJwtPayload(user);
+    const jwtPayload = generateJwtPayload(user, deviceId);
     const accessToken = generateAccessToken(jwtPayload);
-    const refreshToken = generateRefreshToken(jwtPayload);
+    const { token: refreshToken, tokenId } = generateRefreshToken(user.id);
+
+    RefreshTokenStore.save(tokenId, {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      tokenVersion: user.tokenVersion,
+      deviceId: deviceId,
+    });
 
     return {
       user: sanitizeUser(user),
@@ -131,6 +149,95 @@ export class AuthService {
         refreshToken,
       },
     };
+  }
+
+  /**
+   * ============================
+   * Refresh Token (ROTATION)
+   * ============================
+   */
+  static async refresh(refreshToken: string) {
+    /**
+     * 1. Verify refresh token signature & expiry
+     */
+    const payload = verifyRefreshToken(refreshToken);
+
+    /**
+     * 2. Validate token in store
+     */
+    const stored = RefreshTokenStore.get(payload.tokenId);
+    if (!stored || stored.revoked) {
+      throw new UnauthorizedError(ErrorCode.REFRESH_TOKEN_REVOKED,'Refresh token revoked');
+    }
+
+    /**
+     * 3. Rotate refresh token (CRITICAL)
+     */
+    RefreshTokenStore.revoke(payload.tokenId);
+
+    const { token: newRefreshToken, tokenId } = generateRefreshToken(
+      payload.sub
+    );
+
+    RefreshTokenStore.save(tokenId, {
+      id: stored.userId,
+      email: stored.email,
+      role: stored.role,
+      tokenVersion: stored.tokenVersion,
+      deviceId: stored.deviceId,
+    });
+
+    /**
+     * 4. Issue new access token
+     */
+    const accessToken = generateAccessToken({
+      sub: stored.userId,
+      email: stored.email,
+      role: stored.role,
+      tokenVersion: stored.tokenVersion,
+      deviceId: stored.deviceId,
+    });
+
+    return {
+      accessToken,
+      refreshToken: newRefreshToken,
+    };
+  }
+
+  /**
+   * ============================
+   * Logout (Revoke Refresh Token)
+   * ============================
+   */
+  static async logout(refreshToken: string) {
+    /**
+     * 1. Verify refresh token signature & expiry
+     */
+    const payload = verifyRefreshToken(refreshToken);
+
+    /**
+     * 2. Validate token in store
+     */
+    const stored = RefreshTokenStore.get(payload.tokenId);
+    if (!stored) {
+      // Idempotent logout
+      return;
+    }
+
+    RefreshTokenStore.revoke(payload.tokenId);
+  }
+
+  /**
+   * ============================
+   * Logout all devices
+   * ============================
+   */
+  static async logoutAll(userId: string) {
+    // 1. Revoke all refresh token
+    RefreshTokenStore.revokeAll(userId);
+
+    // 2. Increment tokenVersion
+    UserStore.incrementTokenVersion(userId);
   }
 
   /**

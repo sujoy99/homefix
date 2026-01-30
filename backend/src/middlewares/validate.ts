@@ -1,6 +1,7 @@
 import { z, ZodError } from 'zod';
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { AppError } from '@errors/app-error';
+import { ErrorCode } from '@errors/error-code';
 
 /**
  * Generic Zod validation middleware
@@ -38,7 +39,7 @@ export const validate =
             {} as Record<string, any>
           )
         );
-        return next(new AppError('Validation failed', 400, groupedErrors));
+        return next(new AppError('Validation failed', 400, ErrorCode.VALIDATION_ERROR, groupedErrors));
       }
 
       next(error);

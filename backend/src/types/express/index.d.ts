@@ -19,6 +19,7 @@ declare module 'express-serve-static-core' {
       id: string;
       email: string;
       role: UserRole;
+      tokenVersion: number
     };
   }
 }

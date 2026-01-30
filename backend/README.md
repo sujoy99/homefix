@@ -39,10 +39,20 @@ Create a file inside `backend/`:
 
 ```env
 NODE_ENV=development
-PORT=3000
+PORT=4000
+
+ENABLE_SEED=true
+DEFAULT_ADMIN_EMAIL=admin@example.com
+DEFAULT_ADMIN_PASSWORD=Admin@1234
+
 LOG_LEVEL=debug
 LOG_DIR=logs
 LOG_RETENTION_DAYS=3
+
+JWT_ACCESS_SECRET=super-secret-access
+JWT_REFRESH_SECRET=super-secret-refresh
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
 ```
 ---
 ## Run Backend
@@ -130,13 +140,83 @@ homefix/
 ``` bash
 {
   "http_code": 500,
+  "error_code": "BAD_REQUEST"
   "message": "Internal server error",
   "body": null
 }
+
 ```
+
+| ErrorCode      | Frontend Action     |
+|----------------|---------------------|
+| `AUTH_REQUIRED`     | Redirect to login   |
+| `TOKEN_EXPIRED` | Call /auth/refresh  |
+| `SESSION_EXPIRED`      | Logout + redirect   |
+| `REFRESH_TOKEN_REVOKED`      | Logout everywhere   |
+| `INVALID_CREDENTIALS`        | Show error messages |
+| `ALREADY_EXISTS`      | Show error messages |
+| `INSUFFICIENT_PERMISSION`      | Show 403 page       |
+| `RESOURCE_NOT_FOUND`      | Show 404 page       |
 ---
 ## Health Check API
 ``` bash
 GET /health
+```
+
+
+## Covered
+
+#### Authentication
+```
+
+Access token + refresh token 
+
+Short-lived access token 
+
+Refresh token rotation 
+
+Replay protection
+
+Token revocation
+
+Logout (single device) 
+
+Logout all devices 
+
+Token versioning (global invalidation) 
+
+Per-device session awareness
+```
+
+#### Authorization
+```
+Role-based access (RBAC) 
+
+Permission-based guards 
+
+Route-level protection 
+
+Admin vs user isolation
+
+Swagger-documented access rule
+```
+
+#### API & Platform Security
+```
+Helmet headers
+
+Rate limiting
+
+CORS setup
+
+Request ID tracing
+
+Centralized error handling
+
+No sensitive data leakage
+
+Password hashing (bcrypt)
+
+Timing-safe comparisions
 ```
 

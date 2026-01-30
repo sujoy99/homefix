@@ -1,7 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { AppError } from './app-error';
 import { logger } from '@logger/logger';
 import { HttpResponse } from '@http/response';
+import { ErrorCode } from '@errors/error-code';
 
 export const errorHandler = (
   err: Error,
@@ -27,7 +28,8 @@ export const errorHandler = (
       res,
       err.message,
       err.statusCode,
-      err.errors,
+      err.errorCode,
+      err.errors
     );
   }
 
@@ -43,6 +45,7 @@ export const errorHandler = (
   return HttpResponse.error(
     res,
     'Internal server error',
-    500
+    500,
+    ErrorCode.INTERNAL_SERVER_ERROR
   );
 };

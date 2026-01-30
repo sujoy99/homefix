@@ -30,7 +30,7 @@ export const userRouter = Router();
 
 /**
  * @route   GET /users/me
- * @desc    Get current logged-in user
+ * @desc    Get current logged-in user & permissions
  * @access  Protected
  */
 userRouter.get(

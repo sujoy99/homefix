@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { ApiResponse, FieldError, PaginatedBody } from './response.types';
+import { ErrorCode } from '@errors/error-code';
 
 export class HttpResponse {
   static success<T>(
@@ -46,12 +47,14 @@ export class HttpResponse {
     res: Response,
     message: string,
     statusCode: number,
+    errorCode?: ErrorCode,
     errors?: ReadonlyArray<FieldError>
   ) {
     const response: ApiResponse<null> = {
       http_code: statusCode,
       message,
       body: null,
+      ...(errorCode !== undefined ? { error_code: errorCode } : {}),
       ...(errors ? { errors } : {}),
     };
 

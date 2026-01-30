@@ -1,9 +1,10 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { env } from '@config/env';
-import { JwtPayload } from './auth.types';
-import {  } from '@errors/app-error';
+import { JwtPayload, RefreshTokenPayload } from './auth.types';
 import { UnauthorizedError } from '@errors/http-errors';
 import { User } from '@modules/users/user.types';
+import { randomUUID } from 'crypto';
+import { ErrorCode } from '@errors/error-code';
 
 /**
  * ============================
@@ -30,13 +31,16 @@ export function generateAccessToken(payload: JwtPayload): string {
  * - Used to rotate access tokens
  * - Long lived
  */
-export function generateRefreshToken(payload: JwtPayload): string {
+export function generateRefreshToken(userId: string) {
+  const tokenId = randomUUID();
+
   const options: SignOptions = {};
   if (env.jwtRefreshExpiresIn !== undefined) {
     options.expiresIn = env.jwtRefreshExpiresIn;
   }
-
-  return jwt.sign(payload, env.jwtAccessSecret, options);
+  const token = jwt.sign({ sub: userId, tokenId } satisfies RefreshTokenPayload,
+    env.jwtRefreshSecret, options);
+  return { token, tokenId };
 }
 
 /**
@@ -55,11 +59,13 @@ export function sanitizeUser(user: User) {
  * JWT Payload Generator from User
  * ============================
  */
-export function generateJwtPayload(user: User): JwtPayload {
+export function generateJwtPayload(user: User, deviceId: string): JwtPayload {
   return {
     sub: user.id,
     email: user.email,
     role: user.role,
+    deviceId: deviceId,
+    tokenVersion: user.tokenVersion,
   };
 }
 
@@ -78,8 +84,17 @@ export function verifyAccessToken(token: string): JwtPayload {
     !('email' in decoded) ||
     !('role' in decoded)
   ) {
-    throw new UnauthorizedError('Invalid access token');
+    throw new UnauthorizedError(ErrorCode.TOKEN_INVALID,'Invalid access token');
   }
 
   return decoded as JwtPayload;
+}
+
+/**
+ * ============================
+ * JWT Refresh Token Verification
+ * ============================
+ */
+export function verifyRefreshToken(token: string): RefreshTokenPayload {
+  return jwt.verify(token, env.jwtRefreshSecret) as RefreshTokenPayload;
 }
