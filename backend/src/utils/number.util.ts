@@ -1,5 +1,5 @@
 /**
- * Safely converts env values to positive numbers
+ * Safely converts values to positive numbers
  * Falls back to defaultValue on invalid input
  */
 export const toNumber = (

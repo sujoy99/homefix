@@ -2,13 +2,14 @@ backend
 ├── README.md
 ├── docs
 │   └── structure.txt
+├── knexfile.js
 ├── logs
-│   ├── 2026-01-16.log
-│   ├── 2026-01-17.log
-│   ├── exceptions-2026-01-16.log
-│   ├── exceptions-2026-01-17.log
-│   ├── rejections-2026-01-16.log
-│   └── rejections-2026-01-17.log
+│   ├── 2026-01-30.log
+│   ├── 2026-01-31.log
+│   ├── exceptions-2026-01-30.log
+│   ├── exceptions-2026-01-31.log
+│   ├── rejections-2026-01-30.log
+│   └── rejections-2026-01-31.log
 ├── package-lock.json
 ├── package.json
 ├── src
@@ -16,9 +17,17 @@ backend
 │   ├── common
 │   ├── config
 │   │   ├── env.ts
+│   │   ├── knexfile.ts
 │   │   └── swagger.ts
+│   ├── db
+│   │   ├── db.ts
+│   │   ├── migrations
+│   │   │   ├── 20260216151001_create_users_table.ts
+│   │   │   └── 20260216152611_create_auth_accounts_table.ts
+│   │   └── seeds
 │   ├── errors
 │   │   ├── app-error.ts
+│   │   ├── error-code.ts
 │   │   ├── error-handler.ts
 │   │   └── http-errors.ts
 │   ├── http
@@ -28,14 +37,47 @@ backend
 │   │   ├── log-mask.ts
 │   │   └── logger.ts
 │   ├── middlewares
+│   │   ├── helmet.ts
+│   │   ├── rate-limiter.ts
 │   │   ├── request-id.ts
-│   │   └── request-logger.ts
+│   │   ├── request-logger.ts
+│   │   └── validate.ts
 │   ├── modules
-│   │   └── health
-│   │       ├── health.controller.ts
-│   │       ├── health.route.ts
-│   │       └── health.service.ts
+│   │   ├── admin
+│   │   │   ├── admin.controller.ts
+│   │   │   └── admin.route.ts
+│   │   ├── auth
+│   │   │   ├── auth.adapter.ts
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── auth.dto.ts
+│   │   │   ├── auth.guard.ts
+│   │   │   ├── auth.jwt.ts
+│   │   │   ├── auth.repository.ts
+│   │   │   ├── auth.route.ts
+│   │   │   ├── auth.schema.ts
+│   │   │   ├── auth.seed.ts
+│   │   │   ├── auth.service.ts
+│   │   │   ├── auth.types.ts
+│   │   │   ├── auth.validation.ts
+│   │   │   ├── permission.cache.ts
+│   │   │   ├── permissions.ts
+│   │   │   ├── rbac.guard.ts
+│   │   │   ├── role.guard.ts
+│   │   │   ├── roles.ts
+│   │   │   └── token.store.ts
+│   │   ├── health
+│   │   │   ├── health.controller.ts
+│   │   │   ├── health.route.ts
+│   │   │   └── health.service.ts
+│   │   └── users
+│   │       ├── user.controller.ts
+│   │       ├── user.model.ts
+│   │       ├── user.route.ts
+│   │       ├── user.store.ts
+│   │       ├── user.types.ts
+│   │       └── user.validation.ts
 │   ├── routes
+│   │   ├── index.ts
 │   │   └── swagger.route.ts
 │   ├── server.ts
 │   ├── types
@@ -43,6 +85,9 @@ backend
 │   │       └── index.d.ts
 │   └── utils
 │       ├── async-handler.ts
+│       ├── constants.ts
+│       ├── enc-decr.util.ts
+│       ├── env-handler.ts
 │       ├── index.ts
 │       └── number.util.ts
 ├── tsconfig.json

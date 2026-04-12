@@ -1,12 +1,8 @@
 import { Router } from 'express';
-import { authRouter } from '@modules/auth/auth.route';
-import { userRouter } from '@modules/users/user.route';
-import { adminRouter } from '@modules/admin/admin.route';
-import { healthRouter } from '@modules/health/health.route';
+import v1Routes from './v1';
+import v2Routes from './v2';
 
 export function registerRoutes(app: Router) {
-  app.use('/health', healthRouter);
-  app.use('/auth', authRouter); // Public
-  app.use('/users', userRouter); // Protected user routes (Auth Only)
-  app.use('/admin', adminRouter); // Auth + Role protected
+  app.use('/api/v1', v1Routes);
+  app.use('/api/v2', v2Routes);
 }

@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { SignOptions } from 'jsonwebtoken';
 import { toNumber } from '@utils';
+import { required } from '@utils/env-handler';
+import { Environment } from '@utils/constants';
 // import { toNumber } from '@utils/number.util'; ----- Another Approach. but in tsconfig file need path like @utils/
 
 const envFile = `.env.${process.env.NODE_ENV ?? 'development'}`;
@@ -10,17 +12,9 @@ dotenv.config({
   path: path.resolve(process.cwd(), envFile),
 });
 
-const required = (key: string): string => {
-  const value = process.env[key];
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${key}`);
-  }
-  return value;
-};
-
 export const env = {
   /** App */
-  nodeEnv: process.env.NODE_ENV ?? 'development',
+  nodeEnv: process.env.NODE_ENV ?? 'development' as Environment,
   port: toNumber(process.env.PORT, 3000),
 
   /** Default Admin */

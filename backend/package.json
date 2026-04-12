@@ -9,7 +9,10 @@
     "build": "tsc && tsc-alias",
     "start": "cross-env NODE_ENV=production node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "docs:tree": "tree -L 4 -I \"node_modules|.git|dist\" > docs/structure.txt"
+    "docs:tree": "tree -L 4 -I \"node_modules|.git|dist\" > docs/structure.txt",
+    "migrate:make": "knex migrate:make",
+    "migrate:latest": "knex migrate:latest",
+    "migrate:reset": "knex migrate:rollback --all"
   },
   "engines": {
     "node": ">=20"
@@ -24,10 +27,14 @@
     "express": "^5.2.1",
     "ioredis": "^5.9.2",
     "jsonwebtoken": "^9.0.3",
+    "knex": "^3.1.0",
     "multer": "^2.0.2",
+    "objection": "^3.1.5",
+    "pg": "^8.18.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "tsconfig-paths": "^4.2.0",
+    "uuid": "^13.0.0",
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0",
     "zod": "^4.3.5"
@@ -37,6 +44,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/knex": "^0.16.1",
     "@types/node": "^25.0.9",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
