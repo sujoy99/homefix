@@ -14,6 +14,7 @@ export function requestLogger(
     logger.info('HTTP request', {
       requestId: req.id,
       method: req.method,
+      apiVersion: req.baseUrl,
       path: req.originalUrl,
       statusCode: res.statusCode,
       durationMs,

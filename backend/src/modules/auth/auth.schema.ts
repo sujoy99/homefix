@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import validator from 'validator';
 import { UserRole } from '@modules/users/user.types';
+import { AuthMethod } from './auth.types';
 
 const PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?#&])[A-Za-z\d@$!%*?#&]{8,}$/;
@@ -44,6 +45,81 @@ export const registerSchema = z.object({
 
 /**
  * ============================
+ * Register Validation Schema (V2)
+ * ============================
+ * Public registration
+ * - RESIDENT / PROVIDER allowed
+ * - ADMIN explicitly blocked
+ * - Mobile + NID registration
+ * - Provider requires NID photo
+ */
+export const userRegistrationSchema = z.object({
+  body: z
+    .object({
+      full_name: z
+        .string()
+        .min(3, 'Full name must be at least 3 characters'),
+
+      mobile: z
+        .string()
+        .regex(/^[0-9]{11}$/, 'Mobile must be 11 digits'),
+
+      nid: z
+        .string()
+        .regex(/^[0-9]{10}$/, 'NID must be 10 digits'),
+
+      latitude: z.number(),
+      longitude: z.number(),
+
+      /**
+       * Only RESIDENT / PROVIDER allowed
+       */
+      role: z.enum([UserRole.RESIDENT, UserRole.PROVIDER]),
+
+      /**
+       * Optional (email, password, provider)
+       */
+      email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .refine((value) => validator.isEmail(value), {
+        message: 'Invalid email address',
+      })
+      .optional(),
+
+      password: z
+      .string()
+      .min(8)
+      .max(128)
+      .refine((val) => PASSWORD_REGEX.test(val), {
+        message:
+          'Password must be 8–128 characters and include uppercase, lowercase, ' +
+          'number, and special character',
+      })
+      .optional(),
+
+      auth_method: z.enum([AuthMethod.PASSWORD, AuthMethod.OTP, AuthMethod.GOOGLE, AuthMethod.FACEBOOK])
+      .optional(),
+
+      /**
+       * Optional (nid required for provider)
+       */
+      photo_url: z.string().optional(),
+      nid_photo_url: z.string().optional(),
+    })
+  .refine(
+    (data) =>
+      data.role !== UserRole.PROVIDER || !!data.nid_photo_url,
+    {
+      message: 'NID photo is required for provider',
+      path: ['nid_photo_url'],
+    }
+  ),
+});
+
+/**
+ * ============================
  * Login Validation Schema
  * ============================
  */
@@ -59,5 +135,15 @@ export const loginSchema = z.object({
 
     password: z.string().min(1, 'Password is required'),
     deviceId: z.string()
+  }),
+});
+
+export const userLoginSchema = z.object({
+  body: z.object({
+    mobile: z
+      .string()
+      .regex(/^[0-9]{11}$/, 'Mobile must be 11 digits'),
+
+    deviceId: z.string(),
   }),
 });

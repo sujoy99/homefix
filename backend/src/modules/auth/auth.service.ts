@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
-import { User } from '@modules/users/user.types';
-import { LoginDTO, RegisterDTO } from './auth.dto';
+import { User as U, UserResgistrationRequest, UserRole, UserStatus } from '@modules/users/user.types';
+import { LoginDTO, RegisterDTO, UserRegistrationDTO } from './auth.dto';
 import { AuthRepository } from './auth.repository';
 import { DuplicateError, UnauthorizedError } from '@errors/http-errors';
 import {
@@ -13,6 +13,9 @@ import {
 import { RefreshTokenStore } from '@modules/auth/token.store';
 import { UserStore } from '@modules/users/user.store';
 import { ErrorCode } from '@errors/error-code';
+import { User } from '@modules/users/user.model';
+import { AuthMethod } from './auth.types';
+import { mapToUserRegistrationResponse } from './auth.mapper';
 
 /**
  * ============================
@@ -68,7 +71,7 @@ export class AuthService {
      * - Repository abstracts DB/ORM logic
      * - Service remains framework-agnostic
      */
-    const user: User = await AuthRepository.create({
+    const user: U = await AuthRepository.create({
       name,
       email,
       password: hashedPassword,
@@ -95,6 +98,89 @@ export class AuthService {
       //   refreshToken,
       // },
     };
+  }
+
+  /**
+   * ============================
+   * Register New User
+   * ============================
+   * Flow:
+   * 1. Check if user already exists
+   * 2. Hash password
+   * 3. Persist user
+   * 4. Generate tokens
+   */
+  static async registerUser(data: UserRegistrationDTO) {
+    // const { name, email, password, role } = data;
+    const {
+      full_name,
+      mobile,
+      nid,
+      latitude,
+      longitude,
+      role,
+      email,
+      password,
+      auth_method = AuthMethod.PASSWORD,
+      photo_url,
+      nid_photo_url,
+    } = data;
+
+    let hashedPassword = undefined;
+  
+    /**
+     * 1. Check for existing user
+     * - Prevent duplicate accounts
+     * - Mobile is unique identifier
+     */
+    const existingUser = await AuthRepository.findByMobile(mobile);
+    if (existingUser) {
+      throw new DuplicateError(
+        ErrorCode.ALREADY_EXISTS,
+        'User already exists with this mobile number'
+      );
+    }
+
+     /**
+     * 2. Determine status
+     */
+    const status =
+      role === UserRole.PROVIDER ? UserStatus.PENDING : UserStatus.ACTIVE;
+
+    /**
+     * 2. Hash password
+     * - Never store plain text password
+     * - Cost factor 12 is production safe
+     */
+    if(password !== undefined){
+      hashedPassword = await this.hashPassword(password);
+      // provider = AuthMethod.PASSWORD;
+    }
+    
+
+    /**
+     * 3. Create user in DB
+     * - Repository abstracts DB/ORM logic
+     * - Service remains framework-agnostic
+     */
+    const payload: UserResgistrationRequest = {
+      full_name,
+      mobile,
+      nid,
+      role,
+      latitude,
+      longitude,
+      ...(email !== undefined && { email }),
+      ...(hashedPassword !== undefined && { hashedPassword }),
+      auth_method,
+      status,
+      ...(photo_url !== undefined && { photo_url }),
+      ...(nid_photo_url !== undefined && { nid_photo_url }),
+    };
+
+    const result = await AuthRepository.createUser(payload);
+
+    return mapToUserRegistrationResponse(result.user, result.auth);
   }
 
   /**

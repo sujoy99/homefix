@@ -32,3 +32,30 @@ export const healthRouter = router;
  */
 router.get('/', HealthController.check);
 
+/**
+ * @openapi
+ * /health/db:
+ *   get:
+ *     summary: Check database connection
+ *     description: Returns database connection status
+ *     tags:
+ *       - Health
+ *     responses:
+ *       200:
+ *         description: Database is healthy
+ *         content:
+ *           application/json:
+ *             example:
+ *               success: true
+ *               message: Database connection is healthy
+ *
+ *       500:
+ *         description: Database connection failed
+ *         content:
+ *           application/json:
+ *             example:
+ *               success: false
+ *               message: Database connection failed
+ */
+router.get('/db', HealthController.checkDb);
+

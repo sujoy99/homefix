@@ -1,5 +1,6 @@
 import { app } from './app';
-import { env } from '@config/env';
+import { env } from '@config/env'; // 1. loads dotenv internally
+import '@config/db';                // 2️. DB loaded
 import { logger } from '@logger/logger';
 import { seedDefaultAdmin } from '@modules/auth/auth.seed';
 

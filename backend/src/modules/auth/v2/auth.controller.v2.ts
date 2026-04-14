@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../auth.service';
 import { HttpResponse } from '@http/response';
-import { RegisterDTO, LoginDTO } from '../auth.dto';
+import { RegisterDTO, UserRegistrationDTO, LoginDTO } from '../auth.dto';
 import { AuthenticatedRequest } from '@modules/auth/auth.types';
 
 export class AuthControllerV2 {
@@ -11,9 +11,9 @@ export class AuthControllerV2 {
    * ============================
    */
   static async register(req: Request, res: Response) {
-    const data = req.body as RegisterDTO;
+    const data = req.body as UserRegistrationDTO;
 
-    const result = await AuthService.register(data);
+    const result = await AuthService.registerUser(data);
 
     return HttpResponse.success(
       res,
