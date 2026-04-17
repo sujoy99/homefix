@@ -138,12 +138,69 @@ export const loginSchema = z.object({
   }),
 });
 
-export const userLoginSchema = z.object({
-  body: z.object({
-    mobile: z
-      .string()
-      .regex(/^[0-9]{11}$/, 'Mobile must be 11 digits'),
+/**
+ * Common fields
+ */
+const baseSchema = z.object({
+  deviceId: z.string(),
+});
 
-    deviceId: z.string(),
-  }),
+/**
+ * PASSWORD login (mobile/email + password)
+ */
+const passwordSchema = baseSchema.extend({
+  method: z.literal(AuthMethod.PASSWORD),
+
+  mobile: z
+    .string()
+    .regex(/^[0-9]{11}$/, 'Mobile must be 11 digits')
+    .optional(),
+
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .refine((v) => validator.isEmail(v), {
+      message: 'Invalid email',
+    })
+    .optional(),
+
+  password: z.string().min(1, 'Password is required'),
+}).refine((data) => data.mobile || data.email, {
+  message: 'Mobile or email is required',
+});
+
+/**
+ * OTP login (mobile only)
+ */
+const otpSchema = baseSchema.extend({
+  method: z.literal(AuthMethod.OTP),
+
+  mobile: z
+    .string()
+    .regex(/^[0-9]{11}$/, 'Mobile must be 11 digits'),
+});
+
+/**
+ * Google login (email only for now)
+ */
+const googleSchema = baseSchema.extend({
+  method: z.literal(AuthMethod.GOOGLE),
+
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .refine((v) => validator.isEmail(v), {
+      message: 'Invalid email',
+    }),
+});
+
+export const userLoginSchema = z.object({
+  
+  body: z.discriminatedUnion('method', [
+    passwordSchema,
+    otpSchema,
+    googleSchema,
+  ]),
 });

@@ -1,0 +1,17 @@
+#First Migration
+npx knex --knexfile src/config/knexfile.ts migrate:make create_users_table
+
+#Run Migration
+npx knex --knexfile src/config/knexfile.ts migrate:latest
+
+🎯 FINAL CLEAN STRUCTURE
+🔼 UP
+extension
+sequence
+table
+index
+🔽 DOWN
+table
+index
+sequence
+types

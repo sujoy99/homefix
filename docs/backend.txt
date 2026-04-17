@@ -1,0 +1,9 @@
+knex → SQL query builder
+
+objection → ORM
+
+pg → PostgreSQL driver
+
+@types/knex → TypeScript types
+
+ts-node → required to run migrations in TypeScript

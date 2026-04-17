@@ -4,26 +4,32 @@ backend
 │   └── structure.txt
 ├── knexfile.js
 ├── logs
-│   ├── 2026-01-30.log
-│   ├── 2026-01-31.log
-│   ├── exceptions-2026-01-30.log
-│   ├── exceptions-2026-01-31.log
-│   ├── rejections-2026-01-30.log
-│   └── rejections-2026-01-31.log
+│   ├── 2026-04-12.log
+│   ├── 2026-04-14.log
+│   ├── 2026-04-15.log
+│   ├── exceptions-2026-04-12.log
+│   ├── exceptions-2026-04-14.log
+│   ├── exceptions-2026-04-15.log
+│   ├── rejections-2026-04-12.log
+│   ├── rejections-2026-04-14.log
+│   └── rejections-2026-04-15.log
 ├── package-lock.json
 ├── package.json
 ├── src
 │   ├── app.ts
 │   ├── common
 │   ├── config
+│   │   ├── db.ts
 │   │   ├── env.ts
 │   │   ├── knexfile.ts
-│   │   └── swagger.ts
+│   │   ├── swagger.ts
+│   │   ├── swagger.v1.ts
+│   │   └── swagger.v2.ts
 │   ├── db
-│   │   ├── db.ts
 │   │   ├── migrations
 │   │   │   ├── 20260216151001_create_users_table.ts
-│   │   │   └── 20260216152611_create_auth_accounts_table.ts
+│   │   │   ├── 20260216152611_create_auth_accounts_table.ts
+│   │   │   └── 20260414183358_auth_refresh_tokens.ts
 │   │   └── seeds
 │   ├── errors
 │   │   ├── app-error.ts
@@ -52,6 +58,8 @@ backend
 │   │   │   ├── auth.dto.ts
 │   │   │   ├── auth.guard.ts
 │   │   │   ├── auth.jwt.ts
+│   │   │   ├── auth.mapper.ts
+│   │   │   ├── auth.model.ts
 │   │   │   ├── auth.repository.ts
 │   │   │   ├── auth.route.ts
 │   │   │   ├── auth.schema.ts
@@ -62,9 +70,12 @@ backend
 │   │   │   ├── permission.cache.ts
 │   │   │   ├── permissions.ts
 │   │   │   ├── rbac.guard.ts
+│   │   │   ├── refresh_token.model.ts
+│   │   │   ├── refresh_token.service.ts
 │   │   │   ├── role.guard.ts
 │   │   │   ├── roles.ts
-│   │   │   └── token.store.ts
+│   │   │   ├── token.store.ts
+│   │   │   └── v2
 │   │   ├── health
 │   │   │   ├── health.controller.ts
 │   │   │   ├── health.route.ts
@@ -72,13 +83,18 @@ backend
 │   │   └── users
 │   │       ├── user.controller.ts
 │   │       ├── user.model.ts
+│   │       ├── user.repository.ts
 │   │       ├── user.route.ts
 │   │       ├── user.store.ts
 │   │       ├── user.types.ts
 │   │       └── user.validation.ts
 │   ├── routes
 │   │   ├── index.ts
-│   │   └── swagger.route.ts
+│   │   ├── swagger.route.ts
+│   │   ├── v1
+│   │   │   └── index.ts
+│   │   └── v2
+│   │       └── index.ts
 │   ├── server.ts
 │   ├── types
 │   │   └── express

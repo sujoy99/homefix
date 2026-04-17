@@ -103,7 +103,7 @@ export type UserResgistrationRequest = {
   mobile: string;
   nid: string;
 
-  role: UserRole.RESIDENT | UserRole.PROVIDER;
+  role: UserRole;
 
   latitude: number;
   longitude: number;

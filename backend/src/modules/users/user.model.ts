@@ -1,5 +1,6 @@
 import { Model } from 'objection';
 import { UserRole, UserStatus } from './user.types';
+import { AuthAccount } from '@modules/auth/auth.model';
 
 /**
  * User Model mapped to users table
@@ -30,14 +31,16 @@ export class User extends Model {
   created_at!: string;
   updated_at!: string;
 
+  authAccounts?: AuthAccount[];
+
   /**
    * ============================
    * Relations
    * ============================
    */
   static relationMappings = {
-    authAccount: {
-      relation: Model.HasOneRelation,
+    authAccounts: {
+      relation: Model.HasManyRelation,
       modelClass: require('../auth/auth.model').AuthAccount,
       join: {
         from: 'users.id',

@@ -1,0 +1,14 @@
+CREATE DATABASE homefix;
+
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+SELECT PostGIS_Version(); // verify
+
+CREATE USER homefix_db_user WITH PASSWORD 'YourStrongPassword!';
+
+ALTER DATABASE homefix OWNER TO homefix_db_user;
+
+GRANT ALL PRIVILEGES ON DATABASE homefix TO homefix_db_user;
+

@@ -1,0 +1,36 @@
+[
+{
+    "//": "POST /api/v2/auth/register",
+    "full_name": "Abdul Halim",
+    "mobile": "01912345678",
+    "nid": "3234567890",
+    "latitude": 23.7500,
+    "longitude": 90.3900,
+    "role": "provider",
+    "photo_url": "https://example.com/photo.jpg",
+    "nid_photo_url": "https://example.com/nid.jpg",
+    "email": "abc@example.com",
+    "password": "Password@123",
+    "auth_method": "password"
+},
+
+{
+  "//": "POST /api/v2/auth/login",
+  "method": "password",
+  "mobile": "01712345678",
+  "password": "Password@123",
+  "deviceId": "android-device-1"
+},
+{
+    "//": "POST /api/v2/auth/refresh",
+    "refreshToken": "jwt-refresh-token"
+},
+{
+    "//": "POST /api/v2/auth/logout",
+    "refreshToken": "jwt-refresh-token"
+},
+{
+    "//": "POST /api/v2/auth/logout-all"
+}
+
+]

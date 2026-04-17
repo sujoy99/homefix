@@ -39,10 +39,15 @@ export const swaggerV2Spec = swaggerJsdoc({
       },
       /**
        * ============================
-       * Global Response Schemas
+       * Schemas
        * ============================
        */
       schemas: {
+         /**
+         * ============================
+         * COMMON RESPONSES
+         * ============================
+         */
         ApiSuccessResponse: {
           type: 'object',
           required: ['http_code', 'message', 'body'],
@@ -132,6 +137,187 @@ export const swaggerV2Spec = swaggerJsdoc({
                   message: { type: 'string' },
                 },
               },
+            },
+          },
+        },
+
+        /**
+         * ============================
+         * AUTH - USER
+         * ============================
+         */
+        UserResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: 'uuid' },
+            full_name: { type: 'string', example: 'John Doe' },
+            mobile: { type: 'string', example: '01712345678' },
+            email: {
+              type: 'string',
+              nullable: true,
+              example: 'john@example.com',
+            },
+            role: { type: 'string', example: 'resident' },
+            status: { type: 'string', example: 'active' },
+          },
+        },
+
+         /**
+         * ============================
+         * AUTH - TOKENS
+         * ============================
+         */
+        AuthTokens: {
+          type: 'object',
+          properties: {
+            accessToken: { type: 'string' },
+            refreshToken: { type: 'string' },
+          },
+        },
+
+        /**
+         * ============================
+         * LOGIN RESPONSE
+         * ============================
+         */
+        LoginResponse: {
+          type: 'object',
+          properties: {
+            user: {
+              $ref: '#/components/schemas/UserResponse',
+            },
+            tokens: {
+              $ref: '#/components/schemas/AuthTokens',
+            },
+          },
+        },
+
+        /**
+         * ============================
+         * LOGIN REQUEST SCHEMAS
+         * ============================
+         */
+        LoginPassword: {
+          type: 'object',
+          required: ['method', 'password', 'deviceId'],
+          properties: {
+            method: {
+              type: 'string',
+              enum: ['password'],
+            },
+            mobile: {
+              type: 'string',
+              example: '01712345678',
+            },
+            email: {
+              type: 'string',
+              example: 'john@example.com',
+            },
+            password: {
+              type: 'string',
+              example: 'Password@123',
+            },
+            deviceId: {
+              type: 'string',
+              example: 'android-device-1',
+            },
+          },
+          description:
+            'Login using mobile/email and password (at least one required)',
+        },
+
+        LoginOTP: {
+          type: 'object',
+          required: ['method', 'mobile', 'deviceId'],
+          properties: {
+            method: {
+              type: 'string',
+              enum: ['otp'],
+            },
+            mobile: {
+              type: 'string',
+              example: '01712345678',
+            },
+            deviceId: {
+              type: 'string',
+              example: 'android-device-1',
+            },
+          },
+        },
+
+        LoginGoogle: {
+          type: 'object',
+          required: ['method', 'email', 'deviceId'],
+          properties: {
+            method: {
+              type: 'string',
+              enum: ['google'],
+            },
+            email: {
+              type: 'string',
+              example: 'john@gmail.com',
+            },
+            deviceId: {
+              type: 'string',
+              example: 'web-browser',
+            },
+          },
+        },
+
+        /**
+         * ============================
+         * REFRESH TOKEN
+         * ============================
+         */
+        RefreshRequest: {
+          type: 'object',
+          required: ['refreshToken'],
+          properties: {
+            refreshToken: {
+              type: 'string',
+            },
+          },
+        },
+
+        RefreshResponse: {
+          type: 'object',
+          properties: {
+            accessToken: { type: 'string' },
+            refreshToken: { type: 'string' },
+          },
+        },
+
+        /**
+         * ============================
+         * LOGOUT
+         * ============================
+         */
+        LogoutRequest: {
+          type: 'object',
+          required: ['refreshToken'],
+          properties: {
+            refreshToken: {
+              type: 'string',
+            },
+          },
+        },
+
+        /**
+         * ============================
+         * SESSION
+         * ============================
+         */
+        SessionInfo: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            device_id: { type: 'string' },
+            ip_address: { type: 'string' },
+            user_agent: { type: 'string' },
+            is_revoked: { type: 'boolean' },
+            created_at: {
+              type: 'string',
+              format: 'date-time',
             },
           },
         },

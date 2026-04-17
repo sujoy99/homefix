@@ -1,11 +1,10 @@
 import { randomUUID } from 'crypto';
 
-import { transaction, PartialModelObject } from 'objection';
+import { transaction, PartialModelObject, Transaction } from 'objection';
 import { User } from '@modules/users/user.model';
 import { AuthAccount } from './auth.model';
-import knex from '@config/db'; // your knex instance
 
-import { User as U, CreateUserInput, UserRole, UserStatus, UserResgistrationRequest, UserRegistrationResponse } from '@modules/users/user.types';
+import { User as U, CreateUserInput, UserResgistrationRequest} from '@modules/users/user.types';
 import { users, UserStore } from '@modules/users/user.store';
 import { CreateUserRepoResult } from './auth.types';
 
@@ -39,9 +38,69 @@ export class AuthRepository {
    * - Returns the user if mobile exists
    * - Returns null if no matching user is found
    */
+  static async findById(authAccountId: string): Promise<AuthAccount | null> {
+    const authAccount = await AuthAccount.query().findOne({ id: authAccountId });
+    return authAccount ?? null;
+  }
+
+   /**
+   * Find a user by mobile
+   * 
+   * Behavior:
+   * - Returns the user if mobile exists
+   * - Returns null if no matching user is found
+   */
   static async findByMobile(mobile: string): Promise<User | null> {
     const user = await User.query().findOne({ mobile });
     return user ?? null;
+  }
+
+
+  static async handleFailedLogin(id: string) {
+    return AuthAccount.query()
+      .patch({
+        failed_attempts: AuthAccount.knex().raw('failed_attempts + 1'),
+        lock_until: AuthAccount.knex().raw(`
+          CASE 
+            WHEN failed_attempts + 1 >= 5 
+            THEN NOW() + interval '15 minutes'
+            ELSE lock_until
+          END
+        `),
+      })
+      .where('id', id);
+  }
+
+  static async updateFailedAttempts(
+    id: string,
+    failedAttempts: number,
+    lockUntil?: Date | null
+  ) {
+    return AuthAccount.query()
+      .patch({
+        failed_attempts: failedAttempts,
+        lock_until: lockUntil ?? null,
+      })
+      .where('id', id);
+  }
+
+
+  static async markLoginSuccess(id: string, trx?: Transaction) {
+    return AuthAccount.query(trx)
+      .patch({
+        failed_attempts: 0,
+        lock_until: null,
+        last_login: AuthAccount.raw('NOW()'),
+      })
+      .where('id', id);
+  }
+
+  static async invalidateAllUserSessions(userId: string) {
+    return AuthAccount.query()
+      .patch({
+        refresh_token_version: AuthAccount.raw('gen_random_uuid()'),
+      })
+      .where('user_id', userId);
   }
 
   /**

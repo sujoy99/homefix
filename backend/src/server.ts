@@ -2,13 +2,22 @@ import { app } from './app';
 import { env } from '@config/env'; // 1. loads dotenv internally
 import '@config/db';                // 2️. DB loaded
 import { logger } from '@logger/logger';
-import { seedDefaultAdmin } from '@modules/auth/auth.seed';
+import { seedDefaultAdmin, seedDefaultAdminInDB } from '@modules/auth/auth.seed';
 
 async function bootstrap() {
+  process.on('uncaughtException', (err) => {
+    console.error('UNCAUGHT EXCEPTION:', err);
+  });
+
+  process.on('unhandledRejection', (err) => {
+    console.error('UNHANDLED REJECTION:', err);
+  });
+  
   // Seed data
-  await seedDefaultAdmin();
+  // await seedDefaultAdmin();
   if (env.enableSeed !== 'false') {
-    await seedDefaultAdmin();
+    // await seedDefaultAdmin();
+    await seedDefaultAdminInDB();
   }
 
   app.listen(env.port, () => {

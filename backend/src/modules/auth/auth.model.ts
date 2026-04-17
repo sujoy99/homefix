@@ -27,14 +27,14 @@ export class AuthAccount extends Model {
   /**
    * Security / tracking
    */
-  last_login?: string;
+  last_login?: Date | null;
   failed_attempts?: number;
-  lock_until?: string;
+  lock_until?: Date | null;
 
   /**
    * Refresh token version (JWT invalidation)
    */
-  refresh_token_version?: string;
+  refresh_token_version!: string;
 
   created_at!: string;
   updated_at!: string;

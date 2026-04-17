@@ -1,5 +1,6 @@
 import 'express-serve-static-core';
-import { UserRole } from '@modules/users/user.types';
+import { UserRole, UserStatus } from '@modules/users/user.types';
+import { JwtPayload } from 'jsonwebtoken';
 
 declare module 'express-serve-static-core' {
   interface Request {
@@ -15,11 +16,14 @@ declare module 'express-serve-static-core' {
      * - Injected by authGuard
      * - Undefined for public routes
      */
-    user?: {
-      id: string;
-      email: string;
-      role: UserRole;
-      tokenVersion: number
+    user?: JwtPayload;
+
+    /**
+     * Client metadata (from middleware)
+     */
+    clientInfo?: {
+      ip: string;
+      userAgent?: string;
     };
   }
 }

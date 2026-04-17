@@ -1,6 +1,7 @@
 import { Request } from 'express';
-import { UserRole } from '@modules/users/user.types';
+import { UserRole, UserStatus } from '@modules/users/user.types';
 import { User } from '@modules/users/user.model';
+import { AuthAccount } from './auth.model';
 
 /**
  * Supported auth method in the system
@@ -23,7 +24,11 @@ export type CreateUserRepoResult = {
   };
 };
 
-export interface JwtPayload {
+export type UserWithAuth = User & {
+  authAccounts?: AuthAccount[];
+};
+
+export interface JwtPayloadVal {
   sub: string;
   email: string;
   role: UserRole;
@@ -31,18 +36,47 @@ export interface JwtPayload {
   deviceId: string;
 }
 
+export interface JwtPayload {
+  sub: string;
+  email?: string;
+  mobile: string;
+  role: UserRole;
+  status: UserStatus
+  tokenVersion?: string;
+  deviceId?: string;
+}
+
+export type ClientInfo = {
+  ip: string;
+  userAgent?: string;
+};
+
 export interface AuthenticatedRequest extends Request {
-  user: {
-    id: string;
-    email: string;
-    role: UserRole;
-    tokenVersion: number;
-  };
+  // user: {
+  //   id: string;
+  //   email: string;
+  //   mobile: string;
+  //   role: UserRole;
+  //   status: UserStatus;
+  //   tokenVersion: string;
+  // };
+  user: JwtPayload;
+  /**
+   * Client metadata (from middleware)
+   */
+  clientInfo?: ClientInfo
+}
+
+export interface RefreshTokenPayloadVal {
+  sub: string;
+  tokenId: string;
 }
 
 export interface RefreshTokenPayload {
   sub: string;
   tokenId: string;
+  tokenVersion: string,
+  deviceId?: string; 
 }
 
 export interface StoredRefreshToken {

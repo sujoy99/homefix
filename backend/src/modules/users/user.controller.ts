@@ -29,7 +29,7 @@ export class UserController {
     return HttpResponse.success(
       res,
       {
-        id: user.id,
+        id: user.sub,
         email: user.email,
         role: user.role,
         permissions: permissions,

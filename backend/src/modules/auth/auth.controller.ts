@@ -44,7 +44,7 @@ export class AuthController {
   static async refresh(req: Request, res: Response) {
     const { refreshToken } = req.body;
 
-    const tokens = await AuthService.refresh(refreshToken);
+    const tokens = await AuthService.refreshVal(refreshToken);
 
     return HttpResponse.success(res, tokens, 'Token refreshed');
   }
@@ -56,13 +56,13 @@ export class AuthController {
    */
   static async logout(req: Request, res: Response) {
     const { refreshToken } = req.body;
-    await AuthService.logout(refreshToken);
+    await AuthService.logoutVal(refreshToken);
 
     return HttpResponse.success(res, null, 'Logout successful');
   }
 
   static async logoutAll(req: AuthenticatedRequest, res: Response) {
-    await AuthService.logoutAll(req.user.id);
+    await AuthService.logoutAllVal(req.user.sub);
 
     return HttpResponse.success(res, null, 'Logged out from all devices');
   }

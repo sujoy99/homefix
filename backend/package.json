@@ -6,8 +6,10 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development TS_NODE_FILES=true nodemon -r tsconfig-paths/register src/server.ts",
+    "debug": "cross-env NODE_ENV=development TS_NODE_FILES=true ts-node -r tsconfig-paths/register src/server.ts",
     "build": "tsc && tsc-alias",
     "start": "cross-env NODE_ENV=production node dist/server.js",
+    "type-check": "tsc --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1",
     "docs:tree": "tree -L 4 -I \"node_modules|.git|dist\" > docs/structure.txt",
     "migrate:make": "knex migrate:make",

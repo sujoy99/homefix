@@ -21,6 +21,8 @@ export const env = {
   enableSeed: process.env.ENABLE_SEED,
   defaultAdminEmail: required('DEFAULT_ADMIN_EMAIL'),
   defaultAdminPassword: required('DEFAULT_ADMIN_PASSWORD'),
+  defaultAdminNID: required('DEFAULT_ADMIN_NID'),
+  defaultAdminMobile: required('DEFAULT_ADMIN_MOBILE'),
 
   /** Logging */
   logLevel: process.env.LOG_LEVEL ?? 'info',
