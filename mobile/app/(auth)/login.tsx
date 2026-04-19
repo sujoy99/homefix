@@ -42,7 +42,7 @@ export default function LoginScreen() {
         {/* Header Area */}
         <View style={styles.header}>
           <View style={styles.logoPlaceholder}>
-            <Text variant="h2" weight="bold" color="white">HF</Text>
+            <Text variant="h2" weight="bold" color="inverse">HF</Text>
           </View>
           <Text variant="h1" weight="bold" style={styles.title}>
             {t('common.welcome')}
