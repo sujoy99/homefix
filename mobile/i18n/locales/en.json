@@ -1,0 +1,29 @@
+{
+  "common": {
+    "welcome": "Welcome to HomeFix",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save",
+    "continue": "Continue"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "mobile": "Mobile Number",
+    "password": "Password",
+    "getStarted": "Get Started",
+    "forgot_password": "Forgot Password?",
+    "login_subtitle": "Sign in to access your home services",
+    "no_account": "Don't have an account?",
+    "register_now": "Register Now"
+  },
+  "status": {
+    "pending": "Pending",
+    "active": "Active",
+    "awaitingPayment": "Awaiting Payment",
+    "paid": "Paid",
+    "cancelled": "Cancelled"
+  }
+}

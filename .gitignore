@@ -1,21 +1,69 @@
+# ============================
 # Node
+# ============================
 node_modules/
 dist/
 coverage/
 
-# Env files
+# ============================
+# Environment
+# ============================
 .env
 .env.*
 !.env.sample
 
+# ============================
 # Logs
+# ============================
 logs/
 *.log
+npm-debug.log*
 
+# ============================
 # OS
+# ============================
 .DS_Store
 Thumbs.db
 
+# ============================
 # IDE
+# ============================
 .vscode/
 .idea/
+
+# ============================
+# Backend
+# ============================
+backend/dist/
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# ============================
+# Mobile (Expo / React Native)
+# ============================
+mobile/.expo/
+mobile/android/
+mobile/ios/
+mobile/web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# ============================
+# Web (Next.js)
+# ============================
+web/.next/
+web/out/
+
+# ============================
+# Shared Package
+# ============================
+packages/shared/dist/
+
+# ============================
+# Package Manager
+# ============================
+package-lock.json
