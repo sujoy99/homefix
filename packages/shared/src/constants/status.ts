@@ -9,9 +9,9 @@
  * These serve as fallback keys / identifiers.
  */
 
-import { JobStatus } from '@/types/job.types';
-import { PaymentStatus } from '@/types/payment.types';
-import { UserStatus } from '@/types/user.types';
+import { JobStatus } from '../types/job.types';
+import { PaymentStatus } from '../types/payment.types';
+import { UserStatus } from '../types/user.types';
 
 /**
  * Job status display labels (English fallback).

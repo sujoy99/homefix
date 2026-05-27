@@ -148,8 +148,8 @@ export const authRouterV2 = Router();
  *               alreadyExists:
  *                 value:
  *                   http_code: 409
- *                   error_code: ALREADY_EXISTS
- *                   message: User already exists with this mobile number
+ *                   error_code: MOBILE_ALREADY_EXISTS
+ *                   message: Mobile number already registered
  *                   body: null
  *
  * @route   POST /auth/register

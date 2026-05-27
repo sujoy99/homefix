@@ -15,6 +15,7 @@ export interface ButtonProps extends TouchableOpacityProps {
   size?: 'md' | 'lg';
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
 }
 
 export const Button = ({
@@ -24,6 +25,7 @@ export const Button = ({
   isLoading = false,
   disabled,
   leftIcon,
+  rightIcon,
   style,
   ...props
 }: ButtonProps) => {
@@ -63,6 +65,7 @@ export const Button = ({
           >
             {label}
           </Text>
+          {rightIcon && <View style={styles.rightIconContainer}>{rightIcon}</View>}
         </View>
       )}
     </TouchableOpacity>
@@ -83,6 +86,9 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     marginRight: theme.spacing.sm,
+  },
+  rightIconContainer: {
+    marginLeft: theme.spacing.sm,
   },
   
   // Sizes

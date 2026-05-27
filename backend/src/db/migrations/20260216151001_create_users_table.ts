@@ -3,9 +3,6 @@ import type { Knex } from "knex";
 
 
 export async function up(knex: Knex): Promise<void> {
-  // Ensure uuid generation extension
-  await knex.raw(`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`);
-
   await knex.raw(`
     CREATE SEQUENCE IF NOT EXISTS user_short_code_seq START 1;
   `);

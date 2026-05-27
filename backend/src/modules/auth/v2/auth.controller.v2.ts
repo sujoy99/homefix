@@ -13,7 +13,7 @@ export class AuthControllerV2 {
   static async register(req: Request, res: Response) {
     const data = req.body as UserRegistrationDTO;
 
-    const result = await AuthService.registerUser(data);
+    const result = await AuthService.register(data);
 
     return HttpResponse.success(
       res,
@@ -31,7 +31,7 @@ export class AuthControllerV2 {
   static async login(req: Request, res: Response) {
     const data = req.body as UserLoginDTO;
 
-    const result = await AuthService.loginUser(data, req.clientInfo);
+    const result = await AuthService.login(data, req.clientInfo);
 
     return HttpResponse.success(res, result, 'Login successful');
   }
@@ -44,7 +44,7 @@ export class AuthControllerV2 {
   static async refresh(req: Request, res: Response) {
     const { refreshToken } = req.body;
 
-    const tokens = await AuthService.refresh(refreshToken);
+    const tokens = await AuthService.refresh(refreshToken, req.clientInfo);
 
     return HttpResponse.success(res, tokens, 'Token refreshed');
   }

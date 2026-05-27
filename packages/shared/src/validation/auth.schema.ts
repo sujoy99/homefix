@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { UserRole, AuthMethod } from '@/types/user.types';
+import { UserRole, AuthMethod } from '../types/user.types';
 
 export const PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?#&])[A-Za-z\d@$!%*?#&]{8,}$/;
@@ -11,11 +11,14 @@ export const PASSWORD_REGEX =
  */
 export const userRegistrationPayloadSchema = z
   .object({
-    full_name: z.string().min(3, 'Full name must be at least 3 characters'),
+    full_name: z
+      .string()
+      .min(1, 'validation.name_required')
+      .min(3, 'validation.name_min'),
 
-    mobile: z.string().regex(/^[0-9]{11}$/, 'Mobile must be 11 digits'),
+    mobile: z.string().regex(/^[0-9]{11}$/, 'validation.mobile_invalid'),
 
-    nid: z.string().regex(/^[0-9]{10}$/, 'NID must be 10 digits'),
+    nid: z.string().regex(/^[0-9]{10,17}$/, 'validation.nid_invalid'),
 
     latitude: z.number(),
     longitude: z.number(),
@@ -26,18 +29,16 @@ export const userRegistrationPayloadSchema = z
       .string()
       .trim()
       .toLowerCase()
-      .email('Invalid email address')
+      .email('validation.email_invalid')
       .optional()
       .or(z.literal('')), // allow empty string from form
 
     password: z
       .string()
-      .min(8)
+      .min(8, 'validation.password_min')
       .max(128)
       .refine((val) => PASSWORD_REGEX.test(val), {
-        message:
-          'Password must be 8–128 characters and include uppercase, lowercase, ' +
-          'number, and special character',
+        message: 'validation.password_complexity',
       })
       .optional(),
 
@@ -54,7 +55,7 @@ export const userRegistrationPayloadSchema = z
     nid_photo_url: z.string().optional(),
   })
   .refine((data) => data.role !== UserRole.PROVIDER || !!data.nid_photo_url, {
-    message: 'NID photo is required for provider',
+    message: 'validation.nid_photo_required',
     path: ['nid_photo_url'],
   });
 
@@ -66,7 +67,7 @@ export type UserRegistrationPayload = z.infer<typeof userRegistrationPayloadSche
  * ============================
  */
 const baseLoginSchema = z.object({
-  deviceId: z.string().min(1, 'Device ID is required'),
+  deviceId: z.string().min(1, 'validation.device_id_required'),
 });
 
 const passwordLoginSchema = baseLoginSchema
@@ -74,31 +75,31 @@ const passwordLoginSchema = baseLoginSchema
     method: z.literal(AuthMethod.PASSWORD),
     mobile: z
       .string()
-      .regex(/^[0-9]{11}$/, 'Mobile must be 11 digits')
+      .regex(/^[0-9]{11}$/, 'validation.mobile_invalid')
       .optional()
       .or(z.literal('')),
     email: z
       .string()
       .trim()
       .toLowerCase()
-      .email('Invalid email')
+      .email('validation.email_invalid')
       .optional()
       .or(z.literal('')),
-    password: z.string().min(1, 'Password is required'),
+    password: z.string().min(1, 'validation.password_required'),
   })
   .refine((data) => !!data.mobile || !!data.email, {
-    message: 'Mobile or email is required',
+    message: 'validation.mobile_required',
     path: ['mobile'], // Attach error to mobile field primarily
   });
 
 const otpLoginSchema = baseLoginSchema.extend({
   method: z.literal(AuthMethod.OTP),
-  mobile: z.string().regex(/^[0-9]{11}$/, 'Mobile must be 11 digits'),
+  mobile: z.string().regex(/^[0-9]{11}$/, 'validation.mobile_invalid'),
 });
 
 const googleLoginSchema = baseLoginSchema.extend({
   method: z.literal(AuthMethod.GOOGLE),
-  email: z.string().trim().toLowerCase().email('Invalid email'),
+  email: z.string().trim().toLowerCase().email('validation.email_invalid'),
 });
 
 export const userLoginPayloadSchema = z.discriminatedUnion('method', [

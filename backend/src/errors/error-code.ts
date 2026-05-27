@@ -38,6 +38,9 @@ export enum ErrorCode {
    * Identity
    * ========================= */
   ALREADY_EXISTS = 'ALREADY_EXISTS',
+  MOBILE_ALREADY_EXISTS = 'MOBILE_ALREADY_EXISTS',
+  NID_ALREADY_EXISTS = 'NID_ALREADY_EXISTS',
+  EMAIL_ALREADY_EXISTS = 'EMAIL_ALREADY_EXISTS',
   RESOURCE_NOT_FOUND = 'RESOURCE_NOT_FOUND',
 
   /* =========================

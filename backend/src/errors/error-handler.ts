@@ -5,7 +5,7 @@ import { HttpResponse } from '@http/response';
 import { ErrorCode } from '@errors/error-code';
 
 export const errorHandler = (
-  err: Error,
+  err: any,
   req: Request,
   res: Response,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

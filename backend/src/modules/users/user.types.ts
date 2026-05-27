@@ -45,11 +45,21 @@ export enum UserStatus {
  */
 export type User = {
   id: string;
-  name: string;
-  email: string;
-  password: string; // hashed only
+  short_code: string;
+  full_name: string;
+  mobile: string;
+  nid: string;
+  email?: string | null;
   role: UserRole;
-  tokenVersion: number;
+  status: UserStatus;
+  photo_url?: string | null;
+  nid_photo_url?: string | null;
+  area?: {
+    latitude: number;
+    longitude: number;
+  };
+  created_at: string;
+  updated_at: string;
 };
 
 /**

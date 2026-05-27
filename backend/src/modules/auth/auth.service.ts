@@ -4,21 +4,17 @@ import { LoginDTO, RegisterDTO, UserLoginDTO, UserRegistrationDTO } from './auth
 import { AuthRepository } from './auth.repository';
 import { DuplicateError, UnauthorizedError } from '@errors/http-errors';
 import {
-  accessTokenGeneration,
   decodeRefreshToken,
   generateAccessToken,
   generateJwtPayload,
   generateRefreshToken,
-  jwtPayloadGeneration,
-  refreshTokenGeneration,
   sanitizeUser,
   verifyRefreshToken,
 } from '@modules/auth/auth.jwt';
 import { RefreshTokenStore } from '@modules/auth/token.store';
-import { UserStore } from '@modules/users/user.store';
 import { ErrorCode } from '@errors/error-code';
 import { User } from '@modules/users/user.model';
-import { AuthMethod, JwtPayloadVal, JwtPayload, RefreshTokenPayload, ClientInfo } from './auth.types';
+import { AuthMethod, JwtPayload, RefreshTokenPayload, ClientInfo } from './auth.types';
 import { mapToUserRegistrationResponse } from './auth.mapper';
 import { UserRepository } from '@modules/users/user.repository';
 import { RefreshTokenService } from './refresh_token.service';
@@ -45,82 +41,10 @@ import { logger } from '@logger/logger';
 export class AuthService {
   /**
    * ============================
-   * Register New User
+   * Register New User (V2)
    * ============================
-   * Flow:
-   * 1. Check if user already exists
-   * 2. Hash password
-   * 3. Persist user
-   * 4. Generate tokens
    */
-  static async register(data: RegisterDTO) {
-    const { name, email, password, role } = data;
-
-    /**
-     * 1. Check for existing user
-     * - Prevent duplicate accounts
-     * - Email is unique identifier
-     */
-    const existingUser = await AuthRepository.findByEmail(email);
-    if (existingUser) {
-      throw new DuplicateError(
-        ErrorCode.ALREADY_EXISTS,
-        'User already exists with this email'
-      );
-    }
-
-    /**
-     * 2. Hash password
-     * - Never store plain text password
-     * - Cost factor 12 is production safe
-     */
-    const hashedPassword = await this.hashPassword(password);
-
-    /**
-     * 3. Create user in DB
-     * - Repository abstracts DB/ORM logic
-     * - Service remains framework-agnostic
-     */
-    const user: U = await AuthRepository.create({
-      name,
-      email,
-      password: hashedPassword,
-      role, // RESIDENT | PROVIDER only
-    });
-
-    /**
-     * 4. Generate JWT tokens
-     * - Access token → short lived
-     * - Refresh token → long lived
-     */
-    // const jwtPayload = generateJwtPayload(user);
-    // const accessToken = generateAccessToken(jwtPayload);
-    // const refreshToken = generateRefreshToken(jwtPayload);
-
-    /**
-     * 5. Return safe response
-     * - Never expose password
-     */
-    return {
-      user: sanitizeUser(user),
-      // tokens: {
-      //   accessToken,
-      //   refreshToken,
-      // },
-    };
-  }
-
-  /**
-   * ============================
-   * Register New User
-   * ============================
-   * Flow:
-   * 1. Check if user already exists
-   * 2. Hash password
-   * 3. Persist user
-   * 4. Generate tokens
-   */
-  static async registerUser(data: UserRegistrationDTO) {
+  static async register(data: UserRegistrationDTO) {
     // const { name, email, password, role } = data;
     const {
       full_name,
@@ -146,8 +70,8 @@ export class AuthService {
     const existingUser = await AuthRepository.findByMobile(mobile);
     if (existingUser) {
       throw new DuplicateError(
-        ErrorCode.ALREADY_EXISTS,
-        'User already exists with this mobile number'
+        ErrorCode.MOBILE_ALREADY_EXISTS,
+        'Mobile number already registered'
       );
     }
 
@@ -189,74 +113,15 @@ export class AuthService {
     };
 
     const result = await AuthRepository.createUser(payload);
-
     return mapToUserRegistrationResponse(result.user, result.auth);
   }
 
   /**
    * ============================
-   * Login User
+   * Login User (V2)
    * ============================
-   * Flow:
-   * 1. Find user by email
-   * 2. Compare password
-   * 3. Generate tokens
    */
-  static async login(data: LoginDTO) {
-    const { email, password, deviceId } = data;
-
-    /**
-     * 1. Find user
-     */
-    const user = await AuthRepository.findByEmail(email);
-    if (!user) {
-      throw new UnauthorizedError(ErrorCode.INVALID_CREDENTIALS,'Invalid email or password');
-    }
-
-    /**
-     * 2. Compare password
-     * - bcrypt handles timing-safe comparison
-     */
-    const isPasswordValid = await this.comparePassword(password, user.password);
-
-    if (!isPasswordValid) {
-      throw new UnauthorizedError(ErrorCode.INVALID_CREDENTIALS,'Invalid email or password');
-    }
-
-    /**
-     * 3. Generate tokens
-     */
-    const jwtPayload = jwtPayloadGeneration(user, deviceId);
-    const accessToken = accessTokenGeneration(jwtPayload);
-    const { token: refreshToken, tokenId } = refreshTokenGeneration(user.id);
-
-    RefreshTokenStore.save(tokenId, {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      tokenVersion: user.tokenVersion,
-      deviceId: deviceId,
-    });
-
-    return {
-      user: sanitizeUser(user),
-      tokens: {
-        accessToken,
-        refreshToken,
-      },
-    };
-  }
-
-  /**
-   * ============================
-   * Login User
-   * ============================
-   * Flow:
-   * 1. Find user by mobile/email with auth
-   * 2. Compare password
-   * 3. Generate tokens
-   */
-  static async loginUser(data: UserLoginDTO, clientInfo?: ClientInfo) {
+  static async login(data: UserLoginDTO, clientInfo?: ClientInfo) {
     const { method, deviceId } = data;
 
     /**
@@ -411,14 +276,7 @@ export class AuthService {
         /**
          * Build JWT payload
          */
-        const jwtPayload: JwtPayload = {
-          sub: user.id,
-          mobile: user.mobile,
-          role: user.role,
-          status: user.status,
-          tokenVersion: authAccount.refresh_token_version,
-          ...(deviceId !== undefined && { deviceId }),
-        };
+        const jwtPayload = generateJwtPayload(user, authAccount, deviceId);
 
         /**
          * Generate access token
@@ -503,57 +361,9 @@ export class AuthService {
 
   /**
    * ============================
-   * Refresh Token (ROTATION)
+   * Refresh Token (V2)
    * ============================
    */
-  static async refreshVal(refreshToken: string) {
-    /**
-     * 1. Verify refresh token signature & expiry
-     */
-    const payload = verifyRefreshToken(refreshToken);
-
-    /**
-     * 2. Validate token in store
-     */
-    const stored = RefreshTokenStore.get(payload.tokenId);
-    if (!stored || stored.revoked) {
-      throw new UnauthorizedError(ErrorCode.REFRESH_TOKEN_REVOKED,'Refresh token revoked');
-    }
-
-    /**
-     * 3. Rotate refresh token (CRITICAL)
-     */
-    RefreshTokenStore.revoke(payload.tokenId);
-
-    const { token: newRefreshToken, tokenId } = refreshTokenGeneration(
-      payload.sub
-    );
-
-    RefreshTokenStore.save(tokenId, {
-      id: stored.userId,
-      email: stored.email,
-      role: stored.role,
-      tokenVersion: stored.tokenVersion,
-      deviceId: stored.deviceId,
-    });
-
-    /**
-     * 4. Issue new access token
-     */
-    const accessToken = accessTokenGeneration({
-      sub: stored.userId,
-      email: stored.email,
-      role: stored.role,
-      tokenVersion: stored.tokenVersion,
-      deviceId: stored.deviceId,
-    });
-
-    return {
-      accessToken,
-      refreshToken: newRefreshToken,
-    };
-  }
-
   static async refresh(refreshToken: string, clientInfo?: ClientInfo) {
     /**
      * ============================
@@ -713,14 +523,7 @@ export class AuthService {
      * 10. Generate Access Token
      * ============================
      */
-    const jwtPayload: JwtPayload = {
-      sub: userId,
-      mobile: user.mobile,
-      role: user.role,
-      status: user.status,
-      tokenVersion: tokenVersion,
-      ...(deviceId !== undefined && { deviceId }),
-    };
+    const jwtPayload = generateJwtPayload(user, authAccount, deviceId);
 
     const accessToken = generateAccessToken(jwtPayload);
 
@@ -737,27 +540,9 @@ export class AuthService {
 
   /**
    * ============================
-   * Logout (Revoke Refresh Token) (Single Device)
+   * Logout (V2)
    * ============================
    */
-  static async logoutVal(refreshToken: string) {
-    /**
-     * 1. Verify refresh token signature & expiry
-     */
-    const payload = verifyRefreshToken(refreshToken);
-
-    /**
-     * 2. Validate token in store
-     */
-    const stored = RefreshTokenStore.get(payload.tokenId);
-    if (!stored) {
-      // Idempotent logout
-      return;
-    }
-
-    RefreshTokenStore.revoke(payload.tokenId);
-  }
-
   static async logout(refreshToken: string) {
     let payload: RefreshTokenPayload | null = null;
 
@@ -792,18 +577,6 @@ export class AuthService {
     await RefreshTokenService.revokeToken(tokenId);
   }
 
-  /**
-   * ============================
-   * Logout all devices
-   * ============================
-   */
-  static async logoutAllVal(userId: string) {
-    // 1. Revoke all refresh token
-    RefreshTokenStore.revokeAll(userId);
-
-    // 2. Increment tokenVersion
-    UserStore.incrementTokenVersion(userId);
-  }
 
   static async logoutAll(userId: string) {
     await transaction(RefreshToken.knex(), async (trx) => {

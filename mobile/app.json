@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#2563EB"
     },
     "ios": {
       "supportsTablet": true
@@ -28,7 +28,14 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "HomeFix uses your location to set your home address and help providers find you.",
+          "locationAlwaysAndWhenInUsePermission": "HomeFix uses your location in the background to track active service visits."
+        }
+      ]
     ]
   }
 }

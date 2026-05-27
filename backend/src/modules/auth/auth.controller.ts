@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { HttpResponse } from '@http/response';
-import { RegisterDTO, LoginDTO } from './auth.dto';
-import { AuthenticatedRequest } from '@modules/auth/auth.types';
+import { UserRegistrationDTO, UserLoginDTO } from './auth.dto';
+import { AuthenticatedRequest, ClientInfo } from '@modules/auth/auth.types';
 
 export class AuthController {
   /**
@@ -11,7 +11,7 @@ export class AuthController {
    * ============================
    */
   static async register(req: Request, res: Response) {
-    const data = req.body as RegisterDTO;
+    const data = req.body as UserRegistrationDTO;
 
     const result = await AuthService.register(data);
 
@@ -29,9 +29,9 @@ export class AuthController {
    * ============================
    */
   static async login(req: Request, res: Response) {
-    const data = req.body as LoginDTO;
+    const data = req.body as UserLoginDTO;
 
-    const result = await AuthService.login(data);
+    const result = await AuthService.login(data, req.clientInfo);
 
     return HttpResponse.success(res, result, 'Login successful');
   }
@@ -44,7 +44,7 @@ export class AuthController {
   static async refresh(req: Request, res: Response) {
     const { refreshToken } = req.body;
 
-    const tokens = await AuthService.refreshVal(refreshToken);
+    const tokens = await AuthService.refresh(refreshToken, req.clientInfo);
 
     return HttpResponse.success(res, tokens, 'Token refreshed');
   }
@@ -56,13 +56,13 @@ export class AuthController {
    */
   static async logout(req: Request, res: Response) {
     const { refreshToken } = req.body;
-    await AuthService.logoutVal(refreshToken);
+    await AuthService.logout(refreshToken);
 
     return HttpResponse.success(res, null, 'Logout successful');
   }
 
   static async logoutAll(req: AuthenticatedRequest, res: Response) {
-    await AuthService.logoutAllVal(req.user.sub);
+    await AuthService.logoutAll(req.user.sub);
 
     return HttpResponse.success(res, null, 'Logged out from all devices');
   }

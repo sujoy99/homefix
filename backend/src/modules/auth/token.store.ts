@@ -5,9 +5,9 @@ import { UserRole } from '@modules/users/user.types';
 const refreshTokenStore = new Map<string, StoredRefreshToken>();
 
 export const RefreshTokenStore = {
-  save(tokenId: string, user: {id: string; email: string; role: UserRole, tokenVersion: number, deviceId: string}) {
+  save(tokenId: string, user: {id: string; mobile: string; email?: string; role: UserRole, tokenVersion: string, deviceId: string}) {
     refreshTokenStore.set(tokenId,
-      { userId: user.id, email: user.email, role: user.role, tokenVersion: user.tokenVersion,
+      { userId: user.id, mobile: user.mobile, email: user.email, role: user.role, tokenVersion: user.tokenVersion,
         deviceId: user.deviceId, revoked: false });
   },
 

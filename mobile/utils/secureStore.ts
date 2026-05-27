@@ -17,10 +17,15 @@ export const authStorage = {
    */
   setTokens: async (accessToken: string, refreshToken: string) => {
     try {
-      await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
-      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
+      if (Platform.OS === 'web') {
+        localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+        localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+      } else {
+        await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
+        await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
+      }
     } catch (error) {
-      console.error('SecureStore: Failed to save tokens', error);
+      console.error('Storage: Failed to save tokens', error);
       throw error;
     }
   },
@@ -30,9 +35,12 @@ export const authStorage = {
    */
   getAccessToken: async () => {
     try {
+      if (Platform.OS === 'web') {
+        return localStorage.getItem(ACCESS_TOKEN_KEY);
+      }
       return await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
     } catch (error) {
-      console.error('SecureStore: Failed to get access token', error);
+      console.error('Storage: Failed to get access token', error);
       return null;
     }
   },
@@ -42,9 +50,12 @@ export const authStorage = {
    */
   getRefreshToken: async () => {
     try {
+      if (Platform.OS === 'web') {
+        return localStorage.getItem(REFRESH_TOKEN_KEY);
+      }
       return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
     } catch (error) {
-      console.error('SecureStore: Failed to get refresh token', error);
+      console.error('Storage: Failed to get refresh token', error);
       return null;
     }
   },
@@ -54,10 +65,15 @@ export const authStorage = {
    */
   clearTokens: async () => {
     try {
-      await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
-      await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+      if (Platform.OS === 'web') {
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
+      } else {
+        await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+        await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+      }
     } catch (error) {
-      console.error('SecureStore: Failed to clear tokens', error);
+      console.error('Storage: Failed to clear tokens', error);
     }
   },
 };

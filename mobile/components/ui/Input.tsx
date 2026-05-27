@@ -2,6 +2,7 @@ import React from 'react';
 import { View, TextInput, TextInputProps, StyleSheet } from 'react-native';
 import { theme } from '@/theme';
 import { Text } from '@/components/ui/Text';
+import { useTranslation } from 'react-i18next';
 
 export interface InputProps extends TextInputProps {
   label?: string;
@@ -19,6 +20,7 @@ export const Input = ({
   ...props
 }: InputProps) => {
   const [isFocused, setIsFocused] = React.useState(false);
+  const { t } = useTranslation();
 
   return (
     <View style={styles.container}>
@@ -58,7 +60,7 @@ export const Input = ({
 
       {error && (
         <Text variant="caption" color="error" style={styles.errorText}>
-          {error}
+          {t(error)}
         </Text>
       )}
     </View>
