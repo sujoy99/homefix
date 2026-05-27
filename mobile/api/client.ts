@@ -49,11 +49,11 @@ apiClient.interceptors.response.use(
         }
 
         // Call refresh endpoint
-        const response = await axios.post(`${BASE_URL}/auth/refresh`, {
+        const response = await axios.post(`${BASE_URL}/v2/auth/refresh`, {
           refreshToken,
         });
 
-        const { accessToken, refreshToken: newRefreshToken } = response.data;
+        const { accessToken, refreshToken: newRefreshToken } = response.data.body;
 
         // Save new tokens
         await authStorage.setTokens(accessToken, newRefreshToken);

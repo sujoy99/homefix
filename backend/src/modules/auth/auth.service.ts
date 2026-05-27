@@ -15,7 +15,7 @@ import { RefreshTokenStore } from '@modules/auth/token.store';
 import { ErrorCode } from '@errors/error-code';
 import { User } from '@modules/users/user.model';
 import { AuthMethod, JwtPayload, RefreshTokenPayload, ClientInfo } from './auth.types';
-import { mapToUserRegistrationResponse } from './auth.mapper';
+import { mapToUserRegistrationResponse, mapToLoginUserResponse } from './auth.mapper';
 import { UserRepository } from '@modules/users/user.repository';
 import { RefreshTokenService } from './refresh_token.service';
 import { transaction } from 'objection';
@@ -319,7 +319,7 @@ export class AuthService {
     );
 
     return {
-      user: user,
+      user: mapToLoginUserResponse(user),
       tokens: {
         accessToken,
         refreshToken,

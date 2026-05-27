@@ -10,35 +10,7 @@
 
 import { AuthMethod } from "@modules/auth/auth.types";
 
-/**
- * User roles enum
- * - Used in DB
- * - Used in JWT payload
- * - Used in RBAC guards
- */
-/**
- * Supported user roles in the system
- * NOTE:
- * - RESIDENT / PROVIDER → public registration
- * - ADMIN → internal / admin panel only
- */
-export enum UserRole {
-  RESIDENT = 'resident',
-  PROVIDER = 'provider',
-  ADMIN = 'admin',
-}
-
-/**
- * Supported user status in the system
- * NOTE:
- * - ACTIVE → resident users
- * - PENDING → provider initial status when registration
- */
-export enum UserStatus {
-  PENDING = 'pending',
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-}
+export { UserRole, UserStatus } from '@homefix/shared';
 
 /**
  * Core User domain model

@@ -6,11 +6,13 @@ import { seedDefaultAdminInDB } from '@modules/auth/auth.seed';
 
 async function bootstrap() {
   process.on('uncaughtException', (err) => {
-    console.error('UNCAUGHT EXCEPTION:', err);
+    logger.error('UNCAUGHT EXCEPTION', { error: err.message, stack: err.stack });
+    process.exit(1);
   });
 
   process.on('unhandledRejection', (err) => {
-    console.error('UNHANDLED REJECTION:', err);
+    logger.error('UNHANDLED REJECTION', { error: err });
+    process.exit(1);
   });
   
   // Seed data

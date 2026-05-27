@@ -1,7 +1,12 @@
 import { create } from 'zustand';
-import { authStorage } from '../utils/secureStore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authStorage } from '@/utils/secureStore';
 import { UserRole } from '@homefix/shared';
-import { apiClient } from '../api/client';
+import { apiClient } from '@/api/client';
+import { authService } from '@/services/auth.service';
+import { decodeJwtPayload } from '@/utils/jwtDecode';
+
+const ONBOARDING_KEY = 'homefix_has_seen_onboarding';
 
 export interface UserSession {
   id: string;
@@ -61,20 +66,30 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  /**
-   * Called when the app starts.
-   * Checks SecureStore for a token to determine if user is logged in.
-   * (In reality, we should also validate the token with the server or check its expiry).
-   */
   hydrate: async () => {
     try {
-      const token = await authStorage.getAccessToken();
-      // Also check if onboarding was seen (mocking for now, could use AsyncStorage)
-      // For now, let's just assume if they have a token, they've seen onboarding
+      const [token, onboardingFlag] = await Promise.all([
+        authStorage.getAccessToken(),
+        AsyncStorage.getItem(ONBOARDING_KEY),
+      ]);
+
+      const hasSeenOnboarding = onboardingFlag === 'true';
+
       if (token) {
-        set({ isAuthenticated: true, hasSeenOnboarding: true, isLoading: false });
+        const payload = decodeJwtPayload(token);
+        const user = payload
+          ? {
+              id: payload.sub,
+              role: payload.role,
+              fullName: '',
+              mobile: payload.mobile,
+              email: payload.email ?? undefined,
+            }
+          : null;
+
+        set({ isAuthenticated: true, user, hasSeenOnboarding: true, isLoading: false });
       } else {
-        set({ isAuthenticated: false, isLoading: false });
+        set({ isAuthenticated: false, hasSeenOnboarding, isLoading: false });
       }
     } catch (e) {
       set({ isAuthenticated: false, isLoading: false });
@@ -82,15 +97,19 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   completeOnboarding: async () => {
+    await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
     set({ hasSeenOnboarding: true });
   },
 
   login: async (data) => {
     set({ isLoading: true });
     try {
-      const response = await apiClient.post('/v2/auth/login', data);
-      const { user, tokens } = response.data.body;
-      await useAuthStore.getState().setSession(user, tokens.accessToken, tokens.refreshToken);
+      const { user, tokens } = await authService.login(data);
+      await useAuthStore.getState().setSession(
+        { id: user.id, role: user.role as UserRole, fullName: user.full_name, mobile: user.mobile, email: user.email ?? undefined },
+        tokens.accessToken,
+        tokens.refreshToken
+      );
     } catch (e) {
       set({ isLoading: false });
       throw e;

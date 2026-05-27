@@ -16,3 +16,25 @@ export function mapToUserRegistrationResponse(
     auth_method: auth.auth_method,
   };
 }
+
+export type LoginUserResponse = {
+  id: string;
+  short_code: string;
+  full_name: string;
+  mobile: string;
+  email?: string | null;
+  role: string;
+  status: string;
+};
+
+export function mapToLoginUserResponse(user: User): LoginUserResponse {
+  return {
+    id: user.id,
+    short_code: user.short_code,
+    full_name: user.full_name,
+    mobile: user.mobile,
+    email: user.email ?? null,
+    role: user.role,
+    status: user.status,
+  };
+}

@@ -3,15 +3,7 @@ import { UserRole, UserStatus } from '@modules/users/user.types';
 import { User } from '@modules/users/user.model';
 import { AuthAccount } from './auth.model';
 
-/**
- * Supported auth method in the system
- */
-export enum AuthMethod {
-  PASSWORD = 'password',
-  OTP = 'otp',
-  GOOGLE = 'google',
-  FACEBOOK = 'facebook',
-}
+export { AuthMethod } from '@homefix/shared';
 
 export type CreateUserRepoResult = {
   user: Pick<
