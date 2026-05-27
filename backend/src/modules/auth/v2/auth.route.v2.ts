@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { AuthControllerV2 } from './auth.controller.v2';
 import { validate } from '@middlewares/validate';
-import { registerSchema, loginSchema, userRegistrationSchema, userLoginSchema } from '../auth.schema';
+import { userRegistrationSchema, userLoginSchema } from '../auth.schema';
 import { authGuard } from '@modules/auth/auth.guard';
 import { asAuthenticated } from '@modules/auth/auth.adapter';
-import { AdminController } from '@modules/admin/admin.controller';
+import { authRateLimiter } from '@middlewares/rate-limiter';
 
 export const authRouterV2 = Router();
 
@@ -156,7 +156,7 @@ export const authRouterV2 = Router();
  * @desc    Register New User (V2)
  * @access  Public
  */
-authRouterV2.post('/register', validate(userRegistrationSchema), AuthControllerV2.register);
+authRouterV2.post('/register', authRateLimiter, validate(userRegistrationSchema), AuthControllerV2.register);
 
 
 /**
@@ -253,7 +253,7 @@ authRouterV2.post('/register', validate(userRegistrationSchema), AuthControllerV
  * @desc    Login user
  * @access  Public
  */
-authRouterV2.post('/login', validate(userLoginSchema), AuthControllerV2.login);
+authRouterV2.post('/login', authRateLimiter, validate(userLoginSchema), AuthControllerV2.login);
 
 /**
  * @openapi

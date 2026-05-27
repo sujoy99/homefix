@@ -16,6 +16,7 @@ import { ErrorCode } from '@errors/error-code';
 import { User } from '@modules/users/user.model';
 import { AuthMethod, JwtPayload, RefreshTokenPayload, ClientInfo } from './auth.types';
 import { mapToUserRegistrationResponse, mapToLoginUserResponse } from './auth.mapper';
+import { InvalidationStore } from '@modules/auth/invalidation.store';
 import { UserRepository } from '@modules/users/user.repository';
 import { RefreshTokenService } from './refresh_token.service';
 import { transaction } from 'objection';
@@ -581,16 +582,9 @@ export class AuthService {
   static async logoutAll(userId: string) {
     await transaction(RefreshToken.knex(), async (trx) => {
       await Promise.all([
-        /**
-         * 1. Revoke all refresh tokens
-         */
         RefreshToken.query(trx)
           .patch({ is_revoked: true })
           .where('user_id', userId),
-
-        /**
-         * 2. Rotate version
-         */
         AuthAccount.query(trx)
           .patch({
             refresh_token_version: AuthAccount.knex().raw('gen_random_uuid()'),
@@ -598,6 +592,9 @@ export class AuthService {
           .where('user_id', userId),
       ]);
     });
+
+    // Mark all in-flight access tokens for this user as revoked (O(1), no DB)
+    InvalidationStore.invalidate(userId);
   }
 
   /**

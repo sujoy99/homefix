@@ -16,7 +16,7 @@ export const env = {
   /** App */
   nodeEnv: (process.env.NODE_ENV as Environment) ?? 'development',
   port: toNumber(process.env.PORT, 3000),
-  corsOrigin: process.env.CORS_ORIGIN ?? '*',
+  corsOrigin: required('CORS_ORIGIN'),
 
   /** Default Admin */
   enableSeed: process.env.ENABLE_SEED,

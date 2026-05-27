@@ -8,9 +8,10 @@
  * - Used across auth, RBAC, JWT, services
  */
 
+import { UserRole, UserStatus } from '@homefix/shared';
 import { AuthMethod } from "@modules/auth/auth.types";
 
-export { UserRole, UserStatus } from '@homefix/shared';
+export { UserRole, UserStatus };
 
 /**
  * Core User domain model

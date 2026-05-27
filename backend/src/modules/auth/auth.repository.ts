@@ -54,6 +54,18 @@ export class AuthRepository {
   }
 
   /**
+   * Returns true if a token version is still valid for the given user.
+   * Fails after logoutAll because all versions are rotated.
+   */
+  static async isTokenVersionValid(userId: string, tokenVersion: string): Promise<boolean> {
+    const account = await AuthAccount.query()
+      .where('user_id', userId)
+      .where('refresh_token_version', tokenVersion)
+      .first();
+    return !!account;
+  }
+
+  /**
    * Create user and auth account (V2)
    */
   static async createUser(data: UserResgistrationRequest): Promise<CreateUserRepoResult> {
