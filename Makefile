@@ -1,10 +1,10 @@
 ENV_FILE ?= backend/.env.development
 
 up:
-	docker compose --env-file $(ENV_FILE) up --build
+	docker compose --env-file $(ENV_FILE) up -d --build
 
 start:
-	docker compose --env-file $(ENV_FILE) up
+	docker compose --env-file $(ENV_FILE) up -d
 
 down:
 	docker compose --env-file $(ENV_FILE) down
