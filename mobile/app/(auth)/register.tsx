@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
@@ -11,25 +10,25 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   userRegistrationPayloadSchema,
   UserRegistrationPayload,
 } from '@homefix/shared';
-import { theme } from '../../theme';
-import { apiClient } from '../../api/client';
-import { useAuthStore } from '../../store/authStore';
+import { theme } from '@/theme';
+import { authService } from '@/services/auth.service';
 import { UserRole, AuthMethod } from '@homefix/shared';
 import { ArrowLeft, ChevronRight, User as UserIcon, Phone, Lock, Mail, CreditCard, Camera, Upload } from 'lucide-react-native';
-import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button';
-import { LanguageToggle } from '../../components/ui/LanguageToggle';
-import { LocationPicker } from '../../components/ui/LocationPicker';
+import { Text } from '@/components/ui/Text';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
+import { LocationPicker } from '@/components/ui/LocationPicker';
 import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { getApiError } from '../../utils/apiError';
+import { getApiError } from '@/utils/apiError';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -37,7 +36,6 @@ export default function RegisterScreen() {
   const params = useLocalSearchParams<{ role: string }>();
   const isProvider = params.role === UserRole.PROVIDER;
 
-  const { setSession } = useAuthStore();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -82,21 +80,15 @@ export default function RegisterScreen() {
     }
   };
 
-  const onSubmit = async (data: UserRegistrationPayload) => {
+  const onSubmit: SubmitHandler<UserRegistrationPayload> = async (data) => {
     setLoading(true);
     try {
-      const response = await apiClient.post('/v2/auth/register', data);
-      const result = response.data.body;
+      await authService.register(data);
       setLoading(false);
       if (isProvider) {
         router.replace('/(auth)/pending-approval');
       } else {
-        if (result.tokens) {
-          await setSession(result.user, result.tokens.accessToken, result.tokens.refreshToken);
-          router.replace('/(app)');
-        } else {
-          router.replace('/(auth)/login');
-        }
+        router.replace('/(auth)/login');
       }
     } catch (error) {
       setLoading(false);
@@ -125,10 +117,10 @@ export default function RegisterScreen() {
     }
 
     if (step === 3 && !isProvider) {
-      handleSubmit(onSubmit as any)();
+      handleSubmit(onSubmit)();
     } else if (step === 4 && isProvider) {
       const isValid = await trigger(['nid_photo_url']);
-      if (isValid) handleSubmit(onSubmit as any)();
+      if (isValid) handleSubmit(onSubmit)();
     } else {
       setStep((s) => s + 1);
     }
@@ -201,7 +193,7 @@ export default function RegisterScreen() {
       <LocationPicker
         latitude={latitude}
         longitude={longitude}
-        onLocationChange={(lat, lng) => {
+        onLocationChange={(lat: number, lng: number) => {
           setValue('latitude', lat);
           setValue('longitude', lng);
         }}
@@ -331,7 +323,7 @@ export default function RegisterScreen() {
           ) : (
             <Button
               label={t('common.complete')}
-              onPress={handleSubmit(onSubmit as any)}
+              onPress={handleSubmit(onSubmit)}
               isLoading={loading}
             />
           )}

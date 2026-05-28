@@ -1,11 +1,11 @@
 # HomeFix — Full-Stack Implementation Plan
 
-> **Version:** 3.0  
+> **Version:** 3.2  
 > **Prepared by:** Sr. Software Engineer  
 > **Date:** 2026-04-19  
-> **Last Updated:** 2026-05-26  
+> **Last Updated:** 2026-05-28  
 > **Methodology:** Agile (Sprint-based, ticket-level breakdown)  
-> **Inputs:** SRS v1.0 + Architecture decisions
+> **Inputs:** SRS v1.0 + Architecture decisions + Post-Sprint-1 code review
 
 ---
 
@@ -14,7 +14,8 @@
 | Sprint | Status | Started | Completed |
 |---|---|---|---|
 | Sprint 0 — Foundation | ✅ Completed | 2026-04-19 | 2026-05-27 |
-| Sprint 1 — Auth Screens | ✅ Completed | 2026-04-19 | 2026-04-21 |
+| Sprint 1 — Auth Screens | ✅ Completed | 2026-04-19 | 2026-05-28 |
+| Sprint 1 Hardening — Code Review Fixes | ✅ Completed | 2026-05-28 | 2026-05-28 |
 | Sprint 2 — Home + Categories | ⏳ Not Started | — | — |
 | Sprint 3 — Booking + Jobs | ⏳ Not Started | — | — |
 | Sprint 4 — Voice + Accessibility | ⏳ Not Started | — | — |
@@ -30,15 +31,15 @@
 > **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
 
 **Active Sprint:** Sprint 2 — Home, Navigation & Service Catalog  
-**Sprint Status:** ⏳ Not Started  
+**Sprint Status:** 🔄 In Progress (Backend ✅, Mobile ⏳)  
 **Git Branch Convention:** `feature/HF-XXX-short-description`
 
 ### Next Ticket Per Platform
 
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
-| 🖥 Backend | **HF-021** | Service categories module (CRUD, `requires_area` flag) | — |
-| 📱 Mobile | **HF-025** | Tab navigation (Resident/Provider home tabs) | — |
+| 🖥 Backend | — | Sprint 2 backend complete ✅ | — |
+| 📱 Mobile | **HF-025** | Tab navigator + app shell | — |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
 ### How to Pick Up Work
@@ -300,6 +301,77 @@ modules/payments/
 
 ---
 
+### 🔧 Sprint 1 Hardening — Code Review Fixes
+
+**Goal:** Resolve all critical bugs, security gaps, and structural issues found in the post-Sprint-1 code review before Sprint 2 features are built on top of them. Tickets are grouped by blocking priority — do not start Group 2 until Group 1 is complete; do not start Sprint 2 until Group 2 is complete.
+
+> **Source:** Post-Sprint-1 review conducted 2026-05-28. C# = critical, D# = design, Q# = quality, M# = minor as classified in the review.
+
+---
+
+#### Group 1 — Sprint 2 Blockers (must be done first)
+
+##### Backend:
+
+| Ticket | Title | Review Ref | Status | Est. |
+|---|---|---|---|---|
+| HF-085 | Strip `authAccounts` + `password_hash` from login response — add mapper identical to register | C2 | ✅ | 1h |
+| HF-087 | Call `process.exit(1)` in `uncaughtException` and `unhandledRejection` handlers | C3 | ✅ | 0.5h |
+| HF-092 | Add `@homefix/shared` as backend dependency; replace local `UserRole`, `UserStatus`, `AuthMethod` enums with imports from shared package | D6 | ✅ | 3h |
+
+##### Mobile:
+
+| Ticket | Title | Review Ref | Status | Est. |
+|---|---|---|---|---|
+| HF-086 | Fix token refresh interceptor: correct URL to `/v2/auth/refresh`; destructure from `response.data.body` | C1 | ✅ | 1h |
+| HF-088 | Persist `hasSeenOnboarding` flag to `AsyncStorage` in `completeOnboarding()`; read it back in `hydrate()` | C4 | ✅ | 1h |
+| HF-089 | Decode JWT payload in `hydrate()` to restore `user` object — fixes null `user.role` / `user.fullName` on cold start | D5 | ✅ | 2h |
+| HF-090 | Create `mobile/services/auth.service.ts` with `register()` and `login()`; remove direct `apiClient` calls from `register.tsx` | D4 | ✅ | 2h |
+
+##### Shared:
+
+| Ticket | Title | Review Ref | Status | Est. |
+|---|---|---|---|---|
+| HF-091 | Align NID regex: change `packages/shared` from `/^[0-9]{10,17}$/` to `/^[0-9]{10}$/` to match backend (or decide on format and update both) | D8 | ✅ | 1h |
+
+---
+
+#### Group 2 — Before Sprint 2 Sensitive Routes Go Live
+
+##### Backend:
+
+| Ticket | Title | Review Ref | Status | Est. |
+|---|---|---|---|---|
+| HF-093 | **Partial — different approach chosen.** Instead of a DB query per request, implemented an in-memory `InvalidationStore` (`invalidation.store.ts`): `logoutAll` records `userId → timestamp`; `authGuard` rejects tokens whose `iat` predates that timestamp (O(1), no DB). Trade-off: does not survive server restarts; single-instance only. **DB-backed version check still needed** before multi-instance deploy. | D1 | ⚠️ | 3h |
+| HF-094 | Add auth-specific rate limiter (10 req / 15 min per IP) applied only to `POST /auth/login` and `POST /auth/register` | D7 | ✅ | 2h |
+| HF-095 | Make `CORS_ORIGIN` required (use `required()` helper); remove `'*'` default; update all `.env.*` files | C6 | ✅ | 1h |
+
+---
+
+#### Group 3 — Code Quality (can overlap Sprint 2)
+
+##### Backend:
+
+| Ticket | Title | Review Ref | Status | Est. |
+|---|---|---|---|---|
+| HF-096 | Delete dead code: `token.store.ts`, v1 `AuthController` (if no active v1 routes), `StoredRefreshToken` type, `UserResgistration` / `CreateUserInput` types, `sanitizeUser()` no-op, `AdminController` dead import in `auth.route.v2.ts` | D2, D3, Q2, M6, M7, Q5 | ✅ | 2h |
+| HF-097 | Fix misc quality: replace `'pending'`/`'active'` string literals with `UserStatus` enum in `ensureUserIsActive()`; fix copy-paste comment on rate limiter block in `app.ts`; fix Swagger `facebood` typo | Q3, Q4, M5 | ✅ | 1h |
+
+##### Mobile:
+
+| Ticket | Title | Review Ref | Status | Est. |
+|---|---|---|---|---|
+| HF-098 | Fix `register.tsx`: replace native `<Text>` with design-system `<Text>` component; remove `handleSubmit(onSubmit as any)` casts by typing `onSubmit` as `SubmitHandler<UserRegistrationPayload>`; replace hardcoded `device-id-123` with `expo-device` identifier | Q4, Q6, M1 | ✅ | 2h |
+| HF-099 | Fix `validate` middleware: align `FieldError` to emit one `message: string` per field (first error wins); update mobile `apiError.ts` parser to read field errors correctly; fix `authStore.login` typed as `any` | Q1, Q7 | ✅ | 2h |
+
+> **Note on C5 (photo upload stores `file://` URI):** Covered by **HF-024** (Sprint 2 — file storage pluggable interface). Ensure `register.tsx` upload flow is wired to the storage service before Sprint 2 ships.
+
+---
+
+**Deliverable:** Zero critical bugs. Auth flow works end-to-end (refresh, cold start). No sensitive data leaking in responses. Shared enums are the single source of truth. Sprint 2 can be built on a clean foundation.
+
+---
+
 ### 🏠 Sprint 2 — Home, Navigation & Service Catalog
 
 **Goal:** Main app shell, service categories, provider profiles.
@@ -308,10 +380,10 @@ modules/payments/
 
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
-| HF-021 | Service categories module (CRUD, `requires_area` flag per REQ-006) | ⏳ | 6h |
-| HF-022 | Provider profile + skills module (link to categories, availability, pricing) | ⏳ | 8h |
-| HF-023 | Provider approval API (admin: list pending, approve, reject — REQ-003) | ⏳ | 6h |
-| HF-024 | File storage — pluggable interface (local disk now, S3 later) | ⏳ | 6h |
+| HF-021 | Service categories module (CRUD, `requires_area` flag per REQ-006) | ✅ | 6h |
+| HF-022 | Provider profile + skills module (link to categories, availability, pricing) | ✅ | 8h |
+| HF-023 | Provider approval API (admin: list pending, approve, reject — REQ-003) | ✅ | 6h |
+| HF-024 | File storage — pluggable interface (local disk now, S3 later) | ✅ | 6h |
 
 #### Mobile:
 
@@ -545,6 +617,8 @@ Every SRS requirement mapped to its implementing ticket(s):
 | 2026-04-19 | 2.0 | Full SRS incorporated, all decisions confirmed, file storage made pluggable, deployment plan added, 82 tickets across 9 sprints |
 | 2026-05-26 | 3.0 | All sprints segregated by platform (Backend / Mobile / Web / Shared). Commission engine made configurable — added HF-056B (admin commission rules API) and HF-071B (admin commission UI). HF-073 extended for expired promotion cleanup. |
 | 2026-05-28 | 3.1 | Sprint 1 closed. Current Focus updated to Sprint 2. Backend: UniqueViolationError handling moved from global error handler to repository layer via `db-error-map.ts` (scales cleanly as more tables/constraints are added). |
+| 2026-05-28 | 3.2 | Post-Sprint-1 code review completed. Sprint 1 Hardening sprint added (HF-085 to HF-099, 15 tickets). Current Focus updated to Sprint 1 Hardening. Sprint 2 blocked until Group 1 + Group 2 hardening tickets are complete. Total tickets: 96. |
+| 2026-05-28 | 3.3 | Sprint 2 backend complete (HF-021 to HF-024). Added fully DB-driven RBAC system (roles, permissions, role_permissions tables; admin API; PermissionCache; docs/RBAC.md). param() utility added to @utils for Express 5 route param access. 67 tests passing across 6 suites. |
 
 ---
 

@@ -12,3 +12,75 @@ ALTER DATABASE homefix OWNER TO homefix_db_user;
 
 GRANT ALL PRIVILEGES ON DATABASE homefix TO homefix_db_user;
 
+---------------
+Critical Issues (fix before Sprint 2 ships)
+C1. Token refresh interceptor is broken — double bug
+mobile/api/client.ts — The refresh call hits /auth/refresh instead of /v2/auth/refresh (404 every time), and the response is destructured from response.data.accessToken instead of response.data.body.accessToken. Result: every access token expiry silently fails and logs the user out. The auto-refresh flow has never actually worked.
+
+C2. Login response leaks password_hash to the client
+backend/src/modules/auth/auth.service.ts — findUserWithAuth() fetches authAccounts with password_hash, failed_attempts, lock_until, and refresh_token_version for comparison — and then that entire relation rides the login response JSON to the client. The mapper strips it on register but not on login.
+
+C3. uncaughtException / unhandledRejection don't exit the process
+backend/src/server.ts — After an uncaught exception Node is in a corrupted heap state. The handlers log but don't call process.exit(1), so the server keeps running in a broken state. Docker's restart policy can't save you if the process doesn't die.
+
+C4. hasSeenOnboarding is never persisted — onboarding shows every cold start
+mobile/store/authStore.ts — completeOnboarding() only updates in-memory Zustand state. Kill and reopen the app: onboarding appears again.
+
+C5. Photo upload stores a local file:// URI in the database
+mobile/app/(auth)/register.tsx — ImagePicker returns a device-local URI. That URI is posted directly to the backend and stored in photo_url / nid_photo_url. The value is meaningless to the server and to any other client. Provider NID verification is blocked on this — the admin has no way to view the photo.
+
+C6. CORS wildcard + credentials: true will break the web client
+backend/src/config/env.ts — CORS_ORIGIN defaults to '*'. Browsers reject a wildcard origin combined with credentials — the upcoming Next.js web client (Sprint 7) will fail all authenticated requests. Only works now because React Native's Axios is not a browser.
+
+Design / Architecture Concerns (will hurt Sprint 2+ if ignored)
+D1. logoutAll leaves active access tokens valid for up to 15 minutes
+backend/src/modules/auth/auth.guard.ts lines 79–93 — The token version check in authGuard is commented out (// TODO: Redis). A user who triggers "logout all devices" can still use their existing access tokens until natural expiry. This is documented as future Redis work, but Sprint 2 will add protected routes. Before those routes touch sensitive data, you need a decision: either add a DB-backed version check (one query per request, no Redis needed), or explicitly accept the 15-minute window in writing.
+
+D2. AuthController (v1) and AuthControllerV2 are identical — divergence bomb
+backend/src/modules/auth/auth.controller.ts vs backend/src/modules/auth/v2/auth.controller.v2.ts — Character-for-character identical except the class name. As Sprint 2 adds fixes, they'll inevitably be applied to one and forgotten in the other. Delete v1 if nothing uses it.
+
+D3. token.store.ts (in-memory Map) is dead code still imported
+backend/src/modules/auth/token.store.ts — The original in-memory token store before the DB-backed RefreshTokenService was built. Still imported in auth.service.ts, never called, and has no eviction — a memory leak if ever re-activated by accident. Delete it.
+
+D4. register.tsx calls apiClient directly from the screen — breaks the service-layer rule
+mobile/app/(auth)/register.tsx line 88 — login.tsx correctly goes through the store. register.tsx calls apiClient.post(...) directly. Sprint 2 screens will copy whichever pattern is established here, and this is the wrong one. mobile/services/auth.service.ts needs to exist.
+
+D5. hydrate() restores isAuthenticated: true but user stays null
+mobile/store/authStore.ts lines 69–81 — After a cold start with a stored token, any screen that reads user.role or user.fullName will crash or show empty data. The JWT payload is available — decode it in hydrate() or persist a minimal profile to SecureStore.
+
+D6. Backend enums duplicated — packages/shared/ exists but backend ignores it
+backend/src/modules/users/user.types.ts and backend/src/modules/auth/auth.types.ts define UserRole, UserStatus, AuthMethod locally. The shared package has the same enums. If a value is added to shared (e.g. AuthMethod.APPLE), the backend won't pick it up. The backend should import from @homefix/shared.
+
+D7. No per-route rate limiting on auth endpoints
+backend/src/middlewares/rate-limiter.ts — Global limit is 100 req / 15 min per IP. That's 100 login attempts before any throttling. The in-service account lockout (5 bad attempts) only protects targeted attacks — distributing across accounts bypasses it. Add a tight auth-specific limiter (10 req / 15 min) on POST /auth/login and POST /auth/register.
+
+D8. NID regex differs between backend and shared — schema drift
+Backend: /^[0-9]{10}$/ (exactly 10 digits). Shared: /^[0-9]{10,17}$/ (10–17 digits). A user with a 17-digit NID (newer Bangladeshi format) passes mobile validation and hits a confusing backend rejection.
+
+Code Quality Issues
+Q1. validate middleware emits messages: string[] but FieldError type requires message: string — hidden by an as any cast. Field errors are silently dropped on the mobile side.
+
+Q2. sanitizeUser() in backend/src/modules/auth/auth.jwt.ts is a no-op — spreads the full user object unchanged. The name implies it strips sensitive fields. It's imported but not even called. Remove or implement.
+
+Q3. ensureUserIsActive() compares against hardcoded string literals ('pending', 'active') instead of UserStatus.PENDING, UserStatus.ACTIVE. The enums exist for this exact reason.
+
+Q4. register.tsx mixes native <Text> with the design-system <Text> component — step titles use raw React Native Text with manual StyleSheet. login.tsx uses the custom component consistently. Visual drift guaranteed when typography tokens change.
+
+Q5. AdminController imported in auth.route.v2.ts but never used — dead import creating a cross-module dependency.
+
+Q6. authStore.login typed as (data: any) — the form already produces a typed UserLoginPayload. Use it.
+
+Q7. Three handleSubmit(onSubmit as any)() calls in register.tsx — type cast hiding a real type mismatch. Fix by typing onSubmit as SubmitHandler<UserRegistrationPayload>.
+
+Minor / Low Priority
+#	Issue	Location
+M1	deviceId: 'device-id-123' hardcoded	login.tsx:34 — defeats session tracking
+M2	loading state never reset on successful login	login.tsx:42–49
+M3	Input component calls t(error) — assumes all errors are i18n keys	Input.tsx:63
+M4	hydrate missing from useEffect deps array	_layout.tsx:20–22
+M5	Swagger JSDoc typo: facebood	auth.route.v2.ts:89
+M6	StoredRefreshToken type is orphaned — leftover from deleted token store	auth.types.ts:61–70
+M7	UserResgistration / CreateUserInput types are dead code + typo in name	user.types.ts:71–104
+M8	isNewDevice uses OR on device_id OR user_agent — false negatives	auth.service.ts:617–620
+
+

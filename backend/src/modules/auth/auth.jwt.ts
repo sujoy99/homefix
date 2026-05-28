@@ -51,15 +51,6 @@ export function generateRefreshToken(userId: string, authAccount: AuthAccount, d
 
 /**
  * ============================
- * User Sanitizer
- * ============================
- */
-export function sanitizeUser(user: User) {
-  return { ...user };
-}
-
-/**
- * ============================
  * JWT Payload Generator from User
  * ============================
  */

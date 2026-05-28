@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
@@ -15,6 +15,7 @@ import { Lock, Phone, Mail } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { getApiError } from '@/utils/apiError';
+import { getDeviceId } from '@/utils/deviceId';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -26,17 +27,22 @@ export default function LoginScreen() {
   const {
     control,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<UserLoginPayload>({
     resolver: zodResolver(userLoginPayloadSchema),
     defaultValues: {
       method: AuthMethod.PASSWORD,
-      deviceId: 'device-id-123',
+      deviceId: '',
       mobile: '',
       email: '',
       password: '',
     },
   });
+
+  useEffect(() => {
+    getDeviceId().then((id) => setValue('deviceId', id));
+  }, [setValue]);
 
   const onSubmit = async (data: UserLoginPayload) => {
     setLoading(true);

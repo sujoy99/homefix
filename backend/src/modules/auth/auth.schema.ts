@@ -66,7 +66,7 @@ export const userRegistrationSchema = z.object({
 
       nid: z
         .string()
-        .regex(/^[0-9]{10}$/, 'NID must be 10 digits'),
+        .regex(/^[0-9]{10}$|^[0-9]{17}$/, 'NID must be 10 or 17 digits'),
 
       latitude: z.number(),
       longitude: z.number(),

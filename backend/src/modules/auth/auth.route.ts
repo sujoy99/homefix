@@ -4,7 +4,6 @@ import { validate } from '@middlewares/validate';
 import { registerSchema, loginSchema } from './auth.schema';
 import { authGuard } from '@modules/auth/auth.guard';
 import { asAuthenticated } from '@modules/auth/auth.adapter';
-import { AdminController } from '@modules/admin/admin.controller';
 
 export const authRouter = Router();
 

@@ -18,7 +18,7 @@ export const userRegistrationPayloadSchema = z
 
     mobile: z.string().regex(/^[0-9]{11}$/, 'validation.mobile_invalid'),
 
-    nid: z.string().regex(/^[0-9]{10,17}$/, 'validation.nid_invalid'),
+    nid: z.string().regex(/^[0-9]{10}$|^[0-9]{17}$/, 'validation.nid_invalid'),
 
     latitude: z.number(),
     longitude: z.number(),

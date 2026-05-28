@@ -38,8 +38,11 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Never trigger refresh for auth endpoints — a 401 there means bad credentials, not an expired session
+    const isAuthEndpoint = /\/auth\/(login|register|refresh)/.test(originalRequest.url ?? '');
+
     // If error is 401 and not already retried
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       try {
@@ -49,11 +52,11 @@ apiClient.interceptors.response.use(
         }
 
         // Call refresh endpoint
-        const response = await axios.post(`${BASE_URL}/auth/refresh`, {
+        const response = await axios.post(`${BASE_URL}/v2/auth/refresh`, {
           refreshToken,
         });
 
-        const { accessToken, refreshToken: newRefreshToken } = response.data;
+        const { accessToken, refreshToken: newRefreshToken } = response.data.body;
 
         // Save new tokens
         await authStorage.setTokens(accessToken, newRefreshToken);

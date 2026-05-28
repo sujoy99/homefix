@@ -21,25 +21,17 @@ export const validate =
       next();
     }catch (error) {
       if (error instanceof ZodError) {
-        const errors = error.issues.map((issue) => ({
-          field: issue.path
+        const fieldErrors: Record<string, { field: string; message: string }> = {};
+        for (const issue of error.issues) {
+          const field = issue.path
             .filter((p) => typeof p === 'string')
             .slice(1) // remove "body"
-            .join('.'),
-          message: issue.message,
-        }));
-
-        const groupedErrors = Object.values(
-          errors.reduce(
-            (acc, err) => {
-              acc[err.field] ??= { field: err.field, messages: [] };
-              acc[err.field].messages.push(err.message);
-              return acc;
-            },
-            {} as Record<string, any>
-          )
-        );
-        return next(new AppError('Validation failed', 400, ErrorCode.VALIDATION_ERROR, groupedErrors));
+            .join('.');
+          if (!(field in fieldErrors)) {
+            fieldErrors[field] = { field, message: issue.message };
+          }
+        }
+        return next(new AppError('Validation failed', 400, ErrorCode.VALIDATION_ERROR, Object.values(fieldErrors)));
       }
 
       next(error);

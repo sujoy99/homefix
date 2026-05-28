@@ -22,10 +22,9 @@ app.use(securityHeaders);
 
 /**
  * ------------------------------
- * Global security headers
+ * Global rate limiter
  * ------------------------------
- * - Protects against common web vulnerabilities
- * - Must be registered FIRST
+ * - Limits request rate per IP to prevent abuse
  */
 app.use(globalRateLimiter);
 

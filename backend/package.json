@@ -16,7 +16,8 @@
     "docs:tree": "tree -L 4 -I \"node_modules|.git|dist\" > docs/structure.txt",
     "migrate:make": "knex migrate:make",
     "migrate:latest": "knex migrate:latest",
-    "migrate:reset": "knex migrate:rollback --all"
+    "migrate:reset": "knex migrate:rollback --all",
+    "seed": "knex seed:run"
   },
   "engines": {
     "node": ">=20"
@@ -25,6 +26,7 @@
   "author": "HomeFIX IT TEAM",
   "license": "ISC",
   "dependencies": {
+    "@homefix/shared": "*",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -52,6 +54,7 @@
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/knex": "^0.16.1",
+    "@types/multer": "^2.1.0",
     "@types/node": "^25.0.9",
     "@types/supertest": "^7.2.0",
     "@types/swagger-jsdoc": "^6.0.4",
