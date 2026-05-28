@@ -53,6 +53,7 @@
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/knex": "^0.16.1",
+    "@types/multer": "^2.1.0",
     "@types/node": "^25.0.9",
     "@types/supertest": "^7.2.0",
     "@types/swagger-jsdoc": "^6.0.4",

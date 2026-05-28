@@ -18,4 +18,14 @@ export enum Permission {
   // Jobs
   JOB_READ = 'JOB_READ',
   JOB_WRITE = 'JOB_WRITE',
+
+  // Categories
+  CATEGORY_READ = 'CATEGORY_READ',
+  CATEGORY_WRITE = 'CATEGORY_WRITE',
+
+  // Providers
+  PROVIDER_MANAGE = 'PROVIDER_MANAGE',
+
+  // Storage
+  FILE_UPLOAD = 'FILE_UPLOAD',
 }

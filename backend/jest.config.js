@@ -6,7 +6,7 @@ module.exports = {
   testMatch: ['<rootDir>/tests/**/*.test.ts'],
   globalSetup: '<rootDir>/tests/setup.global.ts',
   globalTeardown: '<rootDir>/tests/teardown.global.ts',
-  setupFilesAfterEnv: [],
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   moduleNameMapper: {
     '^@config/(.*)$': '<rootDir>/src/config/$1',
     '^@utils$': '<rootDir>/src/utils/index.ts',

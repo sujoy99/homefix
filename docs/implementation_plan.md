@@ -31,14 +31,14 @@
 > **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
 
 **Active Sprint:** Sprint 2 — Home, Navigation & Service Catalog  
-**Sprint Status:** ⏳ Not Started  
+**Sprint Status:** 🔄 In Progress (Backend ✅, Mobile ⏳)  
 **Git Branch Convention:** `feature/HF-XXX-short-description`
 
 ### Next Ticket Per Platform
 
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
-| 🖥 Backend | **HF-021** | Service categories module (CRUD, `requires_area` flag) | — |
+| 🖥 Backend | — | Sprint 2 backend complete ✅ | — |
 | 📱 Mobile | **HF-025** | Tab navigator + app shell | — |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
@@ -380,10 +380,10 @@ modules/payments/
 
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
-| HF-021 | Service categories module (CRUD, `requires_area` flag per REQ-006) | ⏳ | 6h |
-| HF-022 | Provider profile + skills module (link to categories, availability, pricing) | ⏳ | 8h |
-| HF-023 | Provider approval API (admin: list pending, approve, reject — REQ-003) | ⏳ | 6h |
-| HF-024 | File storage — pluggable interface (local disk now, S3 later) | ⏳ | 6h |
+| HF-021 | Service categories module (CRUD, `requires_area` flag per REQ-006) | ✅ | 6h |
+| HF-022 | Provider profile + skills module (link to categories, availability, pricing) | ✅ | 8h |
+| HF-023 | Provider approval API (admin: list pending, approve, reject — REQ-003) | ✅ | 6h |
+| HF-024 | File storage — pluggable interface (local disk now, S3 later) | ✅ | 6h |
 
 #### Mobile:
 
@@ -618,6 +618,7 @@ Every SRS requirement mapped to its implementing ticket(s):
 | 2026-05-26 | 3.0 | All sprints segregated by platform (Backend / Mobile / Web / Shared). Commission engine made configurable — added HF-056B (admin commission rules API) and HF-071B (admin commission UI). HF-073 extended for expired promotion cleanup. |
 | 2026-05-28 | 3.1 | Sprint 1 closed. Current Focus updated to Sprint 2. Backend: UniqueViolationError handling moved from global error handler to repository layer via `db-error-map.ts` (scales cleanly as more tables/constraints are added). |
 | 2026-05-28 | 3.2 | Post-Sprint-1 code review completed. Sprint 1 Hardening sprint added (HF-085 to HF-099, 15 tickets). Current Focus updated to Sprint 1 Hardening. Sprint 2 blocked until Group 1 + Group 2 hardening tickets are complete. Total tickets: 96. |
+| 2026-05-28 | 3.3 | Sprint 2 backend complete (HF-021 to HF-024). Added fully DB-driven RBAC system (roles, permissions, role_permissions tables; admin API; PermissionCache; docs/RBAC.md). param() utility added to @utils for Express 5 route param access. 67 tests passing across 6 suites. |
 
 ---
 

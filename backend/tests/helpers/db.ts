@@ -25,7 +25,13 @@ export function getTestDb(): Knex {
 export async function truncateAll(): Promise<void> {
   const db = getTestDb();
   await db.raw(`
-    TRUNCATE TABLE auth_refresh_tokens, auth_accounts, users
+    TRUNCATE TABLE
+      provider_skills,
+      provider_profiles,
+      auth_refresh_tokens,
+      auth_accounts,
+      users,
+      categories
     RESTART IDENTITY CASCADE
   `);
 }

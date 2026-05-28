@@ -3,6 +3,7 @@ import { env } from '@config/env'; // 1. loads dotenv internally
 import '@config/db';                // 2️. DB loaded
 import { logger } from '@logger/logger';
 import { seedDefaultAdminInDB } from '@modules/auth/auth.seed';
+import { permissionCache } from '@modules/auth/permission.cache';
 
 async function bootstrap() {
   process.on('uncaughtException', (err) => {
@@ -18,9 +19,10 @@ async function bootstrap() {
   // Seed data
   // await seedDefaultAdmin();
   if (env.enableSeed !== 'false') {
-    // await seedDefaultAdmin();
     await seedDefaultAdminInDB();
   }
+
+  await permissionCache.loadFromDb();
 
   app.listen(env.port, () => {
     logger.info('HomeFix API started', {
