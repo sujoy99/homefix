@@ -1,38 +1,30 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { Platform } from 'react-native';
-import { ErrorCode, FORCE_LOGOUT_CODES, TOKEN_REFRESH_CODES } from '@homefix/shared';
+import axios from 'axios';
 import { authStorage } from '../utils/secureStore';
 import { useAuthStore } from '../store/authStore';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
-/**
- * ============================
- * API Configuration
- * ============================
- */
+// Extract the computer's dynamic local IP address from Expo constants
+const debuggerHost = Constants.expoConfig?.hostUri;
+const localhost = debuggerHost?.split(':')[0] || 'localhost';
 
-// In development, map to your local machine IP so Android emulator / Expo Go works
-// In production, use your actual API URL
-const DEV_API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
-const PROD_API_URL = 'https://api.homefix.com';
+// Use localhost for web, and your computer's dynamic local IP for Expo Go
+const BASE_URL = Platform.OS === 'web'
+  ? 'http://localhost:4000/api'
+  : `http://${localhost}:4000/api`;
 
-const BASE_URL = __DEV__ ? DEV_API_URL : PROD_API_URL;
-
-export const api = axios.create({
+export const apiClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-/**
- * Request Interceptor
- * Injects the Access Token into every outgoing request if available
- */
-api.interceptors.request.use(
-  async (config: InternalAxiosRequestConfig) => {
+// 1. Request interceptor to add access token
+apiClient.interceptors.request.use(
+  async (config) => {
     const token = await authStorage.getAccessToken();
-    if (token && config.headers) {
+    if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -40,57 +32,40 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-/**
- * Response Interceptor
- * Handles automatic token refresh when 401 Unauthorized occurs
- */
-api.interceptors.response.use(
+// 2. Response interceptor to handle token refresh
+apiClient.interceptors.response.use(
   (response) => response,
-  async (error: AxiosError<{ error_code?: ErrorCode; message: string }>) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-    const data = error.response?.data;
-    const errorCode = data?.error_code as ErrorCode;
+  async (error) => {
+    const originalRequest = error.config;
 
-    // Handle session expired / hard logout cases
-    if (errorCode && FORCE_LOGOUT_CODES.has(errorCode)) {
-      useAuthStore.getState().logout();
-      return Promise.reject(error);
-    }
-
-    // Handle token expiration (trigger refresh)
-    if (
-      error.response?.status === 401 &&
-      errorCode &&
-      TOKEN_REFRESH_CODES.has(errorCode) &&
-      originalRequest &&
-      !originalRequest._retry
-    ) {
+    // If error is 401 and not already retried
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
         const refreshToken = await authStorage.getRefreshToken();
         if (!refreshToken) {
-          throw new Error('No refresh token available');
+          throw new Error('No refresh token');
         }
 
-        // Call refresh endpoint directly using a new axios instance to avoid infinite loops
-        const refreshResponse = await axios.post(`${BASE_URL}/api/v2/auth/refresh`, {
+        // Call refresh endpoint
+        const response = await axios.post(`${BASE_URL}/auth/refresh`, {
           refreshToken,
         });
 
-        const { accessToken: newAccess, refreshToken: newRefresh } = refreshResponse.data.body;
+        const { accessToken, refreshToken: newRefreshToken } = response.data;
 
         // Save new tokens
-        await authStorage.setTokens(newAccess, newRefresh);
+        await authStorage.setTokens(accessToken, newRefreshToken);
 
-        // Update original request with new token and retry
-        if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${newAccess}`;
-        }
-        return api(originalRequest);
-        
+        // Update authorization header
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+
+        // Retry original request
+        return apiClient(originalRequest);
       } catch (refreshError) {
-        // If refresh fails, log the user out
+        // Refresh failed, logout user
+        console.error('Session expired, logging out...');
         useAuthStore.getState().logout();
         return Promise.reject(refreshError);
       }

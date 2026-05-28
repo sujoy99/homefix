@@ -28,22 +28,14 @@ export type UserWithAuth = User & {
   authAccounts?: AuthAccount[];
 };
 
-export interface JwtPayloadVal {
-  sub: string;
-  email: string;
-  role: UserRole;
-  tokenVersion: number;
-  deviceId: string;
-}
-
 export interface JwtPayload {
   sub: string;
-  email?: string;
+  email?: string | null | undefined;
   mobile: string;
   role: UserRole;
-  status: UserStatus
-  tokenVersion?: string;
-  deviceId?: string;
+  status: UserStatus;
+  tokenVersion: string;
+  deviceId?: string | undefined;
 }
 
 export type ClientInfo = {
@@ -52,38 +44,26 @@ export type ClientInfo = {
 };
 
 export interface AuthenticatedRequest extends Request {
-  // user: {
-  //   id: string;
-  //   email: string;
-  //   mobile: string;
-  //   role: UserRole;
-  //   status: UserStatus;
-  //   tokenVersion: string;
-  // };
   user: JwtPayload;
   /**
    * Client metadata (from middleware)
    */
-  clientInfo?: ClientInfo
-}
-
-export interface RefreshTokenPayloadVal {
-  sub: string;
-  tokenId: string;
+  clientInfo?: ClientInfo;
 }
 
 export interface RefreshTokenPayload {
   sub: string;
   tokenId: string;
-  tokenVersion: string,
-  deviceId?: string; 
+  tokenVersion: string;
+  deviceId?: string;
 }
 
 export interface StoredRefreshToken {
   userId: string;
-  email: string;
+  email?: string | null | undefined;
+  mobile: string;
   role: UserRole;
-  tokenVersion: number;
+  tokenVersion: string;
   deviceId: string;
   revoked: boolean;
 }

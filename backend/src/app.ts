@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import { env } from '@config/env';
 import { securityHeaders } from '@middlewares/helmet';
 import { globalRateLimiter } from '@middlewares/rate-limiter';
 import { requestId } from '@middlewares/request-id';
@@ -35,7 +36,12 @@ app.use(globalRateLimiter);
  * - Enables cross-origin requests
  * - Can be restricted later per origin
  */
-app.use(cors());
+app.use(
+  cors({
+    origin: env.corsOrigin,
+    credentials: true,
+  })
+);
 
 /**
  * ------------------------------

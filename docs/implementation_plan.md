@@ -1,9 +1,9 @@
 # HomeFix — Full-Stack Implementation Plan
 
-> **Version:** 2.0  
+> **Version:** 3.0  
 > **Prepared by:** Sr. Software Engineer  
 > **Date:** 2026-04-19  
-> **Last Updated:** 2026-04-19  
+> **Last Updated:** 2026-05-26  
 > **Methodology:** Agile (Sprint-based, ticket-level breakdown)  
 > **Inputs:** SRS v1.0 + Architecture decisions
 
@@ -13,8 +13,8 @@
 
 | Sprint | Status | Started | Completed |
 |---|---|---|---|
-| Sprint 0 — Foundation | ✅ Completed | 2026-04-19 | 2026-04-19 |
-| Sprint 1 — Auth Screens | 🏗️ In Progress | 2026-04-19 | — |
+| Sprint 0 — Foundation | ✅ Completed | 2026-04-19 | 2026-05-27 |
+| Sprint 1 — Auth Screens | ✅ Completed | 2026-04-19 | 2026-04-21 |
 | Sprint 2 — Home + Categories | ⏳ Not Started | — | — |
 | Sprint 3 — Booking + Jobs | ⏳ Not Started | — | — |
 | Sprint 4 — Voice + Accessibility | ⏳ Not Started | — | — |
@@ -22,6 +22,40 @@
 | Sprint 6 — Payments + Wallet | ⏳ Not Started | — | — |
 | Sprint 7 — Web + Admin | ⏳ Not Started | — | — |
 | Sprint 8 — Production Readiness | ⏳ Not Started | — | — |
+
+---
+
+## Current Focus
+
+> **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
+
+**Active Sprint:** Sprint 2 — Home, Navigation & Service Catalog  
+**Sprint Status:** ⏳ Not Started  
+**Git Branch Convention:** `feature/HF-XXX-short-description`
+
+### Next Ticket Per Platform
+
+| Platform | Next Ticket | Title | Blocked By |
+|----------|-------------|-------|------------|
+| 🖥 Backend | **HF-021** | Service categories module (CRUD, `requires_area` flag) | — |
+| 📱 Mobile | **HF-025** | Tab navigation (Resident/Provider home tabs) | — |
+| 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
+
+### How to Pick Up Work
+
+1. **Choose a platform** — if both backend and mobile are available, ask which to start first
+2. **Work tickets top-to-bottom** within the chosen platform's section in the sprint
+3. **When a ticket is done:** mark it ✅ in the sprint table, update "Next Ticket" in this table, then ask for a commit
+4. **When a sprint is done:** mark it ✅ in the Status Tracker above, set the next sprint as Active, and refresh this table with its first tickets
+
+---
+
+### 📝 Strategic Mandate: Mobile Responsiveness
+> [!IMPORTANT]
+> All mobile screens MUST be fully responsive and accessibility-compliant:
+> - Use `KeyboardAvoidingView` + `ScrollView` with `flexGrow: 1` to ensure inputs/buttons are reachable on small devices.
+> - No fixed heights for containers; use padding and flexible spacing.
+> - Touch targets must be 48px+ for accessibility.
 
 ---
 
@@ -36,7 +70,7 @@ HomeFix is a **geo-located home services marketplace** for Bangladesh connecting
 - **Voice-first accessibility** — Voice notes, Text-to-Speech for low-literacy providers
 - **Area-based pricing** — Services like painting require sq. footage input
 - **Localized payments** — bKash, Nagad with manual Transaction ID
-- **20% platform commission** with provider wallet system
+- **Configurable platform commission** — default 20%, admin-adjustable per category or promotion
 - **Escrow-style flow** — Payment only after "Awaiting Payment" status
 
 ---
@@ -199,12 +233,21 @@ modules/payments/
 
 **Goal:** Monorepo, shared packages, Expo app scaffold, design system, i18n.
 
+#### Shared:
+
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
 | HF-001 | Monorepo restructure (npm workspaces) | ✅ | 4h |
 | HF-002 | Shared types (UserRole, UserStatus, ErrorCode, JobStatus, PaymentStatus) | ✅ | 3h |
 | HF-003 | Shared Zod schemas (registration, login) | ✅ | 3h |
-| HF-004 | Shared constants (commission %, status machines) | ✅ | 2h |
+| HF-004 | Shared constants (DEFAULT_COMMISSION_RATE, status machines) | ✅ | 2h |
+| HF-009 | Test infrastructure (Backend) — Jest + ts-jest config, test DB setup, Supertest harness, model factory helpers | ✅ | 4h |
+| HF-009B | Test infrastructure (Mobile) — Jest + RNTL config inside Expo, mock setup for `expo-secure-store` / Axios, shared factory helpers | ✅ | 3h |
+
+#### Mobile:
+
+| Ticket | Title | Status | Est. |
+|---|---|---|---|
 | HF-005 | Expo project init + Expo Router setup | ✅ | 4h |
 | HF-006 | Design system — theme, colors, typography, spacing, dark mode | ✅ | 8h |
 | HF-007 | Base components — Button, Input, Text, Card, Screen, Icon | ✅ | 8h |
@@ -220,19 +263,40 @@ modules/payments/
 
 **Goal:** Complete auth flow — register, login, token management, logout.
 
+#### Backend:
+
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
-| HF-012 | Splash + Onboarding carousel (3 slides, "Get Started" CTA) | ⏳ | 6h |
-| HF-013 | Registration — Resident (multi-step: name+mobile+NID → location → email+password) | ⏳ | 10h |
-| HF-014 | Registration — Provider (extends resident: NID photo upload, profile photo) | ⏳ | 6h |
-| HF-015 | Login screen (mobile/email + password, device ID generation) | ⏳ | 6h |
-| HF-016 | Auth Zustand store (user, tokens, isAuthenticated, login/logout/refresh) | ⏳ | 6h |
-| HF-017 | Token refresh Axios interceptor (401 → refresh → retry, SESSION_EXPIRED → logout) | ⏳ | 6h |
-| HF-018 | Logout flow + "Logout all devices" | ⏳ | 3h |
-| HF-019 | Pending approval screen (provider after registration) | ⏳ | 3h |
-| HF-020 | Backend fix: `await` in seed + CORS restriction + consolidate duplicate functions | ⏳ | 4h |
+| HF-020 | Backend fix: `await` in seed + CORS restriction + consolidate duplicate functions | ✅ | 4h |
 
-**Deliverable:** Full auth flow — register, login, pending state, auto-refresh, logout.
+#### Mobile:
+
+| Ticket | Title | Status | Est. |
+|---|---|---|---|
+| HF-012 | Splash + Onboarding carousel (3 slides, "Get Started" CTA) | ✅ | 6h |
+| HF-013 | Registration — Resident (multi-step: name+mobile+NID → location → email+password) | ✅ | 10h |
+| HF-014 | Registration — Provider (extends resident: NID photo upload, profile photo) | ✅ | 6h |
+| HF-015 | Login screen (mobile/email + password, device ID generation) | ✅ | 6h |
+| HF-016 | Auth Zustand store (user, tokens, isAuthenticated, login/logout/refresh) | ✅ | 6h |
+| HF-017 | Token refresh Axios interceptor (401 → refresh → retry, SESSION_EXPIRED → logout) | ✅ | 6h |
+| HF-018 | Logout flow + "Logout all devices" | ✅ | 3h |
+| HF-019 | Pending approval screen (provider after registration) | ✅ | 3h |
+
+#### Shared:
+
+| Ticket | Title | Status | Est. |
+|---|---|---|---|
+| HF-020B | Type Stabilization: Resolve all `tsc` errors across backend, mobile, and shared | ✅ | 8h |
+
+#### Sprint 1 Bug Fixes:
+
+| Ticket | Title | Status | Est. |
+|---|---|---|---|
+| HF-020C | Language toggle (Globe button) missing in Registration + Onboarding screens — all auth screens must be bilingual | ✅ | 2h |
+| HF-020D | API errors show raw axios error or English backend message — map `error_code` to localized i18n messages for duplicate mobile/NID/email, invalid credentials, locked account | ✅ | 3h |
+| HF-020E | Registration location step UX: auto-detect GPS on step entry, show interactive `react-native-maps` map with draggable marker, tap-to-relocate support, provider future booking addresses also need this | ✅ | 5h |
+
+**Deliverable:** Full auth flow — register, login, pending state, auto-refresh, logout. **Stabilized. Bilingual. Localized errors. Interactive map.**
 
 ---
 
@@ -297,6 +361,8 @@ modules/payments/
 
 **Goal:** Voice-first features per SRS REQ-011, 012, 013.
 
+#### Mobile:
+
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
 | HF-042 | Voice note recording in booking (expo-av — REQ-011) | ⏳ | 6h |
@@ -340,7 +406,8 @@ modules/payments/
 |---|---|---|---|
 | HF-054 | Payment interface (pluggable strategy pattern) | ⏳ | 4h |
 | HF-055 | Manual gateway (bKash/Nagad — TxID entry — REQ-019,020) | ⏳ | 6h |
-| HF-056 | Commission engine (20% platform fee — REQ-021) | ⏳ | 4h |
+| HF-056 | Commission engine — configurable rate from `commission_rules` table (REQ-021) | ⏳ | 6h |
+| HF-056B | Admin commission rules API — CRUD + `/preview` endpoint | ⏳ | 4h |
 | HF-057 | Provider wallet/ledger (80% credit — REQ-022) | ⏳ | 6h |
 | HF-058 | Admin revenue dashboard API (REQ-023) | ⏳ | 4h |
 
@@ -358,6 +425,10 @@ modules/payments/
 
 ### 🌐 Sprint 7 — Web App & Admin Panel
 
+**Goal:** Next.js web app for residents/providers + admin panel.
+
+#### Web:
+
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
 | HF-062 | Next.js project init + shared package imports | ⏳ | 4h |
@@ -366,10 +437,16 @@ modules/payments/
 | HF-065 | Web landing page (marketing, SEO, download CTA) | ⏳ | 8h |
 | HF-066 | Web resident dashboard (browse, book, manage) | ⏳ | 10h |
 | HF-067 | Web provider dashboard (jobs, wallet, profile) | ⏳ | 8h |
+
+#### Web (Admin Panel):
+
+| Ticket | Title | Status | Est. |
+|---|---|---|---|
 | HF-068 | Admin panel — provider verification (approve/reject + NID preview) | ⏳ | 8h |
 | HF-069 | Admin panel — service category management (CRUD, requires_area) | ⏳ | 6h |
-| HF-070 | Admin panel — revenue dashboard (total revenue, commission) | ⏳ | 6h |
+| HF-070 | Admin panel — revenue dashboard (total revenue, commission breakdown by rule) | ⏳ | 6h |
 | HF-071 | Admin panel — user management (list, search, status change) | ⏳ | 6h |
+| HF-071B | Admin panel — commission rules management (set global/category/promotion rates) | ⏳ | 6h |
 
 **Deliverable:** Full web app + admin panel.
 
@@ -377,16 +454,30 @@ modules/payments/
 
 ### 🚀 Sprint 8 — Production Readiness
 
+**Goal:** Performance, security hardening, testing, and deployment.
+
+#### Backend:
+
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
-| HF-072 | Backend — Redis cache (sessions, rate limiting, categories) | ⏳ | 6h |
-| HF-073 | Backend — Cron jobs (token cleanup, expired sessions) | ⏳ | 4h |
-| HF-074 | Backend — V1 cleanup (remove in-memory stores, consolidate V2) | ⏳ | 4h |
-| HF-075 | Backend — Production knex config + env setup | ⏳ | 3h |
-| HF-076 | Mobile — Performance (lazy loading, image optimization, < 15MB) | ⏳ | 6h |
-| HF-077 | Mobile — Offline data layer (cache categories, bookings, profile with MMKV/WatermelonDB) | ⏳ | 8h |
-| HF-078 | Mobile — Offline operation queue (queue mutations when offline, auto-sync on reconnect) | ⏳ | 8h |
-| HF-079 | Mobile — Sync conflict resolution + connectivity status UI (banner, retry, queue indicator) | ⏳ | 6h |
+| HF-072 | Redis cache (sessions, rate limiting, categories) | ⏳ | 6h |
+| HF-073 | Cron jobs (token cleanup, expired sessions, expired commission promotions) | ⏳ | 4h |
+| HF-074 | V1 cleanup (remove in-memory stores, consolidate V2) | ⏳ | 4h |
+| HF-075 | Production knex config + env setup | ⏳ | 3h |
+
+#### Mobile:
+
+| Ticket | Title | Status | Est. |
+|---|---|---|---|
+| HF-076 | Performance (lazy loading, image optimization, < 15MB) | ⏳ | 6h |
+| HF-077 | Offline data layer (cache categories, bookings, profile with MMKV/WatermelonDB) | ⏳ | 8h |
+| HF-078 | Offline operation queue (queue mutations when offline, auto-sync on reconnect) | ⏳ | 8h |
+| HF-079 | Sync conflict resolution + connectivity status UI (banner, retry, queue indicator) | ⏳ | 6h |
+
+#### Shared:
+
+| Ticket | Title | Status | Est. |
+|---|---|---|---|
 | HF-080 | E2E Testing (Jest/Supertest for API, Maestro for mobile) | ⏳ | 10h |
 | HF-081 | CI/CD Pipeline (GitHub Actions → lint → test → build → deploy) | ⏳ | 8h |
 | HF-082 | Security audit (OWASP, NID encryption, CORS) | ⏳ | 6h |
@@ -452,7 +543,9 @@ Every SRS requirement mapped to its implementing ticket(s):
 |---|---|---|
 | 2026-04-19 | 1.0 | Initial plan created |
 | 2026-04-19 | 2.0 | Full SRS incorporated, all decisions confirmed, file storage made pluggable, deployment plan added, 82 tickets across 9 sprints |
+| 2026-05-26 | 3.0 | All sprints segregated by platform (Backend / Mobile / Web / Shared). Commission engine made configurable — added HF-056B (admin commission rules API) and HF-071B (admin commission UI). HF-073 extended for expired promotion cleanup. |
+| 2026-05-28 | 3.1 | Sprint 1 closed. Current Focus updated to Sprint 2. Backend: UniqueViolationError handling moved from global error handler to repository layer via `db-error-map.ts` (scales cleanly as more tables/constraints are added). |
 
 ---
 
-> **Next Step:** Sprint 0, Ticket HF-001 — Monorepo restructure
+> See **## Current Focus** at the top of this file for the active sprint and next ticket per platform.

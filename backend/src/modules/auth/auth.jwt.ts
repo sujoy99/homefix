@@ -1,9 +1,10 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
 import ms from 'ms';
 import { env } from '@config/env';
-import { JwtPayload, JwtPayloadVal, RefreshTokenPayload, RefreshTokenPayloadVal, UserWithAuth } from './auth.types';
+import { JwtPayload, RefreshTokenPayload } from './auth.types';
 import { UnauthorizedError } from '@errors/http-errors';
-import { User, UserRole, UserStatus } from '@modules/users/user.types';
+import { UserRole, UserStatus } from '@modules/users/user.types';
+import { User } from '@modules/users/user.model';
 import { randomUUID } from 'crypto';
 import { ErrorCode } from '@errors/error-code';
 import { AuthAccount } from './auth.model';
@@ -16,18 +17,7 @@ import { AuthAccount } from './auth.model';
 
 /**
  * Generate Access Token
- * - Used for API authorization
- * - Short lived
  */
-export function accessTokenGeneration(payload: JwtPayloadVal): string {
-  const options: SignOptions = {};
-  if (env.jwtAccessExpiresIn !== undefined) {
-    options.expiresIn = env.jwtAccessExpiresIn;
-  }
-
-  return jwt.sign(payload, env.jwtAccessSecret, options);
-}
-
 export function generateAccessToken(payload: JwtPayload): string {
   const options: SignOptions = {};
   if (env.jwtAccessExpiresIn !== undefined) {
@@ -39,35 +29,22 @@ export function generateAccessToken(payload: JwtPayload): string {
 
 /**
  * Generate Refresh Token
- * - Used to rotate access tokens
- * - Long lived
  */
-export function refreshTokenGeneration(userId: string) {
-  const tokenId = randomUUID();
-
-  const options: SignOptions = {};
-  if (env.jwtRefreshExpiresIn !== undefined) {
-    options.expiresIn = env.jwtRefreshExpiresIn;
-  }
-  const token = jwt.sign({ sub: userId, tokenId } satisfies RefreshTokenPayloadVal,
-    env.jwtRefreshSecret, options);
-  return { token, tokenId };
-}
-
 export function generateRefreshToken(userId: string, authAccount: AuthAccount, deviceId?: string) {
   const tokenId = randomUUID();
-  const tokenVersion = authAccount.refresh_token_version;
 
   const options: SignOptions = {};
   if (env.jwtRefreshExpiresIn !== undefined) {
     options.expiresIn = env.jwtRefreshExpiresIn;
   }
+  
   const payload: RefreshTokenPayload = {
     sub: userId,
     tokenId,
-    ...(deviceId ? { deviceId } : {}),
     tokenVersion: authAccount.refresh_token_version,
+    ...(deviceId ? { deviceId } : {}),
   };
+  
   const token = jwt.sign(payload, env.jwtRefreshSecret, options);
   return { token, tokenId };
 }
@@ -76,11 +53,9 @@ export function generateRefreshToken(userId: string, authAccount: AuthAccount, d
  * ============================
  * User Sanitizer
  * ============================
- * Ensures sensitive fields never leak outside service
  */
 export function sanitizeUser(user: User) {
-  const { password, ...safeUser } = user;
-  return safeUser;
+  return { ...user };
 }
 
 /**
@@ -88,29 +63,18 @@ export function sanitizeUser(user: User) {
  * JWT Payload Generator from User
  * ============================
  */
-export function jwtPayloadGeneration(user: User, deviceId: string): JwtPayloadVal {
-  return {
-    sub: user.id,
-    email: user.email,
-    role: user.role,
-    deviceId: deviceId,
-    tokenVersion: user.tokenVersion,
-  };
-}
-
-
 export function generateJwtPayload(
-  id: string, 
-  mobile: string, 
-  role: UserRole, 
-  status: UserStatus, 
-  deviceId: string
+  user: User,
+  authAccount: AuthAccount,
+  deviceId?: string
 ): JwtPayload {
   return {
-    sub: id,
-    mobile: mobile,
-    role: role,
-    status: status,
+    sub: user.id,
+    email: user.email ?? undefined,
+    mobile: user.mobile,
+    role: user.role,
+    status: user.status,
+    tokenVersion: authAccount.refresh_token_version,
     deviceId: deviceId,
   };
 }
@@ -120,22 +84,6 @@ export function generateJwtPayload(
  * JWT Access Token Verification
  * ============================
  */
-export function verifyAccessTokenVal(token: string): JwtPayloadVal {
-  const decoded = jwt.verify(token, env.jwtAccessSecret);
-
-  if (
-    typeof decoded !== 'object' ||
-    decoded === null ||
-    !('sub' in decoded) ||
-    !('email' in decoded) ||
-    !('role' in decoded)
-  ) {
-    throw new UnauthorizedError(ErrorCode.TOKEN_INVALID,'Invalid access token');
-  }
-
-  return decoded as JwtPayloadVal;
-}
-
 export function verifyAccessToken(token: string): JwtPayload {
   const decoded = jwt.verify(token, env.jwtAccessSecret);
 
@@ -146,7 +94,7 @@ export function verifyAccessToken(token: string): JwtPayload {
     !('mobile' in decoded) ||
     !('role' in decoded)
   ) {
-    throw new UnauthorizedError(ErrorCode.TOKEN_INVALID,'Invalid access token');
+    throw new UnauthorizedError(ErrorCode.TOKEN_INVALID, 'Invalid access token');
   }
 
   return decoded as JwtPayload;
@@ -164,14 +112,9 @@ export function verifyRefreshToken(token: string): RefreshTokenPayload {
 /**
  * ============================
  * JWT Refresh Token decode if verify fails
- * logout fallback
- * logging
- * debugging
  * ============================
  */
-export function decodeRefreshToken(
-  token: string
-): RefreshTokenPayload | null {
+export function decodeRefreshToken(token: string): RefreshTokenPayload | null {
   const decoded = jwt.decode(token);
 
   if (
@@ -186,6 +129,11 @@ export function decodeRefreshToken(
   return decoded as RefreshTokenPayload;
 }
 
+/**
+ * ============================
+ * Expiry Date Generator
+ * ============================
+ */
 export function getRefreshTokenExpiryDate(): Date {
   const expiresIn = env.jwtRefreshExpiresIn;
 

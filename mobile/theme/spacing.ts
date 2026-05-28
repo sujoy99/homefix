@@ -11,6 +11,7 @@ export const spacing = {
   lg: 24,
   xl: 32,
   '2xl': 40,
+  xxl: 40,      // Alias for 2xl
   '3xl': 48,    // Common for accessible touch targets
 };
 

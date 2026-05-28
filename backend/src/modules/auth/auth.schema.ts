@@ -80,13 +80,14 @@ export const userRegistrationSchema = z.object({
        * Optional (email, password, provider)
        */
       email: z
-      .string()
-      .trim()
-      .toLowerCase()
-      .refine((value) => validator.isEmail(value), {
-        message: 'Invalid email address',
-      })
-      .optional(),
+        .string()
+        .trim()
+        .toLowerCase()
+        .refine((value) => !value || validator.isEmail(value), {
+          message: 'Invalid email address',
+        })
+        .optional()
+        .or(z.literal('')),
 
       password: z
       .string()
@@ -160,10 +161,11 @@ const passwordSchema = baseSchema.extend({
     .string()
     .trim()
     .toLowerCase()
-    .refine((v) => validator.isEmail(v), {
+    .refine((v) => !v || validator.isEmail(v), {
       message: 'Invalid email',
     })
-    .optional(),
+    .optional()
+    .or(z.literal('')),
 
   password: z.string().min(1, 'Password is required'),
 }).refine((data) => data.mobile || data.email, {

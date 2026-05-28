@@ -12,7 +12,7 @@ import { theme } from '../theme';
  * Protects routes based on authentication state.
  */
 export default function RootLayout() {
-  const { isAuthenticated, isLoading, hydrate } = useAuthStore();
+  const { isAuthenticated, isLoading, hydrate, hasSeenOnboarding } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
 
@@ -26,15 +26,19 @@ export default function RootLayout() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const isOnboarding = segments.includes('onboarding');
 
-    if (!isAuthenticated && !inAuthGroup) {
-      // User is not authenticated, redirect to login
+    if (!hasSeenOnboarding && !isOnboarding) {
+      // User hasn't seen onboarding, redirect to onboarding
+      router.replace('/(auth)/onboarding');
+    } else if (hasSeenOnboarding && !isAuthenticated && !inAuthGroup) {
+      // User has seen onboarding but is not authenticated, redirect to login
       router.replace('/(auth)/login');
     } else if (isAuthenticated && inAuthGroup) {
       // User is authenticated, redirect away from login/register
       router.replace('/(app)');
     }
-  }, [isAuthenticated, isLoading, segments]);
+  }, [isAuthenticated, isLoading, segments, hasSeenOnboarding]);
 
   if (isLoading) {
     return (

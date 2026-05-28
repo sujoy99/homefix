@@ -32,6 +32,21 @@ const knexConfig: Record<Environment, Knex.Config> = {
       extension: 'ts',
     },
   },
+  test: {
+    client: 'pg',
+    connection: {
+      host: required('DB_HOST'),
+      port: toNumber(required('DB_PORT'), 0),
+      database: required('DB_NAME'),
+      user: required('DB_USER'),
+      password: required('DB_PASSWORD'),
+    },
+    pool: { min: 1, max: 5 },
+    migrations: {
+      directory: __dirname + '/../db/migrations',
+      extension: 'ts',
+    },
+  },
   production: {
 
   },

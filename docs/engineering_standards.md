@@ -127,7 +127,7 @@ packages/shared/
 │   │   ├── auth.schema.ts      # Registration, login schemas
 │   │   └── job.schema.ts       # Booking schemas
 │   ├── constants/
-│   │   ├── commission.ts       # PLATFORM_COMMISSION_RATE = 0.20
+│   │   ├── commission.ts       # DEFAULT_COMMISSION_RATE = 0.20 (fallback only — live rate resolved from DB at payment time)
 │   │   ├── status.ts           # Status machine definitions
 │   │   └── roles.ts            # Role-permission mappings
 │   └── index.ts                # Barrel exports
@@ -318,14 +318,47 @@ docs(plan): update sprint 0 status
 
 ---
 
-## 9. Testing Strategy (Sprint 8)
+## 9. Testing Strategy
 
-| Layer | Tool | Coverage Target |
-|---|---|---|
-| Backend unit | Jest | Services, utils: 80% |
-| Backend integration | Supertest | All API endpoints |
-| Mobile E2E | Maestro | Critical flows: auth, booking, payment |
-| Shared | Jest | Validation schemas: 100% |
+Tests are written **alongside code in every sprint** — not deferred to Sprint 8. Sprint 8 (HF-080) only adds E2E test suites and CI integration.
+
+| Layer | Tool | When | Coverage Target |
+|---|---|---|---|
+| Backend unit | Jest + ts-jest | Every sprint, per new service | Services + utils: 80% |
+| Backend integration | Supertest | Every sprint, per new route | All API endpoints: success + 401 + validation |
+| Shared (packages/shared) | Jest | Per new schema or utility | Zod schemas + utils: 100% branch |
+| Mobile unit | Jest + ts-jest | Every sprint, per new service function | Service layer: happy path + error states |
+| Mobile component | React Native Testing Library | Every sprint, per interactive screen | Primary user action per screen |
+| Web component | React Testing Library | Sprint 7+, per client component | Primary user action per component |
+| Web / Mobile E2E | Playwright (web) · Maestro (mobile) | Sprint 8 (HF-080) | Auth, booking, payment flows |
+
+### Test File Location
+
+```
+backend/src/modules/auth/
+├── auth.service.ts
+├── auth.service.test.ts       ← unit tests live next to the file
+├── auth.controller.test.ts    ← integration tests (Supertest)
+└── ...
+```
+
+### Infrastructure Setup
+
+**HF-009 — Backend** (set up before Sprint 2 begins):
+- `jest.config.ts` with `ts-jest` and path alias support
+- Separate `.env.test` pointing to a dedicated test database
+- `beforeAll` / `afterAll` hooks to run migrations + truncate tables between tests
+- Factory helpers (e.g. `createTestUser()`) in `src/test/factories/`
+
+**HF-009B — Mobile** (set up before Sprint 2 mobile tickets begin):
+- `jest.config.ts` inside `mobile/` with `ts-jest` + Expo preset
+- Mocks for `expo-secure-store`, `expo-router`, and Axios (`mobile/__mocks__/`)
+- Factory helpers for common test data (e.g. `mockAuthState()`) in `mobile/__tests__/factories/`
+
+**Web** (set up as first task in Sprint 7, HF-062):
+- Playwright config pointing at local dev server for E2E
+- `jest.config.ts` + `@testing-library/react` for component tests
+- MSW (Mock Service Worker) for API mocking in component tests
 
 ---
 

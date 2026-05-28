@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    container_name: homefix_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.dev
+    container_name: homefix_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - backend/.env.development
+    environment:
+      # Override localhost with the postgres service name
+      DB_HOST: postgres
+    ports:
+      - "4000:4000"
+    volumes:
+      # Mount full monorepo for hot reload
+      - .:/app
+      # Preserve container-built node_modules (linux binaries for bcrypt etc.)
+      - root_node_modules:/app/node_modules
+      - backend_node_modules:/app/backend/node_modules
+    working_dir: /app/backend
+    command: sh -c "npm run migrate:latest && npm run dev"
+
+volumes:
+  postgres_data:
+  root_node_modules:
+  backend_node_modules:

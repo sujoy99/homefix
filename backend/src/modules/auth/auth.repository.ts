@@ -1,74 +1,25 @@
-import { randomUUID } from 'crypto';
-
-import { transaction, PartialModelObject, Transaction } from 'objection';
+import { transaction, PartialModelObject, Transaction, UniqueViolationError } from 'objection';
 import { User } from '@modules/users/user.model';
 import { AuthAccount } from './auth.model';
-
-import { User as U, CreateUserInput, UserResgistrationRequest} from '@modules/users/user.types';
-import { users, UserStore } from '@modules/users/user.store';
+import { UserResgistrationRequest } from '@modules/users/user.types';
 import { CreateUserRepoResult } from './auth.types';
+import { mapUniqueViolation } from '@errors/db-error-map';
 
 export class AuthRepository {
   /**
-   * Find a user by email address
-   *
-   * Purpose:
-   * - Used during authentication (login, registration)
-   * - Ensures email uniqueness
-   *
-   * Behavior:
-   * - Returns the user if email exists
-   * - Returns null if no matching user is found
-   *
-   * Notes:
-   * - Email comparison is case-insensitive at input validation level
-   * - Repository layer is responsible for data lookup only
-   */
-  static async findByEmail(email: string): Promise<U | null> {
-    for (const user of users.values()) {
-      if (user.email === email) return user;
-    }
-    return null;
-  }
-
-   /**
    * Find a user by mobile
-   * 
-   * Behavior:
-   * - Returns the user if mobile exists
-   * - Returns null if no matching user is found
-   */
-  static async findById(authAccountId: string): Promise<AuthAccount | null> {
-    const authAccount = await AuthAccount.query().findOne({ id: authAccountId });
-    return authAccount ?? null;
-  }
-
-   /**
-   * Find a user by mobile
-   * 
-   * Behavior:
-   * - Returns the user if mobile exists
-   * - Returns null if no matching user is found
    */
   static async findByMobile(mobile: string): Promise<User | null> {
     const user = await User.query().findOne({ mobile });
     return user ?? null;
   }
 
-
-  static async handleFailedLogin(id: string) {
-    return AuthAccount.query()
-      .patch({
-        failed_attempts: AuthAccount.knex().raw('failed_attempts + 1'),
-        lock_until: AuthAccount.knex().raw(`
-          CASE 
-            WHEN failed_attempts + 1 >= 5 
-            THEN NOW() + interval '15 minutes'
-            ELSE lock_until
-          END
-        `),
-      })
-      .where('id', id);
+  /**
+   * Find auth account by ID
+   */
+  static async findById(authAccountId: string): Promise<AuthAccount | null> {
+    const authAccount = await AuthAccount.query().findOne({ id: authAccountId });
+    return authAccount ?? null;
   }
 
   static async updateFailedAttempts(
@@ -83,7 +34,6 @@ export class AuthRepository {
       })
       .where('id', id);
   }
-
 
   static async markLoginSuccess(id: string, trx?: Transaction) {
     return AuthAccount.query(trx)
@@ -104,24 +54,11 @@ export class AuthRepository {
   }
 
   /**
-   * Create user
-   * - Repository generates ID
-   * - Returns full User entity
+   * Create user and auth account (V2)
    */
-  static async create(data: CreateUserInput): Promise<U> {
-    const user: U = {
-      id: randomUUID(),
-      ...data,
-      tokenVersion: 1
-    };
-
-    UserStore.save(user.id, user);
-    return user;
-  }
-
   static async createUser(data: UserResgistrationRequest): Promise<CreateUserRepoResult> {
-    return transaction(User.knex(), async (trx) => {
-
+    try {
+    return await transaction(User.knex(), async (trx) => {
       /**
        * 1. Prepare user insert object
        */
@@ -131,14 +68,9 @@ export class AuthRepository {
         nid: data.nid,
         role: data.role,
         status: data.status,
-
         email: data.email ?? null,
         photo_url: data.photo_url ?? null,
         nid_photo_url: data.nid_photo_url ?? null,
-
-        /**
-         * Keep raw separately to reduce TS complexity
-         */
         area: trx.raw(
           `ST_SetSRID(ST_MakePoint(?, ?), 4326)`,
           [data.longitude, data.latitude]
@@ -180,5 +112,9 @@ export class AuthRepository {
         auth: authAccount,
       };
     });
+    } catch (err) {
+      if (err instanceof UniqueViolationError) throw mapUniqueViolation(err.constraint);
+      throw err;
+    }
   }
 }
