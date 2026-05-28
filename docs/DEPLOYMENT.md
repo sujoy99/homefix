@@ -12,14 +12,43 @@ Three services defined in `docker-compose.yml`:
 ### First-Time Setup
 
 ```bash
-# 1. Env file must exist (Docker reads it via env_file)
+# 1. Copy env file (Docker reads it via env_file)
 cp backend/.env.sample backend/.env.development
+# Fill in DB_NAME, DB_USER, DB_PASSWORD, JWT secrets, DEFAULT_ADMIN_* values
 
-# 2. Build images and start — migrations run automatically before the server boots
+# 2. Build images and start all services
+#    → waits for postgres to be healthy
+#    → runs all pending migrations automatically
+#    → starts the dev server (nodemon)
 make up
+
+# 3. Seed reference data (roles, permissions, categories, admin user)
+#    Run this ONCE after the first make up on a fresh database
+make seed
 ```
 
-> `make up` runs `npm run migrate:latest` inside the backend container before starting nodemon. On a fresh DB this applies all migrations. On subsequent restarts it is a no-op (already up-to-date).
+> **Why two steps?** Migrations are schema changes (DDL — create/alter tables) and run automatically every time the backend container starts. Seeds are reference data (roles, categories, admin user) and must be run explicitly — they are idempotent so running `make seed` more than once is safe.
+
+#### What `make up` does automatically
+
+```
+make up
+  └─→ Build backend image
+  └─→ Start postgres (waits until healthcheck passes)
+  └─→ Start backend container:
+        npm run migrate:latest   ← applies all pending migrations
+        npm run dev              ← starts nodemon hot-reload server
+```
+
+Tables are created during `npm run migrate:latest`. No separate `make migrate` needed on the first run.
+
+#### What `make seed` populates
+
+| Seed file | Data |
+|-----------|------|
+| `01_roles_permissions` | 3 roles (resident, provider, admin) + 10 permission codes + default role→permission assignments |
+| `02_categories` | 10 bilingual service categories (English + Bengali, `requires_area` flagged for painting/masonry/cleaning/waterproofing) |
+| `03_admin` | Default admin user from `DEFAULT_ADMIN_*` env vars |
 
 ```bash
 # Only needed after pulling new migrations without restarting the container
@@ -36,8 +65,8 @@ make migrate
 | `make restart` | Restart only the backend container |
 | `make logs` | Tail backend container logs |
 | `make db` | Open psql shell inside the postgres container |
-| `make migrate` | Run `knex migrate:latest` inside the backend container |
-| `make seed` | Run DB seeds inside the backend container |
+| `make migrate` | Run `knex migrate:latest` inside the backend container (schema only — no data) |
+| `make seed` | Populate reference data: roles, permissions, categories, admin user (idempotent) |
 | `make shell` | Open a shell inside the backend container |
 | `make clean` | Remove containers + **all named volumes** (destroys DB data) |
 
