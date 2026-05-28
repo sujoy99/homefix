@@ -9,7 +9,7 @@ import { z } from 'zod';
 
 export const adminProviderRouter = Router();
 
-const providerIdSchema = z.object({ params: z.object({ id: z.string().uuid() }) });
+const providerIdSchema = z.object({ params: z.object({ id: z.uuid() }) });
 
 /**
  * @openapi

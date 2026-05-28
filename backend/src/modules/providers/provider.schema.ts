@@ -20,15 +20,15 @@ export const updateProviderProfileSchema = z.object({
 
 export const addSkillSchema = z.object({
   body: z.object({
-    category_id: z.string().uuid(),
+    category_id: z.uuid(),
     is_primary: z.boolean().optional().default(false),
   }),
 });
 
 export const skillIdSchema = z.object({
-  params: z.object({ skill_id: z.string().uuid() }),
+  params: z.object({ skill_id: z.uuid() }),
 });
 
 export const providerUserIdSchema = z.object({
-  params: z.object({ user_id: z.string().uuid() }),
+  params: z.object({ user_id: z.uuid() }),
 });

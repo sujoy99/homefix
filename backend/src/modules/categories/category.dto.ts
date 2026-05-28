@@ -1,5 +1,6 @@
 export type CreateCategoryDTO = {
   name: string;
+  name_bn?: string | null;
   slug: string;
   description?: string | null;
   icon_url?: string | null;
@@ -9,6 +10,7 @@ export type CreateCategoryDTO = {
 
 export type UpdateCategoryDTO = {
   name?: string;
+  name_bn?: string | null;
   slug?: string;
   description?: string | null;
   icon_url?: string | null;

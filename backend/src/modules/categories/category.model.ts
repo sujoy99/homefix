@@ -5,6 +5,7 @@ export class Category extends Model {
 
   id!: string;
   name!: string;
+  name_bn!: string | null;
   slug!: string;
   description!: string | null;
   icon_url!: string | null;

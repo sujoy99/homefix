@@ -4,6 +4,7 @@ export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('categories', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
     table.string('name', 100).notNullable();
+    table.string('name_bn', 150).nullable();
     table.string('slug', 120).notNullable().unique();
     table.text('description').nullable();
     table.string('icon_url').nullable();

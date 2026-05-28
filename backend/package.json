@@ -16,7 +16,8 @@
     "docs:tree": "tree -L 4 -I \"node_modules|.git|dist\" > docs/structure.txt",
     "migrate:make": "knex migrate:make",
     "migrate:latest": "knex migrate:latest",
-    "migrate:reset": "knex migrate:rollback --all"
+    "migrate:reset": "knex migrate:rollback --all",
+    "seed": "knex seed:run"
   },
   "engines": {
     "node": ">=20"
