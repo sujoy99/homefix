@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
-import { User as U, UserResgistrationRequest, UserRole, UserStatus } from '@modules/users/user.types';
-import { LoginDTO, RegisterDTO, UserLoginDTO, UserRegistrationDTO } from './auth.dto';
+import { UserResgistrationRequest, UserRole, UserStatus } from '@modules/users/user.types';
+import { UserLoginDTO, UserRegistrationDTO } from './auth.dto';
 import { AuthRepository } from './auth.repository';
 import { DuplicateError, UnauthorizedError } from '@errors/http-errors';
 import {
@@ -8,13 +8,10 @@ import {
   generateAccessToken,
   generateJwtPayload,
   generateRefreshToken,
-  sanitizeUser,
   verifyRefreshToken,
 } from '@modules/auth/auth.jwt';
-import { RefreshTokenStore } from '@modules/auth/token.store';
 import { ErrorCode } from '@errors/error-code';
-import { User } from '@modules/users/user.model';
-import { AuthMethod, JwtPayload, RefreshTokenPayload, ClientInfo } from './auth.types';
+import { AuthMethod, RefreshTokenPayload, ClientInfo, UserWithAuth } from './auth.types';
 import { mapToUserRegistrationResponse, mapToLoginUserResponse } from './auth.mapper';
 import { InvalidationStore } from '@modules/auth/invalidation.store';
 import { UserRepository } from '@modules/users/user.repository';
@@ -344,15 +341,15 @@ export class AuthService {
     );
   }
 
-  private static ensureUserIsActive(user: any) {
-    if (user.status === 'pending') {
+  private static ensureUserIsActive(user: UserWithAuth) {
+    if (user.status === UserStatus.PENDING) {
       throw new UnauthorizedError(
         ErrorCode.ACCOUNT_NOT_APPROVED,
         'Pending admin approval'
       );
     }
 
-    if (user.status !== 'active') {
+    if (user.status !== UserStatus.ACTIVE) {
       throw new UnauthorizedError(
         ErrorCode.ACCOUNT_INACTIVE,
         'Account inactive'

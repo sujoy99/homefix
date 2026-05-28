@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authStorage } from '@/utils/secureStore';
-import { UserRole } from '@homefix/shared';
+import { UserRole, UserLoginPayload } from '@homefix/shared';
 import { apiClient } from '@/api/client';
 import { authService } from '@/services/auth.service';
 import { decodeJwtPayload } from '@/utils/jwtDecode';
@@ -29,7 +29,7 @@ interface AuthState {
   logout: () => Promise<void>;
   hydrate: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
-  login: (data: any) => Promise<void>;
+  login: (data: UserLoginPayload) => Promise<void>;
 }
 
 /**

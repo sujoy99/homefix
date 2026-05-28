@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
@@ -11,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   userRegistrationPayloadSchema,
@@ -21,6 +20,7 @@ import { theme } from '@/theme';
 import { authService } from '@/services/auth.service';
 import { UserRole, AuthMethod } from '@homefix/shared';
 import { ArrowLeft, ChevronRight, User as UserIcon, Phone, Lock, Mail, CreditCard, Camera, Upload } from 'lucide-react-native';
+import { Text } from '@/components/ui/Text';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
@@ -80,7 +80,7 @@ export default function RegisterScreen() {
     }
   };
 
-  const onSubmit = async (data: UserRegistrationPayload) => {
+  const onSubmit: SubmitHandler<UserRegistrationPayload> = async (data) => {
     setLoading(true);
     try {
       await authService.register(data);
@@ -117,10 +117,10 @@ export default function RegisterScreen() {
     }
 
     if (step === 3 && !isProvider) {
-      handleSubmit(onSubmit as any)();
+      handleSubmit(onSubmit)();
     } else if (step === 4 && isProvider) {
       const isValid = await trigger(['nid_photo_url']);
-      if (isValid) handleSubmit(onSubmit as any)();
+      if (isValid) handleSubmit(onSubmit)();
     } else {
       setStep((s) => s + 1);
     }
@@ -323,7 +323,7 @@ export default function RegisterScreen() {
           ) : (
             <Button
               label={t('common.complete')}
-              onPress={handleSubmit(onSubmit as any)}
+              onPress={handleSubmit(onSubmit)}
               isLoading={loading}
             />
           )}

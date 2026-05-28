@@ -15,7 +15,7 @@
 |---|---|---|---|
 | Sprint 0 — Foundation | ✅ Completed | 2026-04-19 | 2026-05-27 |
 | Sprint 1 — Auth Screens | ✅ Completed | 2026-04-19 | 2026-05-28 |
-| Sprint 1 Hardening — Code Review Fixes | 🔧 In Progress | 2026-05-28 | — |
+| Sprint 1 Hardening — Code Review Fixes | ✅ Completed | 2026-05-28 | 2026-05-28 |
 | Sprint 2 — Home + Categories | ⏳ Not Started | — | — |
 | Sprint 3 — Booking + Jobs | ⏳ Not Started | — | — |
 | Sprint 4 — Voice + Accessibility | ⏳ Not Started | — | — |
@@ -30,18 +30,16 @@
 
 > **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
 
-**Active Sprint:** Sprint 1 Hardening — Code Review Fixes  
-**Sprint Status:** 🔧 In Progress  
-**Git Branch Convention:** `bugfix/HF-XXX-short-description`
-
-> Sprint 2 is blocked until Group 1 tickets (HF-085 to HF-092) are complete.
+**Active Sprint:** Sprint 2 — Home, Navigation & Service Catalog  
+**Sprint Status:** ⏳ Not Started  
+**Git Branch Convention:** `feature/HF-XXX-short-description`
 
 ### Next Ticket Per Platform
 
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
-| 🖥 Backend | **HF-085** | Strip auth_accounts from login response | — |
-| 📱 Mobile | **HF-086** | Fix token refresh interceptor (URL + response shape) | — |
+| 🖥 Backend | **HF-021** | Service categories module (CRUD, `requires_area` flag) | — |
+| 📱 Mobile | **HF-025** | Tab navigator + app shell | — |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
 ### How to Pick Up Work
@@ -317,24 +315,24 @@ modules/payments/
 
 | Ticket | Title | Review Ref | Status | Est. |
 |---|---|---|---|---|
-| HF-085 | Strip `authAccounts` + `password_hash` from login response — add mapper identical to register | C2 | ⏳ | 1h |
-| HF-087 | Call `process.exit(1)` in `uncaughtException` and `unhandledRejection` handlers | C3 | ⏳ | 0.5h |
-| HF-092 | Add `@homefix/shared` as backend dependency; replace local `UserRole`, `UserStatus`, `AuthMethod` enums with imports from shared package | D6 | ⏳ | 3h |
+| HF-085 | Strip `authAccounts` + `password_hash` from login response — add mapper identical to register | C2 | ✅ | 1h |
+| HF-087 | Call `process.exit(1)` in `uncaughtException` and `unhandledRejection` handlers | C3 | ✅ | 0.5h |
+| HF-092 | Add `@homefix/shared` as backend dependency; replace local `UserRole`, `UserStatus`, `AuthMethod` enums with imports from shared package | D6 | ✅ | 3h |
 
 ##### Mobile:
 
 | Ticket | Title | Review Ref | Status | Est. |
 |---|---|---|---|---|
-| HF-086 | Fix token refresh interceptor: correct URL to `/v2/auth/refresh`; destructure from `response.data.body` | C1 | ⏳ | 1h |
-| HF-088 | Persist `hasSeenOnboarding` flag to `AsyncStorage` in `completeOnboarding()`; read it back in `hydrate()` | C4 | ⏳ | 1h |
-| HF-089 | Decode JWT payload in `hydrate()` to restore `user` object — fixes null `user.role` / `user.fullName` on cold start | D5 | ⏳ | 2h |
-| HF-090 | Create `mobile/services/auth.service.ts` with `register()` and `login()`; remove direct `apiClient` calls from `register.tsx` | D4 | ⏳ | 2h |
+| HF-086 | Fix token refresh interceptor: correct URL to `/v2/auth/refresh`; destructure from `response.data.body` | C1 | ✅ | 1h |
+| HF-088 | Persist `hasSeenOnboarding` flag to `AsyncStorage` in `completeOnboarding()`; read it back in `hydrate()` | C4 | ✅ | 1h |
+| HF-089 | Decode JWT payload in `hydrate()` to restore `user` object — fixes null `user.role` / `user.fullName` on cold start | D5 | ✅ | 2h |
+| HF-090 | Create `mobile/services/auth.service.ts` with `register()` and `login()`; remove direct `apiClient` calls from `register.tsx` | D4 | ✅ | 2h |
 
 ##### Shared:
 
 | Ticket | Title | Review Ref | Status | Est. |
 |---|---|---|---|---|
-| HF-091 | Align NID regex: change `packages/shared` from `/^[0-9]{10,17}$/` to `/^[0-9]{10}$/` to match backend (or decide on format and update both) | D8 | ⏳ | 1h |
+| HF-091 | Align NID regex: change `packages/shared` from `/^[0-9]{10,17}$/` to `/^[0-9]{10}$/` to match backend (or decide on format and update both) | D8 | ✅ | 1h |
 
 ---
 
@@ -344,9 +342,9 @@ modules/payments/
 
 | Ticket | Title | Review Ref | Status | Est. |
 |---|---|---|---|---|
-| HF-093 | Implement DB-backed token version check in `authGuard` — one extra query per request, no Redis needed; closes the 15-min residual-access window after `logoutAll` | D1 | ⏳ | 3h |
-| HF-094 | Add auth-specific rate limiter (10 req / 15 min per IP) applied only to `POST /auth/login` and `POST /auth/register` | D7 | ⏳ | 2h |
-| HF-095 | Make `CORS_ORIGIN` required (use `required()` helper); remove `'*'` default; update all `.env.*` files | C6 | ⏳ | 1h |
+| HF-093 | **Partial — different approach chosen.** Instead of a DB query per request, implemented an in-memory `InvalidationStore` (`invalidation.store.ts`): `logoutAll` records `userId → timestamp`; `authGuard` rejects tokens whose `iat` predates that timestamp (O(1), no DB). Trade-off: does not survive server restarts; single-instance only. **DB-backed version check still needed** before multi-instance deploy. | D1 | ⚠️ | 3h |
+| HF-094 | Add auth-specific rate limiter (10 req / 15 min per IP) applied only to `POST /auth/login` and `POST /auth/register` | D7 | ✅ | 2h |
+| HF-095 | Make `CORS_ORIGIN` required (use `required()` helper); remove `'*'` default; update all `.env.*` files | C6 | ✅ | 1h |
 
 ---
 
@@ -356,15 +354,15 @@ modules/payments/
 
 | Ticket | Title | Review Ref | Status | Est. |
 |---|---|---|---|---|
-| HF-096 | Delete dead code: `token.store.ts`, v1 `AuthController` (if no active v1 routes), `StoredRefreshToken` type, `UserResgistration` / `CreateUserInput` types, `sanitizeUser()` no-op, `AdminController` dead import in `auth.route.v2.ts` | D2, D3, Q2, M6, M7, Q5 | ⏳ | 2h |
-| HF-097 | Fix misc quality: replace `'pending'`/`'active'` string literals with `UserStatus` enum in `ensureUserIsActive()`; fix copy-paste comment on rate limiter block in `app.ts`; fix Swagger `facebood` typo | Q3, Q4, M5 | ⏳ | 1h |
+| HF-096 | Delete dead code: `token.store.ts`, v1 `AuthController` (if no active v1 routes), `StoredRefreshToken` type, `UserResgistration` / `CreateUserInput` types, `sanitizeUser()` no-op, `AdminController` dead import in `auth.route.v2.ts` | D2, D3, Q2, M6, M7, Q5 | ✅ | 2h |
+| HF-097 | Fix misc quality: replace `'pending'`/`'active'` string literals with `UserStatus` enum in `ensureUserIsActive()`; fix copy-paste comment on rate limiter block in `app.ts`; fix Swagger `facebood` typo | Q3, Q4, M5 | ✅ | 1h |
 
 ##### Mobile:
 
 | Ticket | Title | Review Ref | Status | Est. |
 |---|---|---|---|---|
-| HF-098 | Fix `register.tsx`: replace native `<Text>` with design-system `<Text>` component; remove `handleSubmit(onSubmit as any)` casts by typing `onSubmit` as `SubmitHandler<UserRegistrationPayload>`; replace hardcoded `device-id-123` with `expo-device` identifier | Q4, Q6, M1 | ⏳ | 2h |
-| HF-099 | Fix `validate` middleware: align `FieldError` to emit one `message: string` per field (first error wins); update mobile `apiError.ts` parser to read field errors correctly; fix `authStore.login` typed as `any` | Q1, Q7 | ⏳ | 2h |
+| HF-098 | Fix `register.tsx`: replace native `<Text>` with design-system `<Text>` component; remove `handleSubmit(onSubmit as any)` casts by typing `onSubmit` as `SubmitHandler<UserRegistrationPayload>`; replace hardcoded `device-id-123` with `expo-device` identifier | Q4, Q6, M1 | ✅ | 2h |
+| HF-099 | Fix `validate` middleware: align `FieldError` to emit one `message: string` per field (first error wins); update mobile `apiError.ts` parser to read field errors correctly; fix `authStore.login` typed as `any` | Q1, Q7 | ✅ | 2h |
 
 > **Note on C5 (photo upload stores `file://` URI):** Covered by **HF-024** (Sprint 2 — file storage pluggable interface). Ensure `register.tsx` upload flow is wired to the storage service before Sprint 2 ships.
 

@@ -50,12 +50,3 @@ export interface RefreshTokenPayload {
   deviceId?: string;
 }
 
-export interface StoredRefreshToken {
-  userId: string;
-  email?: string | null | undefined;
-  mobile: string;
-  role: UserRole;
-  tokenVersion: string;
-  deviceId: string;
-  revoked: boolean;
-}

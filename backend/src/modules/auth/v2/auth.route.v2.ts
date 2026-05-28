@@ -86,7 +86,7 @@ export const authRouterV2 = Router();
  * 
  *               auth_method:
  *                 type: string
- *                 enum: [password, otp, google, facebood]
+ *                 enum: [password, otp, google, facebook]
  *                 description: login method
  *                 nullable: true
  *

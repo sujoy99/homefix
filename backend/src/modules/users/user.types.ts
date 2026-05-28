@@ -37,47 +37,6 @@ export type User = {
 
 /**
  * ============================
- * User Domain Model (V2)
- * ============================
- * Business-aligned (Mobile + NID)
- */
-export type UserResgistration = {
-  id: string;
-  full_name: string;
-  mobile: string;
-  nid: string;
-  email: string;
-  password: string; // hashed only
-
-  role: UserRole;
-
-  status: UserStatus;
-
-  area?: {
-    latitude: number;
-    longitude: number;
-  };
-
-  photo_url?: string;
-  nid_photo_url?: string;
-
-  created_at?: string;
-  updated_at?: string;
-};
-
-/**
- * Input type for creating user
- * (NO id here)
- */
-export type CreateUserInput = {
-  name: string;
-  email: string;
-  password: string;
-  role: UserRole.RESIDENT | UserRole.PROVIDER;
-};
-
-/**
- * ============================
  * User Registration Request (V2)
  * ============================
  */
