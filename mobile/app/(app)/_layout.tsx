@@ -18,6 +18,7 @@ export default function AppLayout() {
       <Stack.Screen name="category/[id]" />
       <Stack.Screen name="provider/[id]" />
       <Stack.Screen name="booking/create" />
+      <Stack.Screen name="booking/job/[id]" />
     </Stack>
   );
 }

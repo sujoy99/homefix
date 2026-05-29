@@ -221,6 +221,28 @@
     "paid": "পরিশোধিত",
     "cancelled": "বাতিলকৃত"
   },
+  "bookings": {
+    "title": "আমার বুকিং",
+    "tab_upcoming": "আসন্ন",
+    "tab_active": "সক্রিয়",
+    "tab_awaiting": "পেমেন্ট বাকি",
+    "tab_completed": "সম্পন্ন",
+    "new_booking": "নতুন বুকিং",
+    "empty_upcoming_title": "কোনো আসন্ন বুকিং নেই",
+    "empty_upcoming_desc": "একটি কাজ পোস্ট করুন, প্রোভাইডাররা শীঘ্রই সাড়া দেবেন।",
+    "empty_active_title": "কোনো সক্রিয় কাজ নেই",
+    "empty_active_desc": "গৃহীত কাজগুলো এখানে দেখাবে।",
+    "empty_awaiting_title": "পেমেন্ট অপেক্ষায় কিছু নেই",
+    "empty_awaiting_desc": "পেমেন্টের জন্য প্রস্তুত কাজগুলো এখানে দেখাবে।",
+    "empty_completed_title": "এখনো কোনো সম্পন্ন কাজ নেই",
+    "empty_completed_desc": "আপনার সম্পন্ন বুকিংগুলো এখানে দেখাবে।",
+    "posted_on": "পোস্ট হয়েছে {{date}}",
+    "budget": "বাজেট",
+    "budget_tbd": "নির্ধারিত নয়",
+    "area": "আয়তন",
+    "address": "ঠিকানা",
+    "load_error": "বুকিং লোড হয়নি। টেনে পুনরায় চেষ্টা করুন।"
+  },
   "booking": {
     "title": "নতুন বুকিং",
     "step_category": "সার্ভিস বেছে নিন",

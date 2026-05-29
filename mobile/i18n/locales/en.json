@@ -221,6 +221,28 @@
     "paid": "Paid",
     "cancelled": "Cancelled"
   },
+  "bookings": {
+    "title": "My Bookings",
+    "tab_upcoming": "Upcoming",
+    "tab_active": "Active",
+    "tab_awaiting": "Awaiting Payment",
+    "tab_completed": "Completed",
+    "new_booking": "New Booking",
+    "empty_upcoming_title": "No upcoming bookings",
+    "empty_upcoming_desc": "Post a job and providers will respond shortly.",
+    "empty_active_title": "No active jobs",
+    "empty_active_desc": "Accepted jobs will appear here.",
+    "empty_awaiting_title": "Nothing awaiting payment",
+    "empty_awaiting_desc": "Jobs ready for payment will appear here.",
+    "empty_completed_title": "No completed jobs yet",
+    "empty_completed_desc": "Your completed bookings will appear here.",
+    "posted_on": "Posted {{date}}",
+    "budget": "Budget",
+    "budget_tbd": "Not set",
+    "area": "Area",
+    "address": "Address",
+    "load_error": "Could not load bookings. Pull to retry."
+  },
   "booking": {
     "title": "New Booking",
     "step_category": "Select Service",
