@@ -29,5 +29,7 @@ export const jobFeedSchema = z.object({
   query: z.object({
     limit: z.coerce.number().int().min(1).max(50).optional().default(20),
     cursor: z.string().optional(),
+    lat: z.coerce.number().min(-90).max(90).optional(),
+    lon: z.coerce.number().min(-180).max(180).optional(),
   }),
 });

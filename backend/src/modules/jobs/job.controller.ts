@@ -23,10 +23,14 @@ export class JobController {
   }
 
   static async getProviderFeed(req: AuthenticatedRequest, res: Response): Promise<Response> {
-    const { limit, cursor } = req.query as { limit?: string; cursor?: string };
+    const { limit, cursor, lat, lon } = req.query as {
+      limit?: string; cursor?: string; lat?: string; lon?: string;
+    };
     const feedQuery: import('./job.types').JobFeedQuery = {};
     if (limit) feedQuery.limit = parseInt(limit, 10);
     if (cursor) feedQuery.cursor = cursor;
+    if (lat) feedQuery.lat = parseFloat(lat);
+    if (lon) feedQuery.lon = parseFloat(lon);
     const jobs = await JobService.getProviderFeed(req.user.sub, feedQuery);
     return HttpResponse.success(res, jobs, 'Job feed fetched');
   }

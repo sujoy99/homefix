@@ -59,4 +59,38 @@ export class ProviderRepository {
       .where('is_available', true)
       .withGraphFetched('skills');
   }
+
+  static async listAvailableNearby(
+    lat: number,
+    lon: number,
+    radiusKm: number,
+    categoryId?: string
+  ): Promise<ProviderProfileModel[]> {
+    const radiusMeters = radiusKm * 1000;
+
+    const q = ProviderProfileModel.query()
+      .join('users', 'provider_profiles.user_id', 'users.id')
+      .where('provider_profiles.is_available', true)
+      .whereNotNull('users.area')
+      .whereRaw(
+        'ST_DWithin(users.area, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)',
+        [lon, lat, radiusMeters]
+      )
+      .orderByRaw(
+        'ST_Distance(users.area, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) ASC',
+        [lon, lat]
+      )
+      .select('provider_profiles.*')
+      .withGraphFetched('skills');
+
+    if (categoryId) {
+      q.whereExists(
+        ProviderSkillModel.query()
+          .whereColumn('provider_skills.provider_id', 'provider_profiles.id')
+          .where('category_id', categoryId)
+      );
+    }
+
+    return q;
+  }
 }

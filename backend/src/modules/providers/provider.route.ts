@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { ProviderController } from './provider.controller';
 import { validate } from '@middlewares/validate';
-import { updateProviderProfileSchema, addSkillSchema, skillIdSchema, providerUserIdSchema } from './provider.schema';
+import { updateProviderProfileSchema, addSkillSchema, skillIdSchema, providerUserIdSchema, listAvailableSchema } from './provider.schema';
 import { authGuard } from '@modules/auth/auth.guard';
 import { asAuthenticated } from '@modules/auth/auth.adapter';
 import { asyncHandler } from '@utils/async-handler';
@@ -19,13 +19,34 @@ export const providerRouter = Router();
  * @openapi
  * /providers/available:
  *   get:
- *     summary: List all available providers with their skills
+ *     summary: List available providers, optionally filtered by location (REQ-007,008)
  *     tags: [Providers]
+ *     parameters:
+ *       - in: query
+ *         name: lat
+ *         schema: { type: number }
+ *         description: Latitude of the search centre
+ *       - in: query
+ *         name: lon
+ *         schema: { type: number }
+ *         description: Longitude of the search centre
+ *       - in: query
+ *         name: radius
+ *         schema: { type: number, default: 10 }
+ *         description: Search radius in km (default 10)
+ *       - in: query
+ *         name: category
+ *         schema: { type: string, format: uuid }
+ *         description: Filter by category ID
  *     responses:
  *       200:
- *         description: Available providers returned
+ *         description: Available providers returned, sorted by distance when lat/lon provided
  */
-providerRouter.get('/available', asyncHandler(ProviderController.listAvailable));
+providerRouter.get(
+  '/available',
+  validate(listAvailableSchema),
+  asyncHandler(ProviderController.listAvailable)
+);
 
 /**
  * NOTE: /me/profile routes must be declared BEFORE /:user_id to prevent

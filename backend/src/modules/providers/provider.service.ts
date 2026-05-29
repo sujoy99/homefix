@@ -86,4 +86,15 @@ export class ProviderService {
   static async listAvailable(): Promise<ProviderProfileWithSkills[]> {
     return ProviderRepository.listAvailable() as unknown as Promise<ProviderProfileWithSkills[]>;
   }
+
+  static async listAvailableNearby(
+    lat: number,
+    lon: number,
+    radiusKm: number,
+    categoryId?: string
+  ): Promise<ProviderProfileWithSkills[]> {
+    return ProviderRepository.listAvailableNearby(
+      lat, lon, radiusKm, categoryId
+    ) as unknown as Promise<ProviderProfileWithSkills[]>;
+  }
 }

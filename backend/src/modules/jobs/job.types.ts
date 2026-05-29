@@ -45,4 +45,6 @@ export type CreateJobInput = {
 export type JobFeedQuery = {
   limit?: number;
   cursor?: string;
+  lat?: number;
+  lon?: number;
 };

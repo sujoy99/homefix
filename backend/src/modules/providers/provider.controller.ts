@@ -24,7 +24,21 @@ export class ProviderController {
     return HttpResponse.success(res, profile, 'Provider profile updated');
   }
 
-  static async listAvailable(_req: Request, res: Response) {
+  static async listAvailable(req: Request, res: Response) {
+    const { lat, lon, radius, category } = req.query as {
+      lat?: string; lon?: string; radius?: string; category?: string;
+    };
+
+    if (lat && lon) {
+      const providers = await ProviderService.listAvailableNearby(
+        parseFloat(lat),
+        parseFloat(lon),
+        radius ? parseFloat(radius) : 10,
+        category
+      );
+      return HttpResponse.success(res, providers, 'Nearby providers fetched');
+    }
+
     const providers = await ProviderService.listAvailable();
     return HttpResponse.success(res, providers, 'Available providers fetched');
   }

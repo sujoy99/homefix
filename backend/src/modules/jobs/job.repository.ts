@@ -37,11 +37,20 @@ export class JobRepository {
     const q = Job.query()
       .where('status', JobStatus.PENDING)
       .whereIn('category_id', categoryIds)
-      .orderBy('created_at', 'desc')
       .limit(limit);
 
     if (query.cursor) {
       q.where('created_at', '<', query.cursor);
+    }
+
+    if (query.lat !== undefined && query.lon !== undefined) {
+      // Sort by distance from provider's current location — nearest jobs first
+      q.orderByRaw(
+        'ST_Distance(service_location, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) ASC NULLS LAST',
+        [query.lon, query.lat]
+      );
+    } else {
+      q.orderBy('created_at', 'desc');
     }
 
     return q;
