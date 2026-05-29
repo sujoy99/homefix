@@ -4,8 +4,10 @@ import 'react-native-gesture-handler/jestSetup';
 jest.spyOn(console, 'warn').mockImplementation(() => {});
 
 // Reset secure store between tests
-beforeEach(async () => {
-  const secureStore = await import('expo-secure-store');
-  (secureStore as any).__reset?.();
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const secureStore = require('expo-secure-store');
+
+beforeEach(() => {
+  secureStore.__reset?.();
   jest.clearAllMocks();
 });

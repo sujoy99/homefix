@@ -1,40 +1,66 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { Home } from 'lucide-react-native';
+import { UserRole } from '@homefix/shared';
 import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { useAuthStore } from '@/store/authStore';
+import { theme } from '@/theme';
 
+/**
+ * Home tab — placeholder shell.
+ * Resident content: HF-026 | Provider content: HF-029
+ */
 export default function HomeScreen() {
+  const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
+
+  const isProvider = user?.role === UserRole.PROVIDER;
 
   return (
     <Screen scrollable>
-      <View style={{ marginBottom: 24 }}>
+      <View style={styles.header}>
         <Text variant="h2" weight="bold">
-          Hi, {user?.fullName || 'Resident'} 👋
+          {t('nav.greeting', { name: user?.fullName || t('nav.there') })}
         </Text>
-        <Text variant="body" color="muted">
-          What do you need help with today?
+        <Text variant="body" color="muted" style={styles.subtitle}>
+          {isProvider ? t('nav.provider_home_subtitle') : t('nav.resident_home_subtitle')}
         </Text>
       </View>
 
-      <Card elevated style={{ marginBottom: 24 }}>
-        <Text variant="h4" weight="semibold" style={{ marginBottom: 8 }}>
-          Current Booking
+      <View style={styles.placeholder}>
+        <Home color={theme.colors.primary} size={48} />
+        <Text variant="h4" weight="semibold" style={styles.placeholderTitle}>
+          {isProvider ? t('nav.provider_home_coming') : t('nav.resident_home_coming')}
         </Text>
-        <Text variant="body" color="muted">
-          No active bookings found.
+        <Text variant="body" color="muted" style={styles.placeholderDesc}>
+          {isProvider ? 'HF-029' : 'HF-026'}
         </Text>
-      </Card>
-
-      <Button 
-        variant="outline"
-        label="Log Out" 
-        onPress={() => logout()}
-      />
+      </View>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    marginBottom: theme.spacing.lg,
+  },
+  subtitle: {
+    marginTop: theme.spacing.xs,
+  },
+  placeholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing['2xl'],
+    gap: theme.spacing.md,
+  },
+  placeholderTitle: {
+    textAlign: 'center',
+    marginTop: theme.spacing.sm,
+  },
+  placeholderDesc: {
+    textAlign: 'center',
+  },
+});

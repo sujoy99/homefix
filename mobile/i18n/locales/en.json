@@ -50,7 +50,8 @@
     "profile_photo": "Profile Photo",
     "upload_photo": "Upload Photo",
     "pending_approval_title": "Application Submitted!",
-    "pending_approval_desc": "Thank you for joining HomeFix. Our team is currently reviewing your documents. This usually takes 24-48 hours."
+    "pending_approval_desc": "Thank you for joining HomeFix. Our team is currently reviewing your documents. This usually takes 24-48 hours.",
+    "logout": "Log Out"
   },
   "onboarding": {
     "skip": "Skip",
@@ -90,6 +91,22 @@
     "photo_required": "Profile photo is required",
     "nid_photo_required": "NID photo is required for providers",
     "device_id_required": "Device ID is required"
+  },
+  "nav": {
+    "home": "Home",
+    "bookings": "Bookings",
+    "jobs": "Jobs",
+    "profile": "Profile",
+    "there": "there",
+    "greeting": "Hi, {{name}} 👋",
+    "resident_home_subtitle": "What do you need help with today?",
+    "provider_home_subtitle": "Welcome back. Here's your dashboard.",
+    "resident_home_coming": "Resident Home coming soon",
+    "provider_home_coming": "Provider Dashboard coming soon",
+    "bookings_coming": "Your bookings will appear here",
+    "jobs_coming": "Available jobs will appear here",
+    "profile_coming": "Full profile coming soon",
+    "signed_in_as": "Signed in as"
   },
   "status": {
     "pending": "Pending",
