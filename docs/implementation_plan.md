@@ -30,16 +30,16 @@
 
 > **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
 
-**Active Sprint:** Sprint 2 — Home, Navigation & Service Catalog  
-**Sprint Status:** ✅ Complete (Backend ✅, Mobile ✅)  
+**Active Sprint:** Sprint 3 — Booking & Job Lifecycle  
+**Sprint Status:** ⏳ Not Started  
 **Git Branch Convention:** `feature/HF-XXX-short-description`
 
 ### Next Ticket Per Platform
 
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
-| 🖥 Backend | — | Sprint 2 backend complete ✅ | — |
-| 📱 Mobile | **HF-031** | Job/Booking module (Sprint 3) | Sprint 3 |
+| 🖥 Backend | **HF-031** | Job/Booking module — state machine | — |
+| 📱 Mobile | **HF-034** | Create booking flow | HF-031 |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
 ### How to Pick Up Work
