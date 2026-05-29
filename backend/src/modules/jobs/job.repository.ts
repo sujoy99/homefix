@@ -66,4 +66,24 @@ export class JobRepository {
     if (providerId !== undefined) patch.provider_id = providerId;
     return Job.query(trx).patchAndFetchById(id, patch);
   }
+
+  static async appendMediaUrls(
+    id: string,
+    urls: string[],
+    trx?: TransactionOrKnex
+  ): Promise<Job | undefined> {
+    // Atomically concat new URLs into the existing JSONB array
+    return Job.query(trx)
+      .patchAndFetchById(id, {
+        media_urls: Job.raw(`media_urls || ?::jsonb`, [JSON.stringify(urls)]),
+      } as PartialModelObject<Job>);
+  }
+
+  static async setVoiceNote(
+    id: string,
+    voiceNoteUrl: string,
+    trx?: TransactionOrKnex
+  ): Promise<Job | undefined> {
+    return Job.query(trx).patchAndFetchById(id, { voice_note_url: voiceNoteUrl } as PartialModelObject<Job>);
+  }
 }

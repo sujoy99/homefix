@@ -9,6 +9,7 @@ import { NotFoundError, BadRequestError, ForbiddenError } from '@errors/http-err
 import { ErrorCode } from '@errors/error-code';
 import { UserRepository } from '@modules/users/user.repository';
 import { Job as JobModel } from './job.model';
+import { storageService } from '@modules/storage/storage.service';
 
 export class JobService {
   static async createJob(
@@ -87,6 +88,56 @@ export class JobService {
     // Transaction: status change + provider assignment must be atomic
     return transaction(JobModel.knex(), async (trx) => {
       const updated = await JobRepository.updateStatus(jobId, JobStatus.ACTIVE, providerId, trx);
+      return updated as unknown as Job;
+    });
+  }
+
+  static async addJobMedia(
+    jobId: string,
+    residentId: string,
+    files: Express.Multer.File[]
+  ): Promise<Job> {
+    const job = await JobService.getById(jobId);
+
+    if (job.resident_id !== residentId) {
+      throw new ForbiddenError(ErrorCode.JOB_ACCESS_DENIED, 'You do not own this job');
+    }
+
+    const existingCount = Array.isArray(job.media_urls) ? job.media_urls.length : 0;
+    if (existingCount + files.length > 10) {
+      throw new BadRequestError(
+        ErrorCode.VALIDATION_ERROR,
+        `Cannot upload more than 10 media files per job (already has ${existingCount})`
+      );
+    }
+
+    // Upload files to storage first (external — cannot be rolled back on DB failure)
+    const uploadedUrls = await Promise.all(
+      files.map((f) => storageService.save(f.buffer, f.originalname, f.mimetype).then((r) => r.url))
+    );
+
+    // Atomically append URLs into jobs.media_urls JSONB array
+    return transaction(JobModel.knex(), async (trx) => {
+      const updated = await JobRepository.appendMediaUrls(jobId, uploadedUrls, trx);
+      return updated as unknown as Job;
+    });
+  }
+
+  static async setVoiceNote(
+    jobId: string,
+    residentId: string,
+    file: Express.Multer.File
+  ): Promise<Job> {
+    const job = await JobService.getById(jobId);
+
+    if (job.resident_id !== residentId) {
+      throw new ForbiddenError(ErrorCode.JOB_ACCESS_DENIED, 'You do not own this job');
+    }
+
+    const { url } = await storageService.save(file.buffer, file.originalname, file.mimetype);
+
+    return transaction(JobModel.knex(), async (trx) => {
+      const updated = await JobRepository.setVoiceNote(jobId, url, trx);
       return updated as unknown as Job;
     });
   }

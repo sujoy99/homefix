@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { JobController } from './job.controller';
 import { validate } from '@middlewares/validate';
 import { createJobSchema, jobIdSchema, jobFeedSchema } from './job.schema';
@@ -7,6 +8,11 @@ import { roleGuard } from '@modules/auth/role.guard';
 import { asAuthenticated } from '@modules/auth/auth.adapter';
 import { asyncHandler } from '@utils/async-handler';
 import { UserRole } from '@modules/users/user.types';
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB per file
+});
 
 export const jobRouter = Router();
 
@@ -139,6 +145,84 @@ jobRouter.get(
   authGuard,
   validate(jobIdSchema),
   asyncHandler(asAuthenticated(JobController.getById))
+);
+
+/**
+ * @openapi
+ * /jobs/{id}/media:
+ *   post:
+ *     summary: Upload media files (photos/videos) for a job (REQ-010)
+ *     tags: [Jobs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               files:
+ *                 type: array
+ *                 items: { type: string, format: binary }
+ *     responses:
+ *       200:
+ *         description: Media uploaded and job updated
+ *       400:
+ *         description: No files, too many files, or wrong type
+ *       403:
+ *         description: Not the job owner
+ */
+jobRouter.post(
+  '/:id/media',
+  authGuard,
+  roleGuard(UserRole.RESIDENT),
+  validate(jobIdSchema),
+  upload.array('files', 10),
+  asyncHandler(asAuthenticated(JobController.addJobMedia))
+);
+
+/**
+ * @openapi
+ * /jobs/{id}/voice-note:
+ *   patch:
+ *     summary: Upload a voice note for a job (REQ-011, Sprint 4)
+ *     tags: [Jobs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Voice note saved
+ *       403:
+ *         description: Not the job owner
+ */
+jobRouter.patch(
+  '/:id/voice-note',
+  authGuard,
+  roleGuard(UserRole.RESIDENT),
+  validate(jobIdSchema),
+  upload.single('file'),
+  asyncHandler(asAuthenticated(JobController.setVoiceNote))
 );
 
 /**
