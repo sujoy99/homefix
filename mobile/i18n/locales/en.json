@@ -221,6 +221,22 @@
     "paid": "Paid",
     "cancelled": "Cancelled"
   },
+  "feed": {
+    "title": "Available Jobs",
+    "subtitle": "Jobs matching your trade",
+    "empty_title": "No jobs available",
+    "empty_desc": "There are no pending jobs matching your trade right now. Check back soon.",
+    "load_error": "Could not load jobs. Pull to retry.",
+    "distance_km": "{{km}} km away",
+    "distance_near": "Nearby",
+    "location_denied": "Enable location for distance sorting",
+    "posted": "Posted {{date}}",
+    "view_job": "View Job",
+    "budget": "Budget",
+    "budget_tbd": "Not specified",
+    "area_sqft": "{{sqft}} sq ft",
+    "desc_preview_label": "Description"
+  },
   "bookings": {
     "title": "My Bookings",
     "tab_upcoming": "Upcoming",

@@ -39,17 +39,6 @@ export type CreateJobPayload = {
   square_footage?: number;
 };
 
-export type JobFeedItem = Job & {
-  distance_km?: number;
-  category?: { id: string; name: string; name_bn: string | null };
-  resident?: { id: string; full_name: string; photo_url?: string | null };
-};
-
-export type JobFeedResponse = {
-  items: JobFeedItem[];
-  nextCursor: string | null;
-};
-
 type ApiResponse<T> = { status: string; body: T };
 
 export const jobService = {
@@ -89,8 +78,8 @@ export const jobService = {
     lon?: number;
     limit?: number;
     cursor?: string;
-  }): Promise<JobFeedResponse> => {
-    const res = await apiClient.get<ApiResponse<JobFeedResponse>>('/v2/jobs/feed', { params });
+  }): Promise<Job[]> => {
+    const res = await apiClient.get<ApiResponse<Job[]>>('/v2/jobs/feed', { params });
     return res.data.body;
   },
 
