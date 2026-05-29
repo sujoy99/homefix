@@ -92,6 +92,16 @@
     "nid_photo_required": "NID photo is required for providers",
     "device_id_required": "Device ID is required"
   },
+  "category": {
+    "providers": "Providers",
+    "sort_rating": "Top Rated",
+    "sort_experience": "Most Experienced",
+    "sort_rate": "Lowest Rate",
+    "hr": "hr",
+    "rate_negotiable": "Negotiable",
+    "reviews": "reviews",
+    "no_providers": "No providers available for this category yet"
+  },
   "home": {
     "subtitle": "What do you need help with today?",
     "search_placeholder": "Search services...",

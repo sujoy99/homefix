@@ -92,6 +92,16 @@
     "nid_photo_required": "এনআইডি ফটো প্রয়োজন (প্রোভাইডারদের জন্য)",
     "device_id_required": "ডিভাইস আইডি প্রয়োজন"
   },
+  "category": {
+    "providers": "প্রোভাইডার",
+    "sort_rating": "সর্বোচ্চ রেটিং",
+    "sort_experience": "সর্বাধিক অভিজ্ঞ",
+    "sort_rate": "সর্বনিম্ন রেট",
+    "hr": "ঘণ্টা",
+    "rate_negotiable": "আলোচনাসাপেক্ষ",
+    "reviews": "রিভিউ",
+    "no_providers": "এই ক্যাটাগরিতে এখনো কোনো প্রোভাইডার নেই"
+  },
   "home": {
     "subtitle": "আজকে কী সাহায্য দরকার?",
     "search_placeholder": "সার্ভিস খুঁজুন...",
