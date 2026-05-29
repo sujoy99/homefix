@@ -183,6 +183,7 @@
   },
   "nav": {
     "home": "Home",
+    "approvals": "Approvals",
     "bookings": "Bookings",
     "jobs": "Jobs",
     "profile": "Profile",
