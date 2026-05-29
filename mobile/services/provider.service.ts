@@ -1,0 +1,33 @@
+import { apiClient } from '@/api/client';
+
+export type ProviderSkill = {
+  id: string;
+  category_id: string;
+  is_primary: boolean;
+};
+
+export type AvailableProvider = {
+  id: string;
+  user_id: string;
+  bio: string | null;
+  experience_years: number;
+  hourly_rate: number | string | null;
+  is_available: boolean;
+  rating_avg: string;
+  total_reviews: number;
+  skills: ProviderSkill[];
+  user?: {
+    id: string;
+    full_name: string;
+    photo_url?: string | null;
+  };
+};
+
+type ApiResponse<T> = { status: string; body: T };
+
+export const providerService = {
+  listAvailable: async (): Promise<AvailableProvider[]> => {
+    const res = await apiClient.get<ApiResponse<AvailableProvider[]>>('/v2/providers/available');
+    return res.data.body;
+  },
+};

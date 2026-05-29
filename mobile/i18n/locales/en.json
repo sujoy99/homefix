@@ -92,6 +92,16 @@
     "nid_photo_required": "NID photo is required for providers",
     "device_id_required": "Device ID is required"
   },
+  "home": {
+    "subtitle": "What do you need help with today?",
+    "search_placeholder": "Search services...",
+    "categories": "Services",
+    "results_count": "{{count}} result(s)",
+    "no_categories": "No services found",
+    "near_you": "Available Providers",
+    "no_providers": "No providers available right now",
+    "unknown_provider": "Provider"
+  },
   "nav": {
     "home": "Home",
     "bookings": "Bookings",

@@ -92,6 +92,16 @@
     "nid_photo_required": "এনআইডি ফটো প্রয়োজন (প্রোভাইডারদের জন্য)",
     "device_id_required": "ডিভাইস আইডি প্রয়োজন"
   },
+  "home": {
+    "subtitle": "আজকে কী সাহায্য দরকার?",
+    "search_placeholder": "সার্ভিস খুঁজুন...",
+    "categories": "সার্ভিস সমূহ",
+    "results_count": "{{count}} ফলাফল",
+    "no_categories": "কোনো সার্ভিস পাওয়া যায়নি",
+    "near_you": "উপলব্ধ প্রোভাইডার",
+    "no_providers": "এখন কোনো প্রোভাইডার পাওয়া যাচ্ছে না",
+    "unknown_provider": "প্রোভাইডার"
+  },
   "nav": {
     "home": "হোম",
     "bookings": "বুকিং",
