@@ -29,6 +29,7 @@ export async function up(knex: Knex): Promise<void> {
     table.specificType('area', 'GEOGRAPHY(Point, 4326)').nullable(); // GIS column
     table.string('photo_url').nullable(); // User photo
     table.string('nid_photo_url').nullable(); // Provider NID photo
+    table.string('nid_photo_back_url').nullable();
     table.timestamps(true, true); // created_at, updated_at
   });
 

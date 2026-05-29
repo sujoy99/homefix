@@ -58,6 +58,7 @@ export class AuthService {
       auth_method = AuthMethod.PASSWORD,
       photo_url,
       nid_photo_url,
+      nid_photo_back_url,
     } = data;
 
     let hashedPassword = undefined;
@@ -110,6 +111,7 @@ export class AuthService {
       status,
       ...(photo_url !== undefined && { photo_url }),
       ...(nid_photo_url !== undefined && { nid_photo_url }),
+      ...(nid_photo_back_url !== undefined && { nid_photo_back_url }),
     };
 
     const result = await AuthRepository.createUser(payload);

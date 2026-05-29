@@ -108,15 +108,16 @@ export const userRegistrationSchema = z.object({
        */
       photo_url: z.string().optional(),
       nid_photo_url: z.string().optional(),
+      nid_photo_back_url: z.string().optional(),
       category_ids: z.array(z.string().uuid('Invalid category ID')).optional(),
     })
   .refine(
-    (data) =>
-      data.role !== UserRole.PROVIDER || !!data.nid_photo_url,
-    {
-      message: 'NID photo is required for provider',
-      path: ['nid_photo_url'],
-    }
+    (data) => data.role !== UserRole.PROVIDER || !!data.nid_photo_url,
+    { message: 'NID front photo is required for provider', path: ['nid_photo_url'] }
+  )
+  .refine(
+    (data) => data.role !== UserRole.PROVIDER || !!data.nid_photo_back_url,
+    { message: 'NID back photo is required for provider', path: ['nid_photo_back_url'] }
   ),
 });
 

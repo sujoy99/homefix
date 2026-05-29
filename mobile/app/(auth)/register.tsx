@@ -7,7 +7,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -18,9 +17,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   userRegistrationPayloadSchema,
   UserRegistrationPayload,
+  NidPhotoSource,
 } from '@homefix/shared';
 import { theme } from '@/theme';
 import { authService } from '@/services/auth.service';
+import { configService } from '@/services/config.service';
 import { UserRole, AuthMethod } from '@homefix/shared';
 import { ArrowLeft, ChevronRight, User as UserIcon, Phone, Lock, Mail, CreditCard, Camera, Upload, CheckCircle2 } from 'lucide-react-native';
 import { Text } from '@/components/ui/Text';
@@ -32,6 +33,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { getApiError } from '@/utils/apiError';
+import { toast } from '@/utils/toast';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -48,6 +50,15 @@ export default function RegisterScreen() {
     queryFn: categoryService.listActive,
     enabled: isProvider,
   });
+
+  const { data: appConfig } = useQuery({
+    queryKey: ['config', 'public'],
+    queryFn: configService.getPublic,
+    staleTime: 5 * 60_000,
+    enabled: isProvider,
+  });
+
+  const nidCameraOnly = appConfig?.nid_photo_source !== NidPhotoSource.CAMERA_AND_GALLERY;
 
   const {
     control,
@@ -70,6 +81,7 @@ export default function RegisterScreen() {
       password: '',
       photo_url: '',
       nid_photo_url: '',
+      nid_photo_back_url: '',
     },
   });
 
@@ -77,14 +89,23 @@ export default function RegisterScreen() {
   const longitude = watch('longitude');
   const photoUrl = watch('photo_url');
   const nidPhotoUrl = watch('nid_photo_url');
+  const nidPhotoBackUrl = watch('nid_photo_back_url');
 
-  const pickImage = async (field: 'photo_url' | 'nid_photo_url') => {
-    const result = await ImagePicker.launchImageLibraryAsync({
+  const pickImage = async (field: 'photo_url' | 'nid_photo_url' | 'nid_photo_back_url') => {
+    const isNidField = field !== 'photo_url';
+    const useCamera = isNidField && nidCameraOnly;
+
+    const options: ImagePicker.ImagePickerOptions = {
       mediaTypes: ['images'],
       allowsEditing: true,
-      aspect: field === 'photo_url' ? [1, 1] : [16, 9],
-      quality: 0.7,
-    });
+      aspect: field === 'photo_url' ? [1, 1] : [4, 3],
+      quality: 0.8,
+    };
+
+    const result = useCamera
+      ? await ImagePicker.launchCameraAsync(options)
+      : await ImagePicker.launchImageLibraryAsync(options);
+
     if (!result.canceled) {
       setValue(field, result.assets[0].uri);
     }
@@ -102,7 +123,7 @@ export default function RegisterScreen() {
       }
     } catch (error) {
       setLoading(false);
-      Alert.alert(t('common.error'), getApiError(error, t));
+      toast.error(getApiError(error, t));
     }
   };
 
@@ -113,7 +134,7 @@ export default function RegisterScreen() {
       fieldsToValidate = ['full_name', 'mobile', 'nid'];
     } else if (step === 2) {
       if (latitude === 0 && longitude === 0) {
-        Alert.alert(t('common.error'), t('validation.location_required'));
+        toast.error(t('validation.location_required'));
         return;
       }
     } else if (step === 3) {
@@ -129,11 +150,11 @@ export default function RegisterScreen() {
     if (step === 3 && !isProvider) {
       handleSubmit(onSubmit)();
     } else if (step === 4 && isProvider) {
-      const isValid = await trigger(['nid_photo_url']);
+      const isValid = await trigger(['nid_photo_url', 'nid_photo_back_url']);
       if (isValid) setStep(5);
     } else if (step === 5 && isProvider) {
       if (selectedCategoryIds.length === 0) {
-        Alert.alert(t('common.error'), t('auth.skills_min'));
+        toast.error(t('auth.skills_min'));
         return;
       }
       handleSubmit(onSubmit)();
@@ -288,10 +309,27 @@ export default function RegisterScreen() {
             </>
           )}
         </TouchableOpacity>
+        {errors.nid_photo_url && (
+          <Text style={styles.errorText}>{t(errors.nid_photo_url.message!)}</Text>
+        )}
       </View>
-      {errors.nid_photo_url && (
-        <Text style={styles.errorText}>{errors.nid_photo_url.message}</Text>
-      )}
+
+      <View style={styles.uploadGroup}>
+        <Text style={styles.uploadLabel}>{t('auth.nid_photo_back')}</Text>
+        <TouchableOpacity style={styles.uploadCard} onPress={() => pickImage('nid_photo_back_url')}>
+          {nidPhotoBackUrl ? (
+            <Image source={{ uri: nidPhotoBackUrl }} style={styles.previewImage} />
+          ) : (
+            <>
+              <Upload size={32} color={theme.colors.textMuted} />
+              <Text style={styles.uploadText}>{t('auth.upload_photo')}</Text>
+            </>
+          )}
+        </TouchableOpacity>
+        {errors.nid_photo_back_url && (
+          <Text style={styles.errorText}>{t(errors.nid_photo_back_url.message!)}</Text>
+        )}
+      </View>
     </View>
   );
 

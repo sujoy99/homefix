@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   ScrollView,
@@ -7,6 +7,8 @@ import {
   Switch,
   Alert,
   ActivityIndicator,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
@@ -18,18 +20,16 @@ import {
   ChevronRight,
   LogOut,
   Camera,
-  Plus,
-  X,
-  Wrench,
+  Check,
+  Pencil,
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { useAuthStore } from '@/store/authStore';
-import { categoryService, type Category } from '@/services/category.service';
+import { categoryService } from '@/services/category.service';
 import { providerService } from '@/services/provider.service';
 import { UserRole } from '@homefix/shared';
 import { theme } from '@/theme';
@@ -106,25 +106,42 @@ export default function ProfileScreen() {
   });
 
   const mySkills = myProfile?.skills ?? [];
-  const mySkillCategoryIds = new Set(mySkills.map((s) => s.category_id));
-  const availableToAdd = allCategories.filter((c) => !mySkillCategoryIds.has(c.id));
+  const skillsBusy = addingSkill || removingSkill;
 
-  const handleAddSkill = () => {
-    if (availableToAdd.length === 0) {
-      Alert.alert(t('profile.my_services'), t('profile.all_services_added'));
+  // Multi-select modal state
+  const [showServicePicker, setShowServicePicker] = useState(false);
+  const [tempSelected, setTempSelected] = useState<string[]>([]);
+
+  const openServicePicker = useCallback(() => {
+    setTempSelected(mySkills.map((s) => s.category_id));
+    setShowServicePicker(true);
+  }, [mySkills]);
+
+  const toggleTemp = (categoryId: string) => {
+    setTempSelected((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
+  const confirmSelection = () => {
+    if (tempSelected.length === 0) {
+      Alert.alert(t('common.error'), t('profile.skills_min'));
       return;
     }
-    Alert.alert(
-      t('profile.add_service'),
-      t('profile.select_service'),
-      [
-        ...availableToAdd.map((cat) => ({
-          text: i18n.language === 'bn' && cat.name_bn ? cat.name_bn : cat.name,
-          onPress: () => addSkill(cat.id),
-        })),
-        { text: t('common.cancel'), style: 'cancel' as const },
-      ]
-    );
+    const currentIds = new Set(mySkills.map((s) => s.category_id));
+    const newIds = new Set(tempSelected);
+
+    mySkills
+      .filter((s) => !newIds.has(s.category_id))
+      .forEach((s) => removeSkill(s.id));
+
+    tempSelected
+      .filter((id) => !currentIds.has(id))
+      .forEach((id) => addSkill(id));
+
+    setShowServicePicker(false);
   };
 
   const handleLogout = () => {
@@ -212,63 +229,109 @@ export default function ProfileScreen() {
 
         {/* My Services — provider only */}
         {isProvider && (
-          <Card style={styles.section}>
-            <View style={styles.skillsHeader}>
-              <Text variant="h4" weight="semibold">{t('profile.my_services')}</Text>
-              <TouchableOpacity
-                onPress={handleAddSkill}
-                disabled={addingSkill}
-                style={styles.addSkillBtn}
-                hitSlop={8}
-              >
-                <Plus color={theme.colors.primary} size={20} />
-              </TouchableOpacity>
-            </View>
-
-            {loadingProfile ? (
-              <ActivityIndicator color={theme.colors.primary} style={{ marginVertical: 8 }} />
-            ) : mySkills.length === 0 ? (
-              <View style={styles.skillsEmpty}>
-                <Wrench color={theme.colors.textMuted} size={22} />
-                <Text variant="caption" color="muted" style={styles.skillsEmptyText}>
-                  {t('profile.no_services')}
-                </Text>
+          <>
+            <Card style={styles.section}>
+              <View style={styles.serviceHeader}>
+                <Text variant="h4" weight="semibold">{t('profile.my_services')}</Text>
+                <TouchableOpacity
+                  style={styles.editBtn}
+                  onPress={openServicePicker}
+                  disabled={loadingProfile || skillsBusy}
+                  hitSlop={8}
+                >
+                  <Pencil color={theme.colors.primary} size={16} />
+                  <Text variant="caption" color="primary" weight="medium" style={styles.editBtnLabel}>
+                    {t('common.edit')}
+                  </Text>
+                </TouchableOpacity>
               </View>
-            ) : (
-              <View style={styles.skillChips}>
-                {mySkills.map((skill) => {
+
+              {loadingProfile ? (
+                <ActivityIndicator color={theme.colors.primary} style={{ marginVertical: 8 }} />
+              ) : mySkills.length === 0 ? (
+                <TouchableOpacity onPress={openServicePicker} style={styles.noServicesBtn}>
+                  <Text variant="caption" color="muted">{t('profile.no_services_tap')}</Text>
+                </TouchableOpacity>
+              ) : (
+                mySkills.map((skill, idx) => {
                   const cat = allCategories.find((c) => c.id === skill.category_id);
-                  const label =
-                    i18n.language === 'bn' && cat?.name_bn ? cat.name_bn : (cat?.name ?? '');
+                  const label = i18n.language === 'bn' && cat?.name_bn ? cat.name_bn : (cat?.name ?? '');
                   return (
-                    <View
-                      key={skill.id}
-                      style={[styles.skillChip, skill.is_primary && styles.skillChipPrimary]}
-                    >
-                      <Text
-                        variant="caption"
-                        weight="medium"
-                        color={skill.is_primary ? 'inverse' : 'primary'}
-                      >
-                        {label}{skill.is_primary ? ' ★' : ''}
-                      </Text>
-                      <TouchableOpacity
-                        onPress={() => removeSkill(skill.id)}
-                        disabled={removingSkill}
-                        hitSlop={8}
-                        style={styles.removeSkillBtn}
-                      >
-                        <X
-                          color={skill.is_primary ? theme.colors.textInverse : theme.colors.primary}
-                          size={12}
-                        />
-                      </TouchableOpacity>
+                    <View key={skill.id}>
+                      {idx > 0 && <View style={styles.divider} />}
+                      <View style={styles.serviceRow}>
+                        <Text variant="body" weight={skill.is_primary ? 'semibold' : 'regular'}>
+                          {label}
+                        </Text>
+                        {skill.is_primary && (
+                          <View style={styles.primaryBadge}>
+                            <Text variant="caption" color="inverse" weight="semibold">
+                              {t('profile.primary')}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
                     </View>
                   );
-                })}
+                })
+              )}
+            </Card>
+
+            {/* Multi-select picker modal */}
+            <Modal
+              visible={showServicePicker}
+              animationType="slide"
+              transparent
+              onRequestClose={() => setShowServicePicker(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalSheet}>
+                  <View style={styles.modalHeader}>
+                    <Text variant="h4" weight="bold">{t('profile.select_services')}</Text>
+                    <Text variant="caption" color="muted">{t('profile.select_services_hint')}</Text>
+                  </View>
+
+                  <FlatList
+                    data={allCategories}
+                    keyExtractor={(c) => c.id}
+                    style={styles.modalList}
+                    renderItem={({ item: cat }) => {
+                      const selected = tempSelected.includes(cat.id);
+                      const label = i18n.language === 'bn' && cat.name_bn ? cat.name_bn : cat.name;
+                      return (
+                        <TouchableOpacity
+                          style={styles.modalRow}
+                          onPress={() => toggleTemp(cat.id)}
+                          activeOpacity={0.7}
+                        >
+                          <Text variant="body" style={styles.modalRowLabel}>{label}</Text>
+                          <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
+                            {selected && <Check color={theme.colors.textInverse} size={14} />}
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    }}
+                    ItemSeparatorComponent={() => <View style={styles.divider} />}
+                  />
+
+                  <View style={styles.modalFooter}>
+                    <TouchableOpacity
+                      style={[styles.modalBtn, styles.cancelBtn]}
+                      onPress={() => setShowServicePicker(false)}
+                    >
+                      <Text variant="body" weight="semibold" color="primary">{t('common.cancel')}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.modalBtn, styles.doneBtn]}
+                      onPress={confirmSelection}
+                    >
+                      <Text variant="body" weight="semibold" color="inverse">{t('common.save')}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
-            )}
-          </Card>
+            </Modal>
+          </>
         )}
 
         {/* Preferences */}
@@ -302,13 +365,17 @@ export default function ProfileScreen() {
         </Card>
 
         {/* Logout */}
-        <Button
-          variant="outline"
-          label={t('auth.logout')}
-          leftIcon={<LogOut color={theme.colors.primary} size={18} />}
-          onPress={handleLogout}
-          style={styles.logoutButton}
-        />
+        <Card style={[styles.section, styles.logoutCard]}>
+          <TouchableOpacity style={styles.logoutRow} onPress={handleLogout} activeOpacity={0.7}>
+            <View style={styles.logoutIconWrap}>
+              <LogOut color={theme.colors.error} size={18} />
+            </View>
+            <Text variant="body" weight="semibold" style={styles.logoutText}>
+              {t('auth.logout')}
+            </Text>
+            <ChevronRight color={theme.colors.error} size={18} />
+          </TouchableOpacity>
+        </Card>
       </ScrollView>
     </SafeAreaView>
   );
@@ -381,31 +448,112 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   prefLabel: { marginLeft: 2 },
-  logoutButton: { marginTop: theme.spacing.sm },
-  skillsHeader: {
+  logoutCard: { padding: 0, overflow: 'hidden', marginBottom: theme.spacing.xl },
+  logoutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    padding: theme.spacing.md,
+  },
+  logoutIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: theme.layout.radius.md,
+    backgroundColor: theme.colors.errorBackground,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoutText: { flex: 1, color: theme.colors.error },
+  serviceHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: theme.spacing.sm,
   },
-  addSkillBtn: { padding: 4 },
-  skillsEmpty: { alignItems: 'center', paddingVertical: theme.spacing.sm, gap: 6 },
-  skillsEmptyText: { marginTop: 2 },
-  skillChips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm },
-  skillChip: {
+  editBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 6,
-    borderRadius: theme.layout.radius.full,
-    backgroundColor: theme.colors.background,
-    borderWidth: 1,
-    borderColor: theme.colors.primary,
+    padding: 4,
   },
-  skillChipPrimary: {
+  editBtnLabel: { marginTop: 1 },
+  noServicesBtn: {
+    paddingVertical: theme.spacing.sm,
+  },
+  serviceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    paddingVertical: theme.spacing.sm,
+  },
+  primaryBadge: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.layout.radius.full,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 2,
+  },
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: theme.colors.surface,
+    borderTopLeftRadius: theme.layout.radius.xl,
+    borderTopRightRadius: theme.layout.radius.xl,
+    maxHeight: '75%',
+    paddingBottom: theme.spacing.xl,
+  },
+  modalHeader: {
+    padding: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    gap: 4,
+  },
+  modalList: {
+    paddingHorizontal: theme.spacing.md,
+  },
+  modalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: theme.spacing.md,
+  },
+  modalRowLabel: { flex: 1 },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: theme.layout.radius.sm,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxSelected: {
     backgroundColor: theme.colors.primary,
     borderColor: theme.colors.primary,
   },
-  removeSkillBtn: { padding: 2 },
+  modalFooter: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
+  modalBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: theme.layout.radius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cancelBtn: {
+    borderWidth: 1.5,
+    borderColor: theme.colors.primary,
+  },
+  doneBtn: {
+    backgroundColor: theme.colors.primary,
+  },
 });

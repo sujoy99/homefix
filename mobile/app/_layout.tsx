@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/authStore';
 import { View, ActivityIndicator } from 'react-native';
 import { theme } from '../theme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toast } from '@/components/ui/Toast';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,7 +59,10 @@ export default function RootLayout() {
   // Render the current route
   return (
     <QueryClientProvider client={queryClient}>
-      <Slot />
+      <View style={{ flex: 1 }}>
+        <Slot />
+        <Toast />
+      </View>
     </QueryClientProvider>
   );
 }

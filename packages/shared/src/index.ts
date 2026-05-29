@@ -23,6 +23,7 @@ export { PaymentMethod, PaymentStatus, REQUIRES_TRANSACTION_ID, CURRENCY_CODE, C
 // ── Constants ──────────────────────────────────
 export { PLATFORM_COMMISSION_RATE, PROVIDER_PAYOUT_RATE, calculateCommission } from './constants/commission';
 export { JOB_STATUS_LABELS, PAYMENT_STATUS_LABELS, USER_STATUS_LABELS } from './constants/status';
+export { PlatformSettingKey, NidPhotoSource } from './constants/platform-settings';
 
 // ── Validation ───────────────────────────────────
 export { userRegistrationPayloadSchema, userLoginPayloadSchema, PASSWORD_REGEX } from './validation/auth.schema';

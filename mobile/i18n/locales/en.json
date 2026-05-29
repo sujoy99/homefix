@@ -10,7 +10,8 @@
     "next": "Next",
     "back": "Back",
     "submit": "Submit",
-    "complete": "Complete"
+    "complete": "Complete",
+    "edit": "Edit"
   },
   "auth": {
     "login": "Login",
@@ -46,7 +47,8 @@
     "step_location": "Your Location",
     "step_auth": "Security",
     "step_documents": "Documents",
-    "nid_photo": "NID Photo",
+    "nid_photo": "NID Photo (Front Side)",
+    "nid_photo_back": "NID Photo (Back Side)",
     "profile_photo": "Profile Photo",
     "upload_photo": "Upload Photo",
     "pending_approval_title": "Application Submitted!",
@@ -92,7 +94,8 @@
     "password_complexity": "Password must include uppercase, lowercase, number, and special character",
     "location_required": "Please select your location",
     "photo_required": "Profile photo is required",
-    "nid_photo_required": "NID photo is required for providers",
+    "nid_photo_required": "NID front photo is required for providers",
+    "nid_photo_back_required": "NID back photo is required for providers",
     "device_id_required": "Device ID is required"
   },
   "profile": {
@@ -115,7 +118,12 @@
     "select_service": "Select the service you want to add:",
     "all_services_added": "You have already added all available service categories.",
     "skill_add_error": "Could not add service. Please try again.",
-    "skill_remove_error": "Could not remove service. Please try again."
+    "skill_remove_error": "Could not remove service. Please try again.",
+    "primary": "Primary",
+    "select_services": "Select Services",
+    "select_services_hint": "Pick at least one service you offer",
+    "no_services_tap": "No services yet. Tap Edit to add.",
+    "skills_min": "Please select at least one service"
   },
   "admin": {
     "title": "Admin Dashboard",

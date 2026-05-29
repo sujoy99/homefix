@@ -515,6 +515,7 @@ modules/payments/
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
 | HF-068 | Admin panel — provider verification (approve/reject + NID preview) | ⏳ | 8h |
+| HF-068B | **Mobile admin screen upgrade** — expand minimal Approvals tab to show provider detail with NID photo, profile photo, location map, and registration data before approve/reject. Must mirror HF-068 web panel scope. Currently only shows name/mobile/email. | ⏳ | 4h |
 | HF-069 | Admin panel — service category management (CRUD, requires_area) | ⏳ | 6h |
 | HF-070 | Admin panel — revenue dashboard (total revenue, commission breakdown by rule) | ⏳ | 6h |
 | HF-071 | Admin panel — user management (list, search, status change) | ⏳ | 6h |
@@ -618,6 +619,7 @@ Every SRS requirement mapped to its implementing ticket(s):
 | 2026-05-26 | 3.0 | All sprints segregated by platform (Backend / Mobile / Web / Shared). Commission engine made configurable — added HF-056B (admin commission rules API) and HF-071B (admin commission UI). HF-073 extended for expired promotion cleanup. |
 | 2026-05-28 | 3.1 | Sprint 1 closed. Current Focus updated to Sprint 2. Backend: UniqueViolationError handling moved from global error handler to repository layer via `db-error-map.ts` (scales cleanly as more tables/constraints are added). |
 | 2026-05-28 | 3.2 | Post-Sprint-1 code review completed. Sprint 1 Hardening sprint added (HF-085 to HF-099, 15 tickets). Current Focus updated to Sprint 1 Hardening. Sprint 2 blocked until Group 1 + Group 2 hardening tickets are complete. Total tickets: 96. |
+| 2026-05-29 | 3.4 | Sprint 2 mobile complete + QA bug fixes (availability toggle, tab bar structure, provider skills flow, admin approval screen). HF-068B added: mobile admin screen must be upgraded in Sprint 7 alongside HF-068 web panel to include provider detail view with NID/photo attachments before approve/reject. |
 | 2026-05-28 | 3.3 | Sprint 2 backend complete (HF-021 to HF-024). Added fully DB-driven RBAC system (roles, permissions, role_permissions tables; admin API; PermissionCache; docs/RBAC.md). param() utility added to @utils for Express 5 route param access. 67 tests passing across 6 suites. |
 
 ---
