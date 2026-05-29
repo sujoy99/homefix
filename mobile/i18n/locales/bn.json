@@ -92,6 +92,21 @@
     "nid_photo_required": "এনআইডি ফটো প্রয়োজন (প্রোভাইডারদের জন্য)",
     "device_id_required": "ডিভাইস আইডি প্রয়োজন"
   },
+  "profile": {
+    "personal_info": "ব্যক্তিগত তথ্য",
+    "preferences": "পছন্দসমূহ",
+    "language": "ভাষা",
+    "dark_mode": "ডার্ক মোড",
+    "tap_to_update": "অবস্থান আপডেট করতে ট্যাপ করুন",
+    "edit": "প্রোফাইল সম্পাদনা",
+    "edit_coming": "প্রোফাইল সম্পাদনা শীঘ্রই আসছে (HF-030)",
+    "photo_upload": "ছবি আপডেট করুন",
+    "photo_coming": "ছবি আপলোড শীঘ্রই আসছে",
+    "location_update": "অবস্থান আপডেট করুন",
+    "location_coming": "অবস্থান আপডেট শীঘ্রই আসছে",
+    "logout_confirm_title": "লগ আউট",
+    "logout_confirm_desc": "আপনি কি নিশ্চিতভাবে লগ আউট করতে চান?"
+  },
   "provider_home": {
     "subtitle": "এখানে আপনার ড্যাশবোর্ড",
     "availability": "উপলব্ধতা",

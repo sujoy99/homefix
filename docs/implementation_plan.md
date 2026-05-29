@@ -16,7 +16,7 @@
 | Sprint 0 — Foundation | ✅ Completed | 2026-04-19 | 2026-05-27 |
 | Sprint 1 — Auth Screens | ✅ Completed | 2026-04-19 | 2026-05-28 |
 | Sprint 1 Hardening — Code Review Fixes | ✅ Completed | 2026-05-28 | 2026-05-28 |
-| Sprint 2 — Home + Categories | ⏳ Not Started | — | — |
+| Sprint 2 — Home + Categories | ✅ Completed | 2026-05-29 | 2026-05-29 |
 | Sprint 3 — Booking + Jobs | ⏳ Not Started | — | — |
 | Sprint 4 — Voice + Accessibility | ⏳ Not Started | — | — |
 | Sprint 5 — Reviews + Notifications | ⏳ Not Started | — | — |
@@ -31,7 +31,7 @@
 > **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
 
 **Active Sprint:** Sprint 2 — Home, Navigation & Service Catalog  
-**Sprint Status:** 🔄 In Progress (Backend ✅, Mobile ⏳)  
+**Sprint Status:** ✅ Complete (Backend ✅, Mobile ✅)  
 **Git Branch Convention:** `feature/HF-XXX-short-description`
 
 ### Next Ticket Per Platform
@@ -39,7 +39,7 @@
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
 | 🖥 Backend | — | Sprint 2 backend complete ✅ | — |
-| 📱 Mobile | **HF-030** | Profile screen | — |
+| 📱 Mobile | **HF-031** | Job/Booking module (Sprint 3) | Sprint 3 |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
 ### How to Pick Up Work
@@ -394,7 +394,7 @@ modules/payments/
 | HF-027 | Category listing — providers filtered by category, distance, rating | ✅ | 6h |
 | HF-028 | Provider detail screen (skills, rating, reviews, "Book Now" CTA) | ✅ | 6h |
 | HF-029 | Provider home screen (dashboard: active jobs, earnings, availability toggle) | ✅ | 6h |
-| HF-030 | Profile screen (view/edit, photo upload, location update, language pref) | ⏳ | 6h |
+| HF-030 | Profile screen (view/edit, photo upload, location update, language pref) | ✅ | 6h |
 
 **Deliverable:** Main app with category browsing, provider discovery, profiles.
 

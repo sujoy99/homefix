@@ -92,6 +92,21 @@
     "nid_photo_required": "NID photo is required for providers",
     "device_id_required": "Device ID is required"
   },
+  "profile": {
+    "personal_info": "Personal Information",
+    "preferences": "Preferences",
+    "language": "Language",
+    "dark_mode": "Dark Mode",
+    "tap_to_update": "Tap to update location",
+    "edit": "Edit Profile",
+    "edit_coming": "Profile editing coming soon (HF-030)",
+    "photo_upload": "Update Photo",
+    "photo_coming": "Photo upload coming soon",
+    "location_update": "Update Location",
+    "location_coming": "Location update coming soon",
+    "logout_confirm_title": "Log Out",
+    "logout_confirm_desc": "Are you sure you want to log out?"
+  },
   "provider_home": {
     "subtitle": "Here's your dashboard",
     "availability": "Availability",
