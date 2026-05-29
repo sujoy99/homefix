@@ -24,16 +24,15 @@ export function getTestDb(): Knex {
 
 export async function truncateAll(): Promise<void> {
   const db = getTestDb();
-  await db.raw(`
-    TRUNCATE TABLE
-      provider_skills,
-      provider_profiles,
-      auth_refresh_tokens,
-      auth_accounts,
-      users,
-      categories
-    RESTART IDENTITY CASCADE
-  `);
+  // DELETE instead of TRUNCATE to avoid ACCESS EXCLUSIVE locks that
+  // kill the app's connection pool (especially with PostGIS generated columns)
+  await db.raw(`DELETE FROM jobs`);
+  await db.raw(`DELETE FROM provider_skills`);
+  await db.raw(`DELETE FROM provider_profiles`);
+  await db.raw(`DELETE FROM auth_refresh_tokens`);
+  await db.raw(`DELETE FROM auth_accounts`);
+  await db.raw(`DELETE FROM users`);
+  await db.raw(`DELETE FROM categories`);
 }
 
 export async function closeTestDb(): Promise<void> {

@@ -32,3 +32,15 @@ export const skillIdSchema = z.object({
 export const providerUserIdSchema = z.object({
   params: z.object({ user_id: z.uuid() }),
 });
+
+export const listAvailableSchema = z.object({
+  query: z.object({
+    lat: z.coerce.number().min(-90).max(90).optional(),
+    lon: z.coerce.number().min(-180).max(180).optional(),
+    radius: z.coerce.number().positive().max(100).optional(),
+    category: z.uuid().optional(),
+  }).refine(
+    (q) => (q.lat === undefined) === (q.lon === undefined),
+    { message: 'lat and lon must both be provided or both omitted' }
+  ),
+});

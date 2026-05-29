@@ -103,6 +103,54 @@ const result = await transaction(User.knex(), async (trx) => {
 const user = await User.query().findById(id).withGraphFetched('authAccounts');
 ```
 
+## Transaction & Rollback Rules
+
+**Rule:** Any service method that writes to **more than one table** — or that is a critical state transition (status machine) — MUST use an Objection.js transaction. The `asyncHandler` + global `errorHandler` provide the try-catch; transaction rollback is automatic on throw.
+
+**Repository pattern** — accept an optional `trx` on every write method so the caller can compose them into one transaction:
+
+```typescript
+// ✅ Repository method — accepts optional trx
+import { TransactionOrKnex } from 'objection';
+
+static async create(data: CreateInput, trx?: TransactionOrKnex): Promise<MyModel> {
+  return MyModel.query(trx).insertAndFetch(payload);
+}
+
+static async updateStatus(id: string, status: string, trx?: TransactionOrKnex): Promise<MyModel | undefined> {
+  return MyModel.query(trx).patchAndFetchById(id, { status });
+}
+```
+
+**Service pattern** — own the transaction boundary:
+
+```typescript
+// ✅ Service method — wraps multi-table writes in a transaction
+import { transaction } from 'objection';
+import { MyModel } from './my.model';
+
+static async doSomething(data: Input): Promise<Result> {
+  // Validation / guards BEFORE the transaction (avoids holding locks)
+  const related = await OtherRepository.findById(data.related_id);
+  if (!related) throw new NotFoundError(...);
+
+  return transaction(MyModel.knex(), async (trx) => {
+    const record = await MyRepository.create(data, trx);
+    await AnotherRepository.create({ record_id: record.id, ... }, trx);
+    return record;
+  });
+}
+```
+
+**When to use a transaction:**
+- Writing to 2+ tables in a single operation
+- Critical state-machine transitions (job status, payment status)
+- Any "create + link" pattern (e.g., job + media records)
+
+**When NOT to use a transaction:**
+- Read-only queries (even across multiple tables)
+- Single-table writes with no related side effects
+
 ## Environment Variables
 
 Required variables (throw at startup if missing) use `required()` from `@utils/env-handler`. Optional ones use `process.env.X ?? 'default'`. All env config is in `src/config/env.ts` — never read `process.env` directly outside of that file.

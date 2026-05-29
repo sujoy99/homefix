@@ -49,6 +49,14 @@ export enum ErrorCode {
   VALIDATION_ERROR = 'VALIDATION_ERROR',
 
   /* =========================
+   * Jobs / Booking
+   * ========================= */
+  INVALID_STATE_TRANSITION = 'INVALID_STATE_TRANSITION',
+  SQUARE_FOOTAGE_REQUIRED = 'SQUARE_FOOTAGE_REQUIRED',
+  PROVIDER_NOT_ELIGIBLE = 'PROVIDER_NOT_ELIGIBLE',
+  JOB_ACCESS_DENIED = 'JOB_ACCESS_DENIED',
+
+  /* =========================
    * System
    * ========================= */
   INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',

@@ -362,4 +362,68 @@ backend/src/modules/auth/
 
 ---
 
+## 9. Sprint Test Completion Standard
+
+> **Every sprint MUST have all automated tests passing before the branch is merged to master.**
+
+### Rule
+
+No sprint is "done" until:
+1. All new automated tests for that sprint are written and **pass 100%**
+2. Existing tests from previous sprints still pass (no regressions)
+3. A `TESTING_SPRINT<N>_<PLATFORM>.md` test guide is written
+
+### Backend (per sprint)
+
+```bash
+# Run only the new sprint's tests
+npm test -- --testPathPattern="<module>" --forceExit
+
+# Run the full backend suite (regression check)
+npm test -- --forceExit
+```
+
+Checklist before merge:
+- [ ] Integration tests cover all new endpoints (happy path + each error code)
+- [ ] New factory helpers added to `tests/factories/`
+- [ ] `tests/helpers/db.ts::truncateAll` updated with any new tables
+- [ ] TypeScript type-check passes: `npm run type-check`
+
+### Mobile (per sprint)
+
+```bash
+cd mobile && npx jest --forceExit
+```
+
+Checklist before merge:
+- [ ] Store tests cover state transitions
+- [ ] Service layer tests mock the API client
+- [ ] No `console.error` output from failing renders
+
+### What "passing tests" means
+
+| Signal | Interpretation |
+|--------|----------------|
+| `Tests: N passed, N total` | ✅ Ship it |
+| Any `✕` in output | ❌ Do not merge — fix first |
+| Type-check error | ❌ Do not merge — fix first |
+| Test suite times out | ❌ Investigate DB connection / lock issues |
+
+### Automated test report format
+
+Each sprint produces a `docs/TESTING_SPRINT<N>_<PLATFORM>.md` with:
+- Automated test result table (passed/failed counts)
+- Manual test cases for flows that can't be automated (file upload golden path, map UI)
+- Error code reference for new codes introduced in that sprint
+- Setup instructions (migrations, seeds, env)
+
+**Document naming convention (two files per sprint):**
+- `docs/SPRINT<N>_USER_MANUAL.md` — Screen-by-screen guide for QA/business stakeholders; step-by-step with result checkboxes
+- `docs/TESTING_SPRINT<N>_BACKEND.md` — Backend automated test results + API-level manual cases + error code reference
+- `docs/TESTING_SPRINT<N>_MOBILE.md` — Mobile automated test results + mobile error code mapping
+
+**Reference files:** `docs/SPRINT1_USER_MANUAL.md`, `docs/SPRINT2_USER_MANUAL.md`, `docs/SPRINT3_USER_MANUAL.md`, `docs/TESTING_SPRINT3_BACKEND.md`, `docs/TESTING_SPRINT3_MOBILE.md`
+
+---
+
 > These standards will be enforced from Sprint 0 onwards. Any deviation must be documented with rationale.
