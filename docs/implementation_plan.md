@@ -39,7 +39,7 @@
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
 | 🖥 Backend | ✅ HF-031/032/033 Done | All backend tickets complete | — |
-| 📱 Mobile | **HF-034** | Create booking flow | ✅ HF-031 Done |
+| 📱 Mobile | ✅ All Sprint 3 mobile tickets complete | — | — |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
 ### How to Pick Up Work
@@ -427,14 +427,14 @@ modules/payments/
 
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
-| HF-034 | Create booking flow (category → describe → photos → address → date → budget) | ⏳ | 10h |
-| HF-035 | Area input — conditional sq. footage when `requires_area` (REQ-006) | ⏳ | 3h |
-| HF-036 | Service address input — separate from home address (REQ-008,009) | ⏳ | 4h |
-| HF-037 | Resident bookings list (Upcoming, Active, Awaiting Payment, Completed) | ⏳ | 6h |
-| HF-038 | Provider job feed — available jobs by trade, sorted by distance (REQ-015) | ⏳ | 6h |
-| HF-039 | Job accept/reject for provider (REQ-016) | ⏳ | 4h |
-| HF-040 | Job status tracking card (real-time updates) | ⏳ | 6h |
-| HF-041 | Provider marks "Work Complete" → Awaiting Payment (REQ-017) | ⏳ | 3h |
+| HF-034 | Create booking flow (category → describe → photos → address → date → budget) | ✅ | 10h |
+| HF-035 | Area input — conditional sq. footage when `requires_area` (REQ-006) | ✅ | 3h |
+| HF-036 | Service address input — separate from home address (REQ-008,009) | ✅ | 4h |
+| HF-037 | Resident bookings list (Upcoming, Active, Awaiting Payment, Completed) | ✅ | 6h |
+| HF-038 | Provider job feed — available jobs by trade, sorted by distance (REQ-015) | ✅ | 6h |
+| HF-039 | Job accept/reject for provider (REQ-016) | ✅ | 4h |
+| HF-040 | Job status tracking card (real-time updates) | ✅ | 6h |
+| HF-041 | Provider marks "Work Complete" → Awaiting Payment (REQ-017) | ✅ | 3h |
 
 **Deliverable:** End-to-end booking flow with status machine.
 

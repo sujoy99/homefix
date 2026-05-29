@@ -15,7 +15,6 @@ import { JobStatus } from '@homefix/shared';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
-import { Screen } from '@/components/ui/Screen';
 import { JobCard } from '@/components/shared/JobCard';
 import { jobService, Job } from '@/services/job.service';
 import { categoryService } from '@/services/category.service';
@@ -130,6 +129,7 @@ export default function BookingsScreen() {
       <View style={styles.header}>
         <Text variant="h2" weight="bold">{t('bookings.title')}</Text>
         <TouchableOpacity
+          testID="new-booking-fab"
           style={styles.fab}
           onPress={() => router.push('/(app)/booking/create' as never)}
           hitSlop={8}
