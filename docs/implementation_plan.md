@@ -17,7 +17,7 @@
 | Sprint 1 — Auth Screens | ✅ Completed | 2026-04-19 | 2026-05-28 |
 | Sprint 1 Hardening — Code Review Fixes | ✅ Completed | 2026-05-28 | 2026-05-28 |
 | Sprint 2 — Home + Categories | ✅ Completed | 2026-05-29 | 2026-05-29 |
-| Sprint 3 — Booking + Jobs | ⏳ Not Started | — | — |
+| Sprint 3 — Booking + Jobs | 🔄 In Progress | 2026-05-29 | — |
 | Sprint 4 — Voice + Accessibility | ⏳ Not Started | — | — |
 | Sprint 5 — Reviews + Notifications | ⏳ Not Started | — | — |
 | Sprint 6 — Payments + Wallet | ⏳ Not Started | — | — |
@@ -31,15 +31,15 @@
 > **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
 
 **Active Sprint:** Sprint 3 — Booking & Job Lifecycle  
-**Sprint Status:** ⏳ Not Started  
-**Git Branch Convention:** `feature/HF-XXX-short-description`
+**Sprint Status:** 🔄 Backend Complete — Mobile In Progress  
+**Git Branch Convention:** `feature/sprint-3-backend` / `feature/sprint-3-mobile`
 
 ### Next Ticket Per Platform
 
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
-| 🖥 Backend | **HF-031** | Job/Booking module — state machine | — |
-| 📱 Mobile | **HF-034** | Create booking flow | HF-031 |
+| 🖥 Backend | ✅ HF-031/032/033 Done | All backend tickets complete | — |
+| 📱 Mobile | **HF-034** | Create booking flow | ✅ HF-031 Done |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
 ### How to Pick Up Work
@@ -419,9 +419,9 @@ modules/payments/
 
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
-| HF-031 | Job/Booking module — state machine (REQ-015 to REQ-018) | ⏳ | 10h |
-| HF-032 | Location-based provider search (PostGIS — REQ-007,008) | ⏳ | 6h |
-| HF-033 | Job media storage (photos, videos, voice notes — REQ-010) | ⏳ | 4h |
+| HF-031 | Job/Booking module — state machine (REQ-015 to REQ-018) | ✅ | 10h |
+| HF-032 | Location-based provider search (PostGIS — REQ-007,008) | ✅ | 6h |
+| HF-033 | Job media storage (photos, videos, voice notes — REQ-010) | ✅ | 4h |
 
 #### Mobile:
 
