@@ -19,17 +19,41 @@ import {
   Calendar,
   Layers,
   AlertCircle,
+  CheckCircle2,
+  Circle,
+  User,
 } from 'lucide-react-native';
-import { JobStatus } from '@homefix/shared';
-import { UserRole } from '@homefix/shared';
+import { JobStatus, UserRole } from '@homefix/shared';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { jobService } from '@/services/job.service';
 import { categoryService } from '@/services/category.service';
+import { providerService } from '@/services/provider.service';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/utils/toast';
 import { theme } from '@/theme';
+
+// ── Status step ordering ──────────────────────────────────────────────────────
+const STATUS_ORDER: Record<string, number> = {
+  [JobStatus.PENDING]: 0,
+  [JobStatus.ACTIVE]: 1,
+  [JobStatus.AWAITING_PAYMENT]: 2,
+  [JobStatus.PAID]: 3,
+};
+
+type StepDef = {
+  labelKey: string;
+  descKey: string;
+  reachedStatus: JobStatus;
+};
+
+const STEPS: StepDef[] = [
+  { labelKey: 'tracking.step_posted',   descKey: 'tracking.step_posted_desc',   reachedStatus: JobStatus.PENDING },
+  { labelKey: 'tracking.step_accepted', descKey: 'tracking.step_accepted_desc', reachedStatus: JobStatus.ACTIVE },
+  { labelKey: 'tracking.step_complete', descKey: 'tracking.step_complete_desc', reachedStatus: JobStatus.AWAITING_PAYMENT },
+  { labelKey: 'tracking.step_paid',     descKey: 'tracking.step_paid_desc',     reachedStatus: JobStatus.PAID },
+];
 
 export default function JobDetailScreen() {
   const { t } = useTranslation();
@@ -37,35 +61,44 @@ export default function JobDetailScreen() {
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
   const userRole = useAuthStore((s) => s.user?.role);
-  const userId = useAuthStore((s) => s.user?.id);
+  const userId   = useAuthStore((s) => s.user?.id);
 
-  const [isAccepting, setIsAccepting] = useState(false);
+  const [isAccepting,   setIsAccepting]   = useState(false);
+  const [isCompleting,  setIsCompleting]  = useState(false);
 
-  const {
-    data: job,
-    isLoading,
-    isError,
-  } = useQuery({
+  // ── Job query — 10 s polling, pauses when app is backgrounded ─────────────
+  const { data: job, isLoading, isError } = useQuery({
     queryKey: ['job', id],
-    queryFn: () => jobService.getJobById(id),
-    enabled: !!id,
+    queryFn:  () => jobService.getJobById(id),
+    enabled:  !!id,
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: false,
   });
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
-    queryFn: categoryService.listActive,
+    queryFn:  categoryService.listActive,
+  });
+
+  // ── Provider profile — only when assigned and viewer is a resident ─────────
+  const isResident = userRole === UserRole.RESIDENT;
+  const isProvider = userRole === UserRole.PROVIDER;
+
+  const { data: assignedProvider } = useQuery({
+    queryKey: ['provider', job?.provider_id],
+    queryFn:  () => providerService.getProfile(job!.provider_id!),
+    enabled:  isResident && !!job?.provider_id,
   });
 
   const categoryName = categories.find((c) => c.id === job?.category_id)?.name;
 
-  // ── Provider: accept the job ───────────────────────────────────────────────
+  // ── Actions ───────────────────────────────────────────────────────────────
   const handleAccept = async () => {
     if (!job) return;
     setIsAccepting(true);
     try {
       await jobService.acceptJob(job.id);
       toast.success(t('job_detail.accept_success'));
-      // Invalidate both the feed (job disappears) and my jobs list
       queryClient.invalidateQueries({ queryKey: ['providerFeed'] });
       queryClient.invalidateQueries({ queryKey: ['myJobs'] });
       router.back();
@@ -73,7 +106,6 @@ export default function JobDetailScreen() {
       const errorCode = (err as { response?: { data?: { error_code?: string } } })
         ?.response?.data?.error_code;
       if (errorCode === 'INVALID_STATE_TRANSITION') {
-        // Another provider accepted concurrently — backend state machine prevented the race
         toast.error(t('job_detail.accept_concurrent'));
         queryClient.invalidateQueries({ queryKey: ['providerFeed'] });
         router.back();
@@ -85,7 +117,29 @@ export default function JobDetailScreen() {
     }
   };
 
-  // ── Loading / error states ─────────────────────────────────────────────────
+  const handleMarkComplete = async () => {
+    if (!job) return;
+    setIsCompleting(true);
+    try {
+      await jobService.completeJob(job.id);
+      toast.success(t('tracking.complete_success'));
+      queryClient.invalidateQueries({ queryKey: ['job', id] });
+      queryClient.invalidateQueries({ queryKey: ['myJobs'] });
+    } catch (err) {
+      const errorCode = (err as { response?: { data?: { error_code?: string } } })
+        ?.response?.data?.error_code;
+      if (errorCode === 'INVALID_STATE_TRANSITION') {
+        toast.error(t('errors.INVALID_STATE_TRANSITION'));
+        queryClient.invalidateQueries({ queryKey: ['job', id] });
+      } else {
+        toast.error(t('tracking.complete_error'));
+      }
+    } finally {
+      setIsCompleting(false);
+    }
+  };
+
+  // ── Loading / error ────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
@@ -106,9 +160,11 @@ export default function JobDetailScreen() {
     );
   }
 
-  const isProvider = userRole === UserRole.PROVIDER;
-  const isPending = job.status === JobStatus.PENDING;
-  const jobTakenByOther = isProvider && !isPending && job.provider_id !== userId;
+  const isPending  = job.status === JobStatus.PENDING;
+  const isActive   = job.status === JobStatus.ACTIVE;
+  const isCancelled = job.status === JobStatus.CANCELLED;
+  const isMyJob    = isProvider && job.provider_id === userId;
+  const jobTakenByOther = isProvider && !isPending && !isMyJob;
 
   const title = job.title ?? categoryName ?? t('home.unknown_provider');
   const addressParts = [
@@ -123,10 +179,10 @@ export default function JobDetailScreen() {
     : t('job_detail.budget_tbd');
 
   const postedDate = new Date(job.created_at).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+    day: 'numeric', month: 'long', year: 'numeric',
   });
+
+  const providerName = assignedProvider?.user?.full_name ?? t('home.unknown_provider');
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -134,7 +190,7 @@ export default function JobDetailScreen() {
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* Already-taken notice (provider view, non-pending) */}
+        {/* ── Already-taken banner (provider seeing someone else's active job) */}
         {jobTakenByOther && (
           <Card style={styles.takenBanner}>
             <View style={styles.takenRow}>
@@ -147,7 +203,46 @@ export default function JobDetailScreen() {
           </Card>
         )}
 
-        {/* Title + category */}
+        {/* ── Status stepper (resident always; provider on their own job) ── */}
+        {(isResident || isMyJob) && !isCancelled && (
+          <Card style={styles.section}>
+            <Text variant="body" weight="semibold" style={styles.sectionTitle}>
+              {t('tracking.status_card')}
+            </Text>
+            <StatusStepper currentStatus={job.status} t={t} />
+          </Card>
+        )}
+
+        {/* ── Assigned provider info (resident view, once accepted) ── */}
+        {isResident && assignedProvider && (
+          <Card style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <User color={theme.colors.primary} size={16} />
+              <Text variant="body" weight="semibold" style={styles.sectionTitle}>
+                {t('tracking.provider_section')}
+              </Text>
+            </View>
+            <View style={styles.providerRow}>
+              <View style={styles.providerAvatar}>
+                <Text variant="h4" weight="bold" color="inverse">
+                  {providerName.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+              <View style={styles.providerInfo}>
+                <Text variant="body" weight="semibold">{providerName}</Text>
+                {assignedProvider.rating_avg && (
+                  <Text variant="caption" color="muted">
+                    ★ {parseFloat(assignedProvider.rating_avg).toFixed(1)}
+                    {'  '}·{'  '}
+                    {assignedProvider.experience_years} yrs exp
+                  </Text>
+                )}
+              </View>
+            </View>
+          </Card>
+        )}
+
+        {/* ── Title + category ── */}
         <Card style={styles.section}>
           <Text variant="h4" weight="bold" style={styles.jobTitle}>{title}</Text>
           {categoryName && (
@@ -166,7 +261,7 @@ export default function JobDetailScreen() {
           </View>
         </Card>
 
-        {/* Description */}
+        {/* ── Description ── */}
         <Card style={styles.section}>
           <Text variant="body" weight="semibold" style={styles.sectionTitle}>
             {t('job_detail.description')}
@@ -174,7 +269,7 @@ export default function JobDetailScreen() {
           <Text variant="body" color="muted" style={styles.descText}>{job.description}</Text>
         </Card>
 
-        {/* Service address */}
+        {/* ── Service address ── */}
         <Card style={styles.section}>
           <View style={styles.sectionHeader}>
             <MapPin color={theme.colors.primary} size={16} />
@@ -187,7 +282,7 @@ export default function JobDetailScreen() {
           ))}
         </Card>
 
-        {/* Budget + sq footage row */}
+        {/* ── Budget + sq footage ── */}
         <View style={styles.statsRow}>
           <Card style={[styles.statCard, styles.flex]}>
             <DollarSign color={theme.colors.primary} size={16} />
@@ -210,7 +305,7 @@ export default function JobDetailScreen() {
           )}
         </View>
 
-        {/* Photos */}
+        {/* ── Photos ── */}
         {job.media_urls?.length > 0 && (
           <Card style={styles.section}>
             <Text variant="body" weight="semibold" style={styles.sectionTitle}>
@@ -230,7 +325,9 @@ export default function JobDetailScreen() {
         )}
       </ScrollView>
 
-      {/* Footer — provider only, job still pending */}
+      {/* ── Footer CTAs ── */}
+
+      {/* Provider + PENDING → Accept / Not Interested */}
       {isProvider && isPending && (
         <View style={styles.footer}>
           <Button
@@ -243,11 +340,85 @@ export default function JobDetailScreen() {
             label={t('job_detail.not_interested')}
             variant="ghost"
             onPress={() => router.back()}
-            style={styles.skipBtn}
+          />
+        </View>
+      )}
+
+      {/* Provider + ACTIVE + own job → Mark Work Complete */}
+      {isProvider && isActive && isMyJob && (
+        <View style={styles.footer}>
+          <Button
+            label={isCompleting ? t('tracking.marking') : t('tracking.mark_complete')}
+            variant="secondary"
+            disabled={isCompleting}
+            onPress={handleMarkComplete}
           />
         </View>
       )}
     </SafeAreaView>
+  );
+}
+
+// ─── Status Stepper ───────────────────────────────────────────────────────────
+function StatusStepper({
+  currentStatus,
+  t,
+}: {
+  currentStatus: JobStatus;
+  t: (key: string) => string;
+}) {
+  const currentIndex = STATUS_ORDER[currentStatus] ?? 0;
+
+  return (
+    <View style={stepperStyles.wrap}>
+      {STEPS.map((step, index) => {
+        const isCompleted = index < currentIndex;
+        const isCurrent   = index === currentIndex;
+        const isUpcoming  = index > currentIndex;
+
+        return (
+          <View key={step.reachedStatus} style={stepperStyles.stepRow}>
+            {/* Connector line above (all except first) */}
+            {index > 0 && (
+              <View
+                style={[
+                  stepperStyles.connector,
+                  isCompleted || isCurrent ? stepperStyles.connectorDone : stepperStyles.connectorPending,
+                ]}
+              />
+            )}
+
+            {/* Icon + label row */}
+            <View style={stepperStyles.iconLabelRow}>
+              <View style={stepperStyles.iconWrap}>
+                {isCompleted ? (
+                  <CheckCircle2 color={theme.colors.success} size={22} fill={theme.colors.successBackground} />
+                ) : isCurrent ? (
+                  <View style={stepperStyles.currentDot}>
+                    <View style={stepperStyles.currentInner} />
+                  </View>
+                ) : (
+                  <Circle color={theme.colors.border} size={22} />
+                )}
+              </View>
+
+              <View style={stepperStyles.labelWrap}>
+                <Text
+                  variant="body"
+                  weight={isCurrent ? 'semibold' : 'regular'}
+                  style={isUpcoming ? stepperStyles.upcomingLabel : undefined}
+                >
+                  {t(step.labelKey)}
+                </Text>
+                {(isCompleted || isCurrent) && (
+                  <Text variant="caption" color="muted">{t(step.descKey)}</Text>
+                )}
+              </View>
+            </View>
+          </View>
+        );
+      })}
+    </View>
   );
 }
 
@@ -285,7 +456,6 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
     gap: theme.spacing.sm,
   },
-  // Already-taken banner
   takenBanner: {
     padding: theme.spacing.md,
     borderWidth: 1,
@@ -293,11 +463,26 @@ const styles = StyleSheet.create({
   },
   takenRow: { flexDirection: 'row', gap: theme.spacing.sm, alignItems: 'flex-start' },
   takenText: { flex: 1, gap: 2 },
-  // Job header card
-  section: {
-    padding: theme.spacing.md,
+  section: { padding: theme.spacing.md, gap: theme.spacing.xs },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: theme.spacing.xs,
+    marginBottom: theme.spacing.xs,
   },
+  sectionTitle: { marginBottom: theme.spacing.xs },
+  // Provider info
+  providerRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
+  providerAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: theme.layout.radius.full,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  providerInfo: { flex: 1, gap: 2 },
+  // Title card
   jobTitle: { marginBottom: theme.spacing.xs },
   categoryChip: {
     flexDirection: 'row',
@@ -311,32 +496,13 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
   },
   chipText: { marginTop: 1 },
-  postedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: theme.spacing.xs,
-  },
+  postedRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: theme.spacing.xs },
   postedText: { flex: 1 },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-    marginBottom: theme.spacing.xs,
-  },
-  sectionTitle: { marginBottom: theme.spacing.xs },
   descText: { lineHeight: 22 },
-  // Stats row
-  statsRow: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-  },
+  // Stats
+  statsRow: { flexDirection: 'row', gap: theme.spacing.sm },
   flex: { flex: 1 },
-  statCard: {
-    padding: theme.spacing.md,
-    gap: 4,
-    alignItems: 'flex-start',
-  },
+  statCard: { padding: theme.spacing.md, gap: 4, alignItems: 'flex-start' },
   statLabel: { marginTop: 4 },
   // Photos
   photoRow: { marginTop: theme.spacing.xs },
@@ -359,7 +525,39 @@ const styles = StyleSheet.create({
     borderTopColor: theme.colors.border,
     gap: theme.spacing.xs,
   },
-  skipBtn: {
-    marginTop: 0,
+});
+
+const stepperStyles = StyleSheet.create({
+  wrap: { paddingTop: theme.spacing.xs },
+  stepRow: { alignItems: 'flex-start' },
+  connector: {
+    width: 2,
+    height: 16,
+    marginLeft: 10,
   },
+  connectorDone:    { backgroundColor: theme.colors.success },
+  connectorPending: { backgroundColor: theme.colors.border },
+  iconLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing.md,
+  },
+  iconWrap: { width: 22, alignItems: 'center', paddingTop: 1 },
+  currentDot: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  currentInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: theme.colors.primary,
+  },
+  labelWrap: { flex: 1, paddingBottom: theme.spacing.sm, gap: 2 },
+  upcomingLabel: { color: theme.colors.textMuted },
 });

@@ -221,6 +221,23 @@
     "paid": "পরিশোধিত",
     "cancelled": "বাতিলকৃত"
   },
+  "tracking": {
+    "status_card": "কাজের স্ট্যাটাস",
+    "step_posted": "পোস্ট হয়েছে",
+    "step_posted_desc": "একজন প্রোভাইডার গ্রহণ করার অপেক্ষায়",
+    "step_accepted": "প্রোভাইডার পাওয়া গেছে",
+    "step_accepted_desc": "প্রোভাইডার আসছেন",
+    "step_complete": "কাজ সম্পন্ন",
+    "step_complete_desc": "আপনার পেমেন্টের অপেক্ষায়",
+    "step_paid": "পরিশোধিত",
+    "step_paid_desc": "কাজ সফলভাবে সম্পন্ন হয়েছে",
+    "step_cancelled": "বাতিল",
+    "provider_section": "নিযুক্ত প্রোভাইডার",
+    "mark_complete": "কাজ সম্পন্ন হিসেবে চিহ্নিত করুন",
+    "marking": "চিহ্নিত হচ্ছে...",
+    "complete_success": "কাজ সম্পন্ন হিসেবে চিহ্নিত হয়েছে। নিবাসীকে জানানো হয়েছে।",
+    "complete_error": "কাজ সম্পন্ন করা যায়নি। আবার চেষ্টা করুন।"
+  },
   "job_detail": {
     "title": "কাজের বিবরণ",
     "category": "সার্ভিস",
