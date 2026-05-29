@@ -221,6 +221,27 @@
     "paid": "Paid",
     "cancelled": "Cancelled"
   },
+  "job_detail": {
+    "title": "Job Detail",
+    "category": "Service",
+    "description": "Description",
+    "address": "Service Address",
+    "budget": "Estimated Budget",
+    "budget_tbd": "Not specified",
+    "area": "Area",
+    "sq_ft": "sq ft",
+    "photos": "Photos",
+    "posted": "Posted",
+    "accept": "Accept Job",
+    "accepting": "Accepting...",
+    "not_interested": "Not Interested",
+    "accept_success": "Job accepted! Check your active jobs.",
+    "accept_concurrent": "This job was just taken by another provider.",
+    "accept_error": "Could not accept job. Please try again.",
+    "load_error": "Could not load job details.",
+    "already_accepted": "This job is no longer available",
+    "already_accepted_desc": "Another provider accepted this job before you."
+  },
   "feed": {
     "title": "Available Jobs",
     "subtitle": "Jobs matching your trade",
