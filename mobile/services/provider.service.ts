@@ -35,4 +35,11 @@ export const providerService = {
     const res = await apiClient.get<ApiResponse<AvailableProvider>>(`/v2/providers/${userId}`);
     return res.data.body;
   },
+
+  updateMyAvailability: async (isAvailable: boolean): Promise<AvailableProvider> => {
+    const res = await apiClient.patch<ApiResponse<AvailableProvider>>('/v2/providers/me/profile', {
+      is_available: isAvailable,
+    });
+    return res.data.body;
+  },
 };

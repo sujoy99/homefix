@@ -92,6 +92,20 @@
     "nid_photo_required": "এনআইডি ফটো প্রয়োজন (প্রোভাইডারদের জন্য)",
     "device_id_required": "ডিভাইস আইডি প্রয়োজন"
   },
+  "provider_home": {
+    "subtitle": "এখানে আপনার ড্যাশবোর্ড",
+    "availability": "উপলব্ধতা",
+    "you_are_visible": "আপনি নিবাসীদের কাছে দৃশ্যমান",
+    "you_are_hidden": "আপনি নিবাসীদের কাছে অদৃশ্য",
+    "toggle_error": "উপলব্ধতা আপডেট করা যায়নি। আবার চেষ্টা করুন।",
+    "active_jobs": "সক্রিয় কাজ",
+    "rating": "রেটিং",
+    "my_rate": "আমার রেট",
+    "active_jobs_section": "সক্রিয় কাজ",
+    "earnings_section": "আয়",
+    "jobs_coming": "সক্রিয় কাজ এখানে দেখাবে",
+    "earnings_coming": "আয়ের বিস্তারিত শীঘ্রই আসছে"
+  },
   "provider": {
     "title": "প্রোভাইডার প্রোফাইল",
     "available_now": "এখন উপলব্ধ",

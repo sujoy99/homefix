@@ -92,6 +92,20 @@
     "nid_photo_required": "NID photo is required for providers",
     "device_id_required": "Device ID is required"
   },
+  "provider_home": {
+    "subtitle": "Here's your dashboard",
+    "availability": "Availability",
+    "you_are_visible": "You are visible to residents",
+    "you_are_hidden": "You are hidden from residents",
+    "toggle_error": "Could not update availability. Try again.",
+    "active_jobs": "Active Jobs",
+    "rating": "Rating",
+    "my_rate": "My Rate",
+    "active_jobs_section": "Active Jobs",
+    "earnings_section": "Earnings",
+    "jobs_coming": "Active jobs will appear here",
+    "earnings_coming": "Earnings breakdown coming soon"
+  },
   "provider": {
     "title": "Provider Profile",
     "available_now": "Available now",

@@ -39,7 +39,7 @@
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
 | 🖥 Backend | — | Sprint 2 backend complete ✅ | — |
-| 📱 Mobile | **HF-028** | Provider detail screen | — |
+| 📱 Mobile | **HF-030** | Profile screen | — |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
 ### How to Pick Up Work
@@ -393,7 +393,7 @@ modules/payments/
 | HF-026 | Resident home screen (category grid with icons, search bar, "near you" section) | ✅ | 8h |
 | HF-027 | Category listing — providers filtered by category, distance, rating | ✅ | 6h |
 | HF-028 | Provider detail screen (skills, rating, reviews, "Book Now" CTA) | ✅ | 6h |
-| HF-029 | Provider home screen (dashboard: active jobs, earnings, availability toggle) | ⏳ | 6h |
+| HF-029 | Provider home screen (dashboard: active jobs, earnings, availability toggle) | ✅ | 6h |
 | HF-030 | Profile screen (view/edit, photo upload, location update, language pref) | ⏳ | 6h |
 
 **Deliverable:** Main app with category browsing, provider discovery, profiles.
