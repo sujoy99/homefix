@@ -108,6 +108,7 @@ export const userRegistrationSchema = z.object({
        */
       photo_url: z.string().optional(),
       nid_photo_url: z.string().optional(),
+      category_ids: z.array(z.string().uuid('Invalid category ID')).optional(),
     })
   .refine(
     (data) =>

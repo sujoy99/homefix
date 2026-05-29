@@ -42,8 +42,7 @@ export default function ProviderHomeScreen() {
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['provider', 'me'],
-    queryFn: () => providerService.getProfile(user!.id),
-    enabled: !!user?.id,
+    queryFn: () => providerService.getMyProfile(),
   });
 
   const [available, setAvailable] = useState<boolean | null>(null);

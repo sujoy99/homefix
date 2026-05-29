@@ -11,6 +11,7 @@ export default function AppLayout() {
   const user = useAuthStore((state) => state.user);
 
   const isProvider = user?.role === UserRole.PROVIDER;
+  const isAdmin = user?.role === UserRole.ADMIN;
 
   return (
     <Tabs
@@ -34,7 +35,7 @@ export default function AppLayout() {
         options={{
           title: t('nav.bookings'),
           tabBarIcon: ({ color, size }) => <CalendarDays color={color} size={size} />,
-          href: isProvider ? null : undefined,
+          href: isProvider || isAdmin ? null : undefined,
         }}
       />
       <Tabs.Screen
@@ -42,7 +43,7 @@ export default function AppLayout() {
         options={{
           title: t('nav.jobs'),
           tabBarIcon: ({ color, size }) => <Briefcase color={color} size={size} />,
-          href: isProvider ? undefined : null,
+          href: isProvider && !isAdmin ? undefined : null,
         }}
       />
       <Tabs.Screen
@@ -52,6 +53,9 @@ export default function AppLayout() {
           tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
         }}
       />
+      {/* Hide dynamic route screens from the tab bar */}
+      <Tabs.Screen name="category/[id]" options={{ href: null }} />
+      <Tabs.Screen name="provider/[id]" options={{ href: null }} />
     </Tabs>
   );
 }

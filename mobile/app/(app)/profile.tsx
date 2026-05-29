@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Switch,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
@@ -17,13 +18,20 @@ import {
   ChevronRight,
   LogOut,
   Camera,
+  Plus,
+  X,
+  Wrench,
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { useAuthStore } from '@/store/authStore';
+import { categoryService, type Category } from '@/services/category.service';
+import { providerService } from '@/services/provider.service';
+import { UserRole } from '@homefix/shared';
 import { theme } from '@/theme';
 
 function InfoRow({
@@ -63,6 +71,61 @@ export default function ProfileScreen() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const [darkMode, setDarkMode] = useState(false);
+  const queryClient = useQueryClient();
+
+  const isProvider = user?.role === UserRole.PROVIDER;
+
+  const { data: myProfile, isLoading: loadingProfile } = useQuery({
+    queryKey: ['provider', 'me'],
+    queryFn: () => providerService.getMyProfile(),
+    enabled: isProvider,
+  });
+
+  const { data: allCategories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: categoryService.listActive,
+    enabled: isProvider,
+  });
+
+  const { mutate: removeSkill, isPending: removingSkill } = useMutation({
+    mutationFn: (skillId: string) => providerService.removeSkill(skillId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['provider', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ['providers', 'available'] });
+    },
+    onError: () => Alert.alert(t('common.error'), t('profile.skill_remove_error')),
+  });
+
+  const { mutate: addSkill, isPending: addingSkill } = useMutation({
+    mutationFn: (categoryId: string) => providerService.addSkill(categoryId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['provider', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ['providers', 'available'] });
+    },
+    onError: () => Alert.alert(t('common.error'), t('profile.skill_add_error')),
+  });
+
+  const mySkills = myProfile?.skills ?? [];
+  const mySkillCategoryIds = new Set(mySkills.map((s) => s.category_id));
+  const availableToAdd = allCategories.filter((c) => !mySkillCategoryIds.has(c.id));
+
+  const handleAddSkill = () => {
+    if (availableToAdd.length === 0) {
+      Alert.alert(t('profile.my_services'), t('profile.all_services_added'));
+      return;
+    }
+    Alert.alert(
+      t('profile.add_service'),
+      t('profile.select_service'),
+      [
+        ...availableToAdd.map((cat) => ({
+          text: i18n.language === 'bn' && cat.name_bn ? cat.name_bn : cat.name,
+          onPress: () => addSkill(cat.id),
+        })),
+        { text: t('common.cancel'), style: 'cancel' as const },
+      ]
+    );
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -146,6 +209,67 @@ export default function ProfileScreen() {
             onPress={handleLocationUpdate}
           />
         </Card>
+
+        {/* My Services — provider only */}
+        {isProvider && (
+          <Card style={styles.section}>
+            <View style={styles.skillsHeader}>
+              <Text variant="h4" weight="semibold">{t('profile.my_services')}</Text>
+              <TouchableOpacity
+                onPress={handleAddSkill}
+                disabled={addingSkill}
+                style={styles.addSkillBtn}
+                hitSlop={8}
+              >
+                <Plus color={theme.colors.primary} size={20} />
+              </TouchableOpacity>
+            </View>
+
+            {loadingProfile ? (
+              <ActivityIndicator color={theme.colors.primary} style={{ marginVertical: 8 }} />
+            ) : mySkills.length === 0 ? (
+              <View style={styles.skillsEmpty}>
+                <Wrench color={theme.colors.textMuted} size={22} />
+                <Text variant="caption" color="muted" style={styles.skillsEmptyText}>
+                  {t('profile.no_services')}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.skillChips}>
+                {mySkills.map((skill) => {
+                  const cat = allCategories.find((c) => c.id === skill.category_id);
+                  const label =
+                    i18n.language === 'bn' && cat?.name_bn ? cat.name_bn : (cat?.name ?? '');
+                  return (
+                    <View
+                      key={skill.id}
+                      style={[styles.skillChip, skill.is_primary && styles.skillChipPrimary]}
+                    >
+                      <Text
+                        variant="caption"
+                        weight="medium"
+                        color={skill.is_primary ? 'inverse' : 'primary'}
+                      >
+                        {label}{skill.is_primary ? ' ★' : ''}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => removeSkill(skill.id)}
+                        disabled={removingSkill}
+                        hitSlop={8}
+                        style={styles.removeSkillBtn}
+                      >
+                        <X
+                          color={skill.is_primary ? theme.colors.textInverse : theme.colors.primary}
+                          size={12}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </Card>
+        )}
 
         {/* Preferences */}
         <Card style={styles.section}>
@@ -258,4 +382,30 @@ const styles = StyleSheet.create({
   },
   prefLabel: { marginLeft: 2 },
   logoutButton: { marginTop: theme.spacing.sm },
+  skillsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  addSkillBtn: { padding: 4 },
+  skillsEmpty: { alignItems: 'center', paddingVertical: theme.spacing.sm, gap: 6 },
+  skillsEmptyText: { marginTop: 2 },
+  skillChips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm },
+  skillChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 6,
+    borderRadius: theme.layout.radius.full,
+    backgroundColor: theme.colors.background,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+  },
+  skillChipPrimary: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  removeSkillBtn: { padding: 2 },
 });

@@ -51,7 +51,10 @@
     "upload_photo": "Upload Photo",
     "pending_approval_title": "Application Submitted!",
     "pending_approval_desc": "Thank you for joining HomeFix. Our team is currently reviewing your documents. This usually takes 24-48 hours.",
-    "logout": "Log Out"
+    "logout": "Log Out",
+    "step_skills": "My Services",
+    "skills_subtitle": "Select the services you provide to residents",
+    "skills_min": "Please select at least one service"
   },
   "onboarding": {
     "skip": "Skip",
@@ -105,7 +108,30 @@
     "location_update": "Update Location",
     "location_coming": "Location update coming soon",
     "logout_confirm_title": "Log Out",
-    "logout_confirm_desc": "Are you sure you want to log out?"
+    "logout_confirm_desc": "Are you sure you want to log out?",
+    "my_services": "My Services",
+    "no_services": "No services added yet. Tap + to add.",
+    "add_service": "Add a Service",
+    "select_service": "Select the service you want to add:",
+    "all_services_added": "You have already added all available service categories.",
+    "skill_add_error": "Could not add service. Please try again.",
+    "skill_remove_error": "Could not remove service. Please try again."
+  },
+  "admin": {
+    "title": "Admin Dashboard",
+    "subtitle": "HomeFix Platform Management",
+    "pending_title": "Pending Approvals",
+    "registered": "Registered",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approve_confirm_title": "Approve Provider",
+    "approve_confirm_desc": "Approve {{name}}? They will be able to log in and receive bookings.",
+    "reject_confirm_title": "Reject Provider",
+    "reject_confirm_desc": "Reject {{name}}? Their account will be deactivated.",
+    "approve_error": "Could not approve provider. Please try again.",
+    "reject_error": "Could not reject provider. Please try again.",
+    "no_pending": "All caught up!",
+    "no_pending_desc": "No providers are waiting for approval right now."
   },
   "provider_home": {
     "subtitle": "Here's your dashboard",

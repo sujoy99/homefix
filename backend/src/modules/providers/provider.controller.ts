@@ -18,9 +18,9 @@ export class ProviderController {
   }
 
   static async updateMyProfile(req: Request, res: Response) {
-    const { sub } = (req as AuthenticatedRequest).user;
+    const { sub, role } = (req as AuthenticatedRequest).user;
     const data = req.body as UpdateProviderProfileDTO;
-    const profile = await ProviderService.updateProfile(sub, data);
+    const profile = await ProviderService.updateProfile(sub, role, data);
     return HttpResponse.success(res, profile, 'Provider profile updated');
   }
 

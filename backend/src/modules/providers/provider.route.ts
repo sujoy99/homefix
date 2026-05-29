@@ -28,29 +28,9 @@ export const providerRouter = Router();
 providerRouter.get('/available', asyncHandler(ProviderController.listAvailable));
 
 /**
- * @openapi
- * /providers/{user_id}:
- *   get:
- *     summary: Get a provider's public profile by user ID
- *     tags: [Providers]
- *     parameters:
- *       - in: path
- *         name: user_id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: Provider profile returned
- *       404:
- *         description: Profile not found
+ * NOTE: /me/profile routes must be declared BEFORE /:user_id to prevent
+ * Express matching "me" as a user_id param.
  */
-providerRouter.get(
-  '/:user_id',
-  validate(providerUserIdSchema),
-  asyncHandler(ProviderController.getProfileByUser)
-);
 
 /**
  * @openapi
@@ -168,4 +148,29 @@ providerRouter.delete(
   authGuard,
   validate(skillIdSchema),
   asyncHandler(asAuthenticated(ProviderController.removeSkill))
+);
+
+/**
+ * @openapi
+ * /providers/{user_id}:
+ *   get:
+ *     summary: Get a provider's public profile by user ID
+ *     tags: [Providers]
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Provider profile returned
+ *       404:
+ *         description: Profile not found
+ */
+providerRouter.get(
+  '/:user_id',
+  validate(providerUserIdSchema),
+  asyncHandler(ProviderController.getProfileByUser)
 );

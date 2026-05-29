@@ -8,9 +8,12 @@ import {
   Platform,
   Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import { useForm, Controller, SubmitHandler } from 'react-hook-form';
+import { categoryService } from '@/services/category.service';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   userRegistrationPayloadSchema,
@@ -19,7 +22,7 @@ import {
 import { theme } from '@/theme';
 import { authService } from '@/services/auth.service';
 import { UserRole, AuthMethod } from '@homefix/shared';
-import { ArrowLeft, ChevronRight, User as UserIcon, Phone, Lock, Mail, CreditCard, Camera, Upload } from 'lucide-react-native';
+import { ArrowLeft, ChevronRight, User as UserIcon, Phone, Lock, Mail, CreditCard, Camera, Upload, CheckCircle2 } from 'lucide-react-native';
 import { Text } from '@/components/ui/Text';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -38,6 +41,13 @@ export default function RegisterScreen() {
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+
+  const { data: categories = [], isLoading: loadingCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: categoryService.listActive,
+    enabled: isProvider,
+  });
 
   const {
     control,
@@ -83,7 +93,7 @@ export default function RegisterScreen() {
   const onSubmit: SubmitHandler<UserRegistrationPayload> = async (data) => {
     setLoading(true);
     try {
-      await authService.register(data);
+      await authService.register({ ...data, category_ids: selectedCategoryIds });
       setLoading(false);
       if (isProvider) {
         router.replace('/(auth)/pending-approval');
@@ -120,7 +130,13 @@ export default function RegisterScreen() {
       handleSubmit(onSubmit)();
     } else if (step === 4 && isProvider) {
       const isValid = await trigger(['nid_photo_url']);
-      if (isValid) handleSubmit(onSubmit)();
+      if (isValid) setStep(5);
+    } else if (step === 5 && isProvider) {
+      if (selectedCategoryIds.length === 0) {
+        Alert.alert(t('common.error'), t('auth.skills_min'));
+        return;
+      }
+      handleSubmit(onSubmit)();
     } else {
       setStep((s) => s + 1);
     }
@@ -279,6 +295,47 @@ export default function RegisterScreen() {
     </View>
   );
 
+  const renderStep5 = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.stepTitle}>{t('auth.step_skills')}</Text>
+      <Text style={styles.stepSubtitle}>{t('auth.skills_subtitle')}</Text>
+
+      {loadingCategories ? (
+        <ActivityIndicator color={theme.colors.primary} style={{ marginTop: 24 }} />
+      ) : (
+        <View style={styles.skillsGrid}>
+          {categories.map((cat) => {
+            const selected = selectedCategoryIds.includes(cat.id);
+            return (
+              <TouchableOpacity
+                key={cat.id}
+                style={[styles.skillOption, selected && styles.skillOptionSelected]}
+                onPress={() => {
+                  setSelectedCategoryIds((prev) =>
+                    selected ? prev.filter((id) => id !== cat.id) : [...prev, cat.id]
+                  );
+                }}
+                activeOpacity={0.75}
+              >
+                {selected && (
+                  <CheckCircle2 color={theme.colors.primary} size={16} style={styles.skillCheck} />
+                )}
+                <Text
+                  variant="caption"
+                  weight={selected ? 'semibold' : 'regular'}
+                  color={selected ? 'primary' : 'default'}
+                  align="center"
+                >
+                  {cat.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -296,9 +353,9 @@ export default function RegisterScreen() {
 
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${(step / (isProvider ? 4 : 3)) * 100}%` }]} />
+            <View style={[styles.progressFill, { width: `${(step / (isProvider ? 5 : 3)) * 100}%` }]} />
           </View>
-          <Text style={styles.progressText}>{t('common.next')} {step} / {isProvider ? 4 : 3}</Text>
+          <Text style={styles.progressText}>{step} / {isProvider ? 5 : 3}</Text>
         </View>
 
         <ScrollView
@@ -311,10 +368,11 @@ export default function RegisterScreen() {
           {step === 2 && renderStep2()}
           {step === 3 && renderStep3()}
           {step === 4 && isProvider && renderStep4()}
+          {step === 5 && isProvider && renderStep5()}
         </ScrollView>
 
         <View style={styles.footer}>
-          {step < (isProvider ? 4 : 3) ? (
+          {(isProvider ? step < 5 : step < 3) ? (
             <Button
               label={t('common.next')}
               onPress={nextStep}
@@ -323,7 +381,7 @@ export default function RegisterScreen() {
           ) : (
             <Button
               label={t('common.complete')}
-              onPress={handleSubmit(onSubmit)}
+              onPress={nextStep}
               isLoading={loading}
             />
           )}
@@ -439,4 +497,26 @@ const styles = StyleSheet.create({
     color: theme.colors.error,
     marginTop: theme.spacing.xs,
   },
+  skillsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.md,
+  },
+  skillOption: {
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.layout.radius.full,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  skillOptionSelected: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary + '12',
+  },
+  skillCheck: { marginRight: 2 },
 });

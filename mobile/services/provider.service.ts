@@ -36,6 +36,23 @@ export const providerService = {
     return res.data.body;
   },
 
+  getMyProfile: async (): Promise<AvailableProvider> => {
+    const res = await apiClient.get<ApiResponse<AvailableProvider>>('/v2/providers/me/profile');
+    return res.data.body;
+  },
+
+  addSkill: async (categoryId: string): Promise<AvailableProvider> => {
+    const res = await apiClient.post<ApiResponse<AvailableProvider>>('/v2/providers/me/skills', {
+      category_id: categoryId,
+      is_primary: false,
+    });
+    return res.data.body;
+  },
+
+  removeSkill: async (skillId: string): Promise<void> => {
+    await apiClient.delete(`/v2/providers/me/skills/${skillId}`);
+  },
+
   updateMyAvailability: async (isAvailable: boolean): Promise<AvailableProvider> => {
     const res = await apiClient.patch<ApiResponse<AvailableProvider>>('/v2/providers/me/profile', {
       is_available: isAvailable,

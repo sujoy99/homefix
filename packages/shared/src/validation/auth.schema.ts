@@ -53,6 +53,7 @@ export const userRegistrationPayloadSchema = z
 
     photo_url: z.string().optional(),
     nid_photo_url: z.string().optional(),
+    category_ids: z.array(z.string().uuid()).optional(),
   })
   .refine((data) => data.role !== UserRole.PROVIDER || !!data.nid_photo_url, {
     message: 'validation.nid_photo_required',

@@ -3,7 +3,7 @@
 > **Sprint:** Sprint 2 — Home, Navigation & Service Catalog  
 > **Covers:** HF-025 · HF-026 · HF-027 · HF-028 · HF-029 · HF-030  
 > **Audience:** QA, Product Owner, Business Stakeholder  
-> **Last updated:** 2026-05-29
+> **Last updated:** 2026-05-29 (v2 — bug fixes: availability toggle, extra tabs, provider skills flow)
 
 ---
 
@@ -81,15 +81,16 @@ A QR code will appear in the terminal.
 
 ### Test accounts
 
-Use these credentials (from the seed data) or register new accounts:
+All accounts below are created by `make seed` and are ready to use immediately:
 
-| Role | How to get |
-|------|-----------|
-| **Resident** | Register a new account on the Register screen → select "Resident" |
-| **Provider** | Register a new account → select "Service Provider" → you will land on "Pending Approval" screen |
-| **Provider (approved)** | Admin must approve the provider first via the admin API, or promote manually in the DB |
+| Role | Mobile | Password | Notes |
+|------|--------|----------|-------|
+| **Admin** | `00000000000` | `Admin@1234` | Use Email tab: `admin@example.com` |
+| **Provider (approved)** | `01711223344` | `Provider@1234` | Rahim Uddin — has profile + 2 skills, available |
+| **Resident** | `01811223344` | `Resident@1234` | Fatema Begum |
 
-> **Tip:** Register at least one Resident and one approved Provider to test both dashboards.
+> **To register new accounts:** Select role on the Register screen. Provider registration includes a **Step 5: My Services** where you pick your service categories before submitting.  
+> New providers land on "Pending Approval" after registration. Use the Admin account + DB tools to approve them, or use the pre-seeded provider above.
 
 ---
 
@@ -249,6 +250,79 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 
 ---
 
+---
+
+### Screen 7 — Provider Registration: Step 5 Skills Picker (Bug Fix c)
+
+> **What to check:** When registering as a Provider, step 5 lets you select which services you offer. These are saved immediately when the account is created.
+
+**Navigate:** Register → Select "Service Provider" → complete Steps 1–4 → arrives at Step 5
+
+| # | Step | Expected Result | Result |
+|---|------|-----------------|--------|
+| 1 | Reach Step 5 | Screen titled "My Services" with a grid of service category chips | |
+| 2 | No selection, tap "Complete" | Error alert: "Please select at least one service" | |
+| 3 | Tap "Plumbing" chip | Chip gets a blue border + checkmark, highlighted background | |
+| 4 | Tap "Electrical" chip | Second chip also selected | |
+| 5 | Tap a selected chip again | Chip deselects (border goes grey) | |
+| 6 | Select 1+ categories, tap "Complete" | Registration submits, lands on Pending Approval screen | |
+| 7 | After admin approves + provider logs in → Profile tab | "My Services" card shows the categories selected at registration | |
+| 8 | Progress bar | Shows 5 steps for Provider (5 / 5 on last step) | |
+
+---
+
+### Screen 8 — Provider Profile: My Services Management (Bug Fix c)
+
+> **What to check:** Approved providers can add and remove service categories from their Profile tab.
+
+**Navigate:** Log in as Provider (01711223344) → **Profile tab** → scroll to "My Services" section
+
+| # | Step | Expected Result | Result |
+|---|------|-----------------|--------|
+| 1 | Profile tab | "My Services" card appears (providers only — residents don't see this) | |
+| 2 | Pre-seeded provider | Shows 2 skill chips from seed (first one has ★ = primary) | |
+| 3 | Tap **+** button | Alert appears: "Add a Service" with list of categories not yet added | |
+| 4 | Tap a category in the alert | New skill chip appears immediately | |
+| 5 | Tap **+** when all categories added | Alert: "You have already added all available service categories" | |
+| 6 | Tap **X** on a chip | Chip disappears (skill removed) | |
+| 7 | After adding/removing, go to Home → search category | Provider now appears / disappears in that category's listing | |
+| 8 | Primary skill chip | Shown with filled blue background + ★ symbol | |
+
+---
+
+### Screen 9 — Tab Bar: No Extra Tabs (Bug Fix b)
+
+> **What to check:** Only the correct tabs appear — no `category/[id]` or `provider/[id]` visible.
+
+**Navigate:** Log in as either role → check the bottom tab bar
+
+| # | Step | Expected Result | Result |
+|---|------|-----------------|--------|
+| 1 | Log in as Resident | Tab bar shows exactly 3 tabs: Home · Bookings · Profile | |
+| 2 | Log in as Provider | Tab bar shows exactly 3 tabs: Home · Jobs · Profile | |
+| 3 | No extra tabs | No "category [id]" or "provider [id]" tab visible | |
+
+---
+
+### Screen 10 — Availability Toggle (Bug Fix a)
+
+> **What to check:** Provider can flip availability ON/OFF and it saves correctly.
+
+**Navigate:** Log in as Provider (01711223344) → **Home tab**
+
+| # | Step | Expected Result | Result |
+|---|------|-----------------|--------|
+| 1 | Home tab | Availability card shows current status + Switch control | |
+| 2 | Toggle is ON | Text: "You are visible to residents" | |
+| 3 | Flip toggle OFF | Switch moves to OFF, text changes to "You are hidden from residents" | |
+| 4 | Go to another tab and back | Toggle stays OFF (persisted to server) | |
+| 5 | Log out and log back in | Toggle shows the last saved state | |
+| 6 | While OFF: open Resident app (01811223344), go to Home | Provider does not appear in "Available Providers" section | |
+| 7 | Flip toggle back ON | Provider reappears in Resident's home screen after refresh | |
+| 8 | New provider (no profile yet) | Toggle still works — profile auto-created on first toggle | |
+
+---
+
 ## Part 3 — Cross-Screen Flows
 
 These tests span multiple screens and verify the full user journey.
@@ -310,8 +384,11 @@ These items are **intentionally incomplete** — they are built in later sprints
 | Reviews says "coming soon" | Reviews module not built yet | Sprint 5 (HF-050) |
 | Earnings shows placeholder | Wallet/payments not built yet | Sprint 6 (HF-060) |
 | Dark mode switch has no effect | Full theme switching in Sprint 8 | Sprint 8 |
-| Photo upload shows "coming soon" | File upload backend Sprint 3 | Sprint 3 (HF-033) |
-| Location update shows "coming soon" | Full edit form Sprint 3 | Sprint 3 |
+| Photo upload shows "coming soon" | File upload wired in Sprint 3 | Sprint 3 (HF-033) |
+| Location update shows "coming soon" | Full edit form in Sprint 3 | Sprint 3 |
+| Admin sees dashboard with pending list, not category grid | Admin has a dedicated minimal dashboard | ✅ Built |
+| Provider name shows "—" on dashboard | `full_name` not joined in `/me/profile` response yet | Sprint 3 |
+| Category listing empty for new provider | Provider must add skills via Profile → My Services first | ✅ Now available |
 
 ---
 
