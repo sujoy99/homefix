@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, StyleSheet, SafeAreaView } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { theme } from '@/theme';
-import { Clock, CheckCircle2 } from 'lucide-react-native';
+import { Clock, CheckCircle2, Bell } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 export default function PendingApprovalScreen() {
@@ -30,23 +31,26 @@ export default function PendingApprovalScreen() {
 
         <View style={styles.infoBox}>
           <Text variant="caption" weight="bold" color="primary" style={styles.infoTitle}>
-            {t('common.next').toUpperCase()}?
+            {t('auth.pending_review_title')}
           </Text>
           <Text variant="body" style={styles.infoText}>
-            • {t('auth.nid_photo')} check{'\n'}
-            • {t('auth.profile_photo')} check{'\n'}
-            • Skill assessment
+            {t('auth.pending_review_items')}
           </Text>
         </View>
       </View>
 
       <View style={styles.footer}>
-        <Button 
-          label={t('auth.sign_in')} 
-          variant="outline"
+        <Button
+          label={t('auth.pending_got_it')}
+          variant="secondary"
           onPress={() => router.replace('/(auth)/login')}
-          style={styles.button}
         />
+        <View style={styles.notifyHint}>
+          <Bell size={14} color={theme.colors.textMuted} />
+          <Text variant="caption" color="muted" style={styles.notifyText}>
+            {t('auth.pending_notify_hint')}
+          </Text>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -101,8 +105,16 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: theme.spacing.xl,
+    gap: theme.spacing.md,
   },
-  button: {
-    width: '100%',
+  notifyHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  notifyText: {
+    textAlign: 'center',
+    flex: 1,
   },
 });

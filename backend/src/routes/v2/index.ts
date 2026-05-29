@@ -5,6 +5,7 @@ import { rbacRouter } from '@modules/auth/rbac.route';
 import { providerRouter } from '@modules/providers/provider.route';
 import { adminProviderRouter } from '@modules/admin/providers/admin-providers.route';
 import { storageRouter } from '@modules/storage/storage.route';
+import { configRouter } from '@modules/config/config.route';
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use('/admin/rbac', rbacRouter);
 router.use('/admin/providers', adminProviderRouter);
 router.use('/providers', providerRouter);
 router.use('/storage', storageRouter);
+router.use('/config', configRouter);
 
 export default router;

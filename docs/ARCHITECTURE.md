@@ -139,6 +139,39 @@ WebSocket via `ws` or Socket.IO. Events:
 - `payment:confirmed` → provider (wallet credited)
 - `notification:new` → user (push via FCM as fallback)
 
+## Platform Settings
+
+Runtime-configurable platform behavior stored in the `platform_settings` table:
+
+```
+platform_settings: key (PK) | value (text) | description | timestamps
+```
+
+- **Admin changes** a setting by updating the `value` column in the DB (or via the admin API, Sprint 6).
+- **Mobile** fetches `GET /v2/config/public` (no auth) on provider registration Step 4 load. TanStack Query caches it for 5 minutes.
+- **All valid keys and values** are defined in `packages/shared/src/constants/platform-settings.ts` — the single source of truth shared by mobile, backend, and DB.
+
+| Setting Key | Default | Valid Values | Effect |
+|---|---|---|---|
+| `nid_photo_source` | `camera_only` | `camera_only` \| `camera_and_gallery` | Controls whether NID photo upload opens camera or gallery in provider registration |
+| `platform_commission_pct` | `20` | any numeric string | Default commission % (overridable per category in Sprint 6) |
+
+## Mobile: Toast Notification System
+
+Replaces `Alert.alert()` for all non-confirmation messages:
+
+```
+store/toastStore.ts      ← Zustand: showToast(msg, type), hideToast()
+utils/toast.ts           ← Imperative API: toast.error(), toast.success(), toast.info()
+components/ui/Toast.tsx  ← Animated slide-in banner, mounted at root _layout.tsx, zIndex 9999
+```
+
+- **Error** → red (`theme.colors.error`), AlertCircle icon
+- **Success** → green (`theme.colors.success`), CheckCircle2 icon
+- **Info** → primary blue, Info icon
+- Auto-dismisses after 3 seconds. New toast replaces any active one.
+- Native `Alert.alert()` still used for **confirmation dialogs** that require user action (Cancel/Confirm buttons).
+
 ## Caching Strategy (Sprint 8)
 
 Redis (Upstash) targets:

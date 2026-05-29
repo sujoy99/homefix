@@ -1,6 +1,8 @@
 import { act } from '@testing-library/react-native';
 import { useAuthStore } from '../../store/authStore';
 import { buildUserSession, buildTokenPair } from '../factories/user.factory';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const expoSecureStore = require('expo-secure-store');
 
 jest.mock('../../api/client', () => ({
   apiClient: {
@@ -50,8 +52,7 @@ describe('authStore', () => {
   });
 
   it('hydrate restores session when token exists', async () => {
-    const secureStore = await import('expo-secure-store');
-    (secureStore.getItemAsync as jest.Mock).mockResolvedValueOnce('mock-access-token');
+    (expoSecureStore.getItemAsync as jest.Mock).mockResolvedValueOnce('mock-access-token');
 
     await act(async () => {
       await useAuthStore.getState().hydrate();

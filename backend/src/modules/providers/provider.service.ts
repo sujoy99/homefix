@@ -1,7 +1,7 @@
 import { ProviderRepository } from './provider.repository';
 import { CategoryRepository } from '@modules/categories/category.repository';
 import { CreateProviderProfileInput, UpdateProviderProfileInput, AddSkillInput, ProviderProfileWithSkills } from './provider.types';
-import { NotFoundError, DuplicateError, ForbiddenError } from '@errors/http-errors';
+import { NotFoundError, DuplicateError, ForbiddenError, UnauthorizedError } from '@errors/http-errors';
 import { ErrorCode } from '@errors/error-code';
 import { UserRole } from '@modules/users/user.types';
 
@@ -27,10 +27,14 @@ export class ProviderService {
     return profile as unknown as ProviderProfileWithSkills;
   }
 
-  static async updateProfile(userId: string, data: UpdateProviderProfileInput): Promise<ProviderProfileWithSkills> {
-    const profile = await ProviderRepository.findByUserId(userId);
+  static async updateProfile(userId: string, role: UserRole, data: UpdateProviderProfileInput): Promise<ProviderProfileWithSkills> {
+    let profile = await ProviderRepository.findByUserId(userId);
     if (!profile) {
-      throw new NotFoundError(ErrorCode.RESOURCE_NOT_FOUND, 'Provider profile not found');
+      if (role !== UserRole.PROVIDER) {
+        throw new ForbiddenError(ErrorCode.FORBIDDEN, 'Only providers can have a profile');
+      }
+      profile = await ProviderRepository.create({ user_id: userId });
+      profile = await ProviderRepository.findByUserId(userId) ?? profile;
     }
 
     const updated = await ProviderRepository.update(profile.id, data);

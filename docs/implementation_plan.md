@@ -1,9 +1,9 @@
 # HomeFix — Full-Stack Implementation Plan
 
-> **Version:** 3.2  
+> **Version:** 3.3  
 > **Prepared by:** Sr. Software Engineer  
 > **Date:** 2026-04-19  
-> **Last Updated:** 2026-05-28  
+> **Last Updated:** 2026-05-29  
 > **Methodology:** Agile (Sprint-based, ticket-level breakdown)  
 > **Inputs:** SRS v1.0 + Architecture decisions + Post-Sprint-1 code review
 
@@ -16,7 +16,7 @@
 | Sprint 0 — Foundation | ✅ Completed | 2026-04-19 | 2026-05-27 |
 | Sprint 1 — Auth Screens | ✅ Completed | 2026-04-19 | 2026-05-28 |
 | Sprint 1 Hardening — Code Review Fixes | ✅ Completed | 2026-05-28 | 2026-05-28 |
-| Sprint 2 — Home + Categories | ⏳ Not Started | — | — |
+| Sprint 2 — Home + Categories | ✅ Completed | 2026-05-29 | 2026-05-29 |
 | Sprint 3 — Booking + Jobs | ⏳ Not Started | — | — |
 | Sprint 4 — Voice + Accessibility | ⏳ Not Started | — | — |
 | Sprint 5 — Reviews + Notifications | ⏳ Not Started | — | — |
@@ -30,16 +30,16 @@
 
 > **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
 
-**Active Sprint:** Sprint 2 — Home, Navigation & Service Catalog  
-**Sprint Status:** 🔄 In Progress (Backend ✅, Mobile ⏳)  
+**Active Sprint:** Sprint 3 — Booking & Job Lifecycle  
+**Sprint Status:** ⏳ Not Started  
 **Git Branch Convention:** `feature/HF-XXX-short-description`
 
 ### Next Ticket Per Platform
 
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
-| 🖥 Backend | — | Sprint 2 backend complete ✅ | — |
-| 📱 Mobile | **HF-025** | Tab navigator + app shell | — |
+| 🖥 Backend | **HF-031** | Job/Booking module — state machine | — |
+| 📱 Mobile | **HF-034** | Create booking flow | HF-031 |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
 ### How to Pick Up Work
@@ -389,14 +389,25 @@ modules/payments/
 
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
-| HF-025 | Tab navigation (Resident: Home/Bookings/Profile, Provider: Home/Jobs/Profile) | ⏳ | 4h |
-| HF-026 | Resident home screen (category grid with icons, search bar, "near you" section) | ⏳ | 8h |
-| HF-027 | Category listing — providers filtered by category, distance, rating | ⏳ | 6h |
-| HF-028 | Provider detail screen (skills, rating, reviews, "Book Now" CTA) | ⏳ | 6h |
-| HF-029 | Provider home screen (dashboard: active jobs, earnings, availability toggle) | ⏳ | 6h |
-| HF-030 | Profile screen (view/edit, photo upload, location update, language pref) | ⏳ | 6h |
+| HF-025 | Tab navigation (Resident: Home/Bookings/Profile, Provider: Home/Jobs/Profile) | ✅ | 4h |
+| HF-026 | Resident home screen (category grid with icons, search bar, "near you" section) | ✅ | 8h |
+| HF-027 | Category listing — providers filtered by category, distance, rating | ✅ | 6h |
+| HF-028 | Provider detail screen (skills, rating, reviews, "Book Now" CTA) | ✅ | 6h |
+| HF-029 | Provider home screen (dashboard: active jobs, earnings, availability toggle) | ✅ | 6h |
+| HF-030 | Profile screen (view/edit, photo upload, location update, language pref) | ✅ | 6h |
 
 **Deliverable:** Main app with category browsing, provider discovery, profiles.
+
+#### Sprint 2 Bug Fixes & Enhancements:
+
+| Ticket | Title | Status | Est. |
+|---|---|---|---|
+| HF-014B | Registration — Provider: NID requires **front AND back** photo; both validated before Step 5 | ✅ | 2h |
+| HF-014C | Camera policy: NID photos use `launchCameraAsync` by default (`camera_only`); admin-configurable via `platform_settings.nid_photo_source` | ✅ | 3h |
+| HF-030A | Profile — My Services: rebuilt as multi-select bottom-sheet modal (checkbox list, primary badge, at-least-one validation, Edit pencil button) | ✅ | 4h |
+| HF-030B | Profile — Logout: redesigned from outline button to red card-row matching InfoRow pattern (red icon + chevron) | ✅ | 1h |
+| HF-030C | Toast notification system: animated colored banner (red=error, green=success, blue=info) replaces `Alert.alert()` for all non-confirmation messages app-wide | ✅ | 3h |
+| HF-030D | Platform Settings: `platform_settings` table + `GET /v2/config/public` (no auth); `PlatformSettingKey` + `NidPhotoSource` enums in `packages/shared` document all valid values; admin updates via direct DB or future admin API (Sprint 6) | ✅ | 4h |
 
 ---
 
@@ -515,6 +526,7 @@ modules/payments/
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
 | HF-068 | Admin panel — provider verification (approve/reject + NID preview) | ⏳ | 8h |
+| HF-068B | **Mobile admin screen upgrade** — expand minimal Approvals tab to show provider detail with NID photo, profile photo, location map, and registration data before approve/reject. Must mirror HF-068 web panel scope. Currently only shows name/mobile/email. | ⏳ | 4h |
 | HF-069 | Admin panel — service category management (CRUD, requires_area) | ⏳ | 6h |
 | HF-070 | Admin panel — revenue dashboard (total revenue, commission breakdown by rule) | ⏳ | 6h |
 | HF-071 | Admin panel — user management (list, search, status change) | ⏳ | 6h |
@@ -618,6 +630,7 @@ Every SRS requirement mapped to its implementing ticket(s):
 | 2026-05-26 | 3.0 | All sprints segregated by platform (Backend / Mobile / Web / Shared). Commission engine made configurable — added HF-056B (admin commission rules API) and HF-071B (admin commission UI). HF-073 extended for expired promotion cleanup. |
 | 2026-05-28 | 3.1 | Sprint 1 closed. Current Focus updated to Sprint 2. Backend: UniqueViolationError handling moved from global error handler to repository layer via `db-error-map.ts` (scales cleanly as more tables/constraints are added). |
 | 2026-05-28 | 3.2 | Post-Sprint-1 code review completed. Sprint 1 Hardening sprint added (HF-085 to HF-099, 15 tickets). Current Focus updated to Sprint 1 Hardening. Sprint 2 blocked until Group 1 + Group 2 hardening tickets are complete. Total tickets: 96. |
+| 2026-05-29 | 3.4 | Sprint 2 mobile complete + QA bug fixes (availability toggle, tab bar structure, provider skills flow, admin approval screen). HF-068B added: mobile admin screen must be upgraded in Sprint 7 alongside HF-068 web panel to include provider detail view with NID/photo attachments before approve/reject. |
 | 2026-05-28 | 3.3 | Sprint 2 backend complete (HF-021 to HF-024). Added fully DB-driven RBAC system (roles, permissions, role_permissions tables; admin API; PermissionCache; docs/RBAC.md). param() utility added to @utils for Express 5 route param access. 67 tests passing across 6 suites. |
 
 ---

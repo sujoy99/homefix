@@ -4,6 +4,14 @@ import '@/i18n';
 import { useAuthStore } from '../store/authStore';
 import { View, ActivityIndicator } from 'react-native';
 import { theme } from '../theme';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toast } from '@/components/ui/Toast';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: 60_000, retry: 1 },
+  },
+});
 
 /**
  * ============================
@@ -49,5 +57,12 @@ export default function RootLayout() {
   }
 
   // Render the current route
-  return <Slot />;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <View style={{ flex: 1 }}>
+        <Slot />
+        <Toast />
+      </View>
+    </QueryClientProvider>
+  );
 }

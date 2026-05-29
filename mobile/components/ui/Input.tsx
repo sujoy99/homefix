@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, TextInput, TextInputProps, StyleSheet } from 'react-native';
+import { View, TextInput, TextInputProps, StyleSheet, TouchableOpacity } from 'react-native';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { theme } from '@/theme';
 import { Text } from '@/components/ui/Text';
 import { useTranslation } from 'react-i18next';
@@ -16,11 +17,27 @@ export const Input = ({
   error,
   leftIcon,
   rightIcon,
+  secureTextEntry,
   style,
   ...props
 }: InputProps) => {
   const [isFocused, setIsFocused] = React.useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
   const { t } = useTranslation();
+
+  const isPassword = secureTextEntry === true;
+
+  const eyeToggle = isPassword ? (
+    <TouchableOpacity
+      onPress={() => setIsPasswordVisible((v) => !v)}
+      hitSlop={8}
+      style={styles.eyeBtn}
+    >
+      {isPasswordVisible
+        ? <EyeOff size={20} color={theme.colors.textMuted} />
+        : <Eye size={20} color={theme.colors.textMuted} />}
+    </TouchableOpacity>
+  ) : null;
 
   return (
     <View style={styles.container}>
@@ -40,10 +57,11 @@ export const Input = ({
         )}
 
         {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
-        
+
         <TextInput
           style={[styles.input, style]}
           placeholderTextColor={theme.colors.textMuted}
+          secureTextEntry={isPassword && !isPasswordVisible}
           onFocus={(e) => {
             setIsFocused(true);
             props.onFocus?.(e);
@@ -54,8 +72,8 @@ export const Input = ({
           }}
           {...props}
         />
-        
-        {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
+
+        {eyeToggle ?? (rightIcon ? <View style={styles.rightIcon}>{rightIcon}</View> : null)}
       </View>
 
       {error && (
@@ -69,8 +87,8 @@ export const Input = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20, // Slightly more space for the legend
-    marginTop: 10, // Top margin for the legend to sit
+    marginBottom: 20,
+    marginTop: 10,
   },
   labelContainer: {
     position: 'absolute',
@@ -93,7 +111,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: theme.colors.border,
     borderRadius: 16,
-    backgroundColor: '#FFFFFF', // Unified for legend style
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: theme.spacing.md,
   },
   inputFocused: {
@@ -114,6 +132,10 @@ const styles = StyleSheet.create({
   },
   rightIcon: {
     marginLeft: theme.spacing.sm,
+  },
+  eyeBtn: {
+    marginLeft: theme.spacing.sm,
+    padding: 2,
   },
   errorText: {
     marginTop: theme.spacing.xs,

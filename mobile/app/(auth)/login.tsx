@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -16,6 +16,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { getApiError } from '@/utils/apiError';
 import { getDeviceId } from '@/utils/deviceId';
+import { toast } from '@/utils/toast';
+import { ErrorCode } from '@homefix/shared';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -50,7 +52,12 @@ export default function LoginScreen() {
       await login(data);
     } catch (error) {
       setLoading(false);
-      Alert.alert(t('common.error'), getApiError(error, t));
+      const code = (error as any)?.response?.data?.error_code;
+      if (code === ErrorCode.ACCOUNT_NOT_APPROVED) {
+        router.replace('/(auth)/pending-approval');
+      } else {
+        toast.error(getApiError(error, t));
+      }
     }
   };
 

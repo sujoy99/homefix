@@ -1,21 +1,22 @@
 import { Stack } from 'expo-router';
 
 /**
- * ============================
- * App Route Group Layout
- * ============================
- * Only accessible to authenticated users.
+ * (app) Stack layout.
+ *
+ * (tabs)          → bottom tab navigator (Home / Bookings|Jobs / Profile)
+ * category/[id]   → category provider listing  (slides over tabs, no tab bar)
+ * provider/[id]   → provider detail + Book Now  (slides over tabs, no tab bar)
+ *
+ * Detail screens live here so they are never auto-discovered by the Tabs
+ * navigator — that was causing category/[id] and provider/[id] to appear
+ * as ghost tabs in the tab bar.
  */
 export default function AppLayout() {
   return (
-    <Stack>
-      <Stack.Screen 
-        name="index" 
-        options={{ 
-          title: 'HomeFix',
-          headerLargeTitle: true,
-        }} 
-      />
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="category/[id]" />
+      <Stack.Screen name="provider/[id]" />
     </Stack>
   );
 }

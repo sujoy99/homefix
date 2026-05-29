@@ -16,6 +16,8 @@ import { mapToUserRegistrationResponse, mapToLoginUserResponse } from './auth.ma
 import { InvalidationStore } from '@modules/auth/invalidation.store';
 import { UserRepository } from '@modules/users/user.repository';
 import { RefreshTokenService } from './refresh_token.service';
+import { ProviderRepository } from '@modules/providers/provider.repository';
+import { CategoryRepository } from '@modules/categories/category.repository';
 import { transaction } from 'objection';
 import { RefreshToken } from './refresh_token.model';
 import { AuthAccount } from './auth.model';
@@ -56,6 +58,7 @@ export class AuthService {
       auth_method = AuthMethod.PASSWORD,
       photo_url,
       nid_photo_url,
+      nid_photo_back_url,
     } = data;
 
     let hashedPassword = undefined;
@@ -108,9 +111,27 @@ export class AuthService {
       status,
       ...(photo_url !== undefined && { photo_url }),
       ...(nid_photo_url !== undefined && { nid_photo_url }),
+      ...(nid_photo_back_url !== undefined && { nid_photo_back_url }),
     };
 
     const result = await AuthRepository.createUser(payload);
+
+    // For providers: auto-create profile and link any chosen service categories
+    if (role === UserRole.PROVIDER && data.category_ids?.length) {
+      const profile = await ProviderRepository.create({ user_id: result.user.id });
+      let isPrimary = true;
+      for (const categoryId of data.category_ids) {
+        const category = await CategoryRepository.findById(categoryId);
+        if (category) {
+          await ProviderRepository.addSkill(profile.id, {
+            category_id: categoryId,
+            is_primary: isPrimary,
+          });
+          isPrimary = false;
+        }
+      }
+    }
+
     return mapToUserRegistrationResponse(result.user, result.auth);
   }
 

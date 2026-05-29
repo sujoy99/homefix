@@ -27,6 +27,7 @@ export type User = {
   status: UserStatus;
   photo_url?: string | null;
   nid_photo_url?: string | null;
+  nid_photo_back_url?: string | null;
   area?: {
     latitude: number;
     longitude: number;
@@ -55,8 +56,9 @@ export type UserResgistrationRequest = {
 
   auth_method: AuthMethod,
 
-  photo_url?: string; 
+  photo_url?: string;
   nid_photo_url?: string;
+  nid_photo_back_url?: string;
 
   status: UserStatus.PENDING | UserStatus.ACTIVE;
 };
