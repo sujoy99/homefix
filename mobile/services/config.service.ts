@@ -1,4 +1,4 @@
-import apiClient from './api';
+import { apiClient } from '@/api/client';
 import { NidPhotoSource } from '@homefix/shared';
 
 interface PublicConfig {

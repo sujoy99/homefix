@@ -184,9 +184,11 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 
 ---
 
-### Screen 4 — Registration: Provider (HF-014 + Sprint 2 Skills Fix)
+### Screen 4 — Registration: Provider (HF-014 + HF-014B + Sprint 2 Skills Fix)
 
-> **What to check:** Provider registration has 5 steps — same as resident but adds Documents (step 4) and My Services (step 5).
+> **What to check:** Provider registration has 5 steps — same as resident but adds Documents (step 4) and My Services (step 5).  
+> **Updated (HF-014B):** Step 4 now requires BOTH NID front photo AND NID back photo.  
+> **Updated (HF-014C):** NID photo taps open the **camera** by default (not gallery) — admin can change this.
 
 **Navigate:** Login screen → "Register Now" → select "Service Provider"
 
@@ -196,14 +198,17 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 
 | # | Step | Expected Result | Result |
 |---|------|-----------------|--------|
-| 1 | Step 4 screen loads | Upload areas for "Profile Photo" and "NID Photo" | |
+| 1 | Step 4 screen loads | 3 upload areas: "Profile Photo", "NID Photo (Front Side)", "NID Photo (Back Side)" | |
 | 2 | Progress bar shows 4/5 | 5-step progress for providers | |
-| 3 | Tap "Profile Photo" area | Photo picker opens | |
-| 4 | Select a photo | Photo thumbnail appears in upload area | |
-| 5 | Tap "NID Photo" area | Photo picker opens | |
-| 6 | Select NID photo | Thumbnail appears | |
-| 7 | Tap Next without NID photo | Error: "NID photo is required for providers" | |
-| 8 | NID photo selected → tap Next | Advances to Step 5 | |
+| 3 | Tap "Profile Photo" area | Gallery picker opens (profile photo always uses gallery) | |
+| 4 | Select a profile photo | Thumbnail appears in upload area | |
+| 5 | Tap "NID Photo (Front Side)" | **Camera opens** (not gallery — NID requires live photo by default) | |
+| 6 | Take front photo | Thumbnail appears in front NID slot | |
+| 7 | Tap "NID Photo (Back Side)" | Camera opens for back side | |
+| 8 | Take back photo | Thumbnail appears in back NID slot | |
+| 9 | Tap Next with no NID front → red error banner | "NID front photo is required for providers" shown as red toast at top of screen | |
+| 10 | Front taken but no back → tap Next | "NID back photo is required for providers" shown as red toast | |
+| 11 | Both NID photos taken → tap Next | Advances to Step 5 | |
 
 **Step 5 — My Services (skills selection):**
 
@@ -267,19 +272,25 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 
 ---
 
-## Part 3 — Error Handling (HF-020D)
+## Part 3 — Error Handling (HF-020D + HF-030C Toast System)
 
-> **What to check:** API errors show user-friendly localized messages, not raw technical errors.
+> **What to check:** API errors show user-friendly localized messages as colored toast banners — **not** plain black dialogs.
+>
+> **Sprint 2 enhancement:** All error notifications now appear as a **red animated banner** that slides in from the top of the screen and auto-dismisses after 3 seconds. Success messages appear green. Native `Alert.alert()` dialogs are only used for confirmations (e.g., logout, approve/reject provider).
 
-| # | Scenario | Expected Error Message | Result |
-|---|----------|----------------------|--------|
-| 1 | Login with unregistered mobile | "Incorrect mobile number or password" | |
-| 2 | Register with existing mobile | "This mobile number is already registered" | |
-| 3 | Register with existing NID | "This NID is already registered" | |
-| 4 | Register with existing email | "This email address is already registered" | |
-| 5 | Login with pending provider | "Your account has not been approved yet" | |
-| 6 | Backend unreachable | "An error occurred" (generic fallback) | |
-| 7 | Switch to Bengali before login error | Error message appears in Bengali | |
+| # | Scenario | Expected Behavior | Result |
+|---|----------|-------------------|--------|
+| 1 | Login with unregistered mobile | **Red toast banner**: "Incorrect mobile number or password" | |
+| 2 | Register with existing mobile | **Red toast banner**: "This mobile number is already registered" | |
+| 3 | Register with existing NID | **Red toast banner**: "This NID is already registered" | |
+| 4 | Register with existing email | **Red toast banner**: "This email address is already registered" | |
+| 5 | Login with pending provider | **Red toast banner**: "Your account has not been approved yet" | |
+| 6 | Backend unreachable | **Red toast banner**: "An error occurred" (generic fallback) | |
+| 7 | Switch to Bengali before login error | Error banner text in Bengali | |
+| 8 | Skip location in Step 2 → tap Next | **Red toast banner**: "Please select your location" | |
+| 9 | Skip NID front photo → tap Next | **Red toast banner**: "NID front photo is required for providers" | |
+| 10 | Skip NID back photo → tap Next | **Red toast banner**: "NID back photo is required for providers" | |
+| 11 | Skip skills in Step 5 → tap Complete | **Red toast banner**: "Please select at least one service" | |
 
 ---
 
@@ -372,6 +383,8 @@ When admin is logged in, the tab bar shows only **Home** (Admin Dashboard) and *
 | Provider name shows "—" on dashboard after login | `full_name` not returned by `/me/profile` response yet | Sprint 3 |
 | Photo uploads store a local file URI, not a real URL | File upload service wired in Sprint 3 | Sprint 3 (HF-033) |
 | Admin can only approve/reject — no other admin features | Full admin panel (categories, revenue, users) is the Sprint 7 web app | Sprint 7 |
+| Admin mobile approval screen shows minimal info only (name/mobile/email) | Full detail view (NID photos, location) deferred to Sprint 7 alongside web admin panel — tracked as HF-068B | Sprint 7 |
+| NID photo always opens camera regardless of admin setting | `GET /v2/config/public` is called only when the provider step loads; if the backend is slow to respond, `camera_only` is the safe default | Instant (config loads before step 4 renders) |
 
 ---
 

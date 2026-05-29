@@ -2,95 +2,23 @@
 
 > **Sprint:** Sprint 2 — Home, Navigation & Service Catalog  
 > **Covers:** HF-025 · HF-026 · HF-027 · HF-028 · HF-029 · HF-030  
+> **Also covers:** HF-030A (My Services modal) · HF-030B (Logout redesign) · HF-030C (Toast system) · HF-030D (Platform Settings) · HF-014B (NID front+back) · HF-014C (Camera policy)  
 > **Audience:** QA, Product Owner, Business Stakeholder  
-> **Last updated:** 2026-05-29 (v2 — bug fixes: availability toggle, extra tabs, provider skills flow)
+> **Last updated:** 2026-05-29
 
 ---
 
 ## Part 1 — Environment Setup
 
-### Step 1 — Find your Windows WiFi IP
+See [TESTING_SPRINT1_MOBILE.md](TESTING_SPRINT1_MOBILE.md) Part 1 for backend start, mobile start, and seed instructions. The commands are the same.
 
-Open **Command Prompt** (or PowerShell) on Windows and run:
-
-```
-ipconfig
-```
-
-Look for the **Wi-Fi adapter** section. Copy the **IPv4 Address** — e.g. `192.168.0.102`.  
-You will use this IP in every command below. Write it down.
-
----
-
-### Step 2 — Start the backend
-
-Open a **WSL2 terminal** and run from the repo root:
-
-```bash
-# First time only (builds images, runs migrations, starts server)
-make up
-
-# Every time after the first
-make start
-```
-
-Wait until you see:
-```
-backend  | HomeFix API running on port 4000
-```
-
-If the category grid is empty when you test, run this **once** to load seed data:
-
-```bash
-make seed
-```
-
-> Seed loads: 10 service categories (Bengali + English), roles, permissions, and the default admin user.
-
----
-
-### Step 3 — Start the mobile app
-
-Open a **second WSL2 terminal** and run:
-
-```bash
-cd mobile
-REACT_NATIVE_PACKAGER_HOSTNAME=<your-windows-wifi-ip> npx expo start --host lan
-```
-
-Replace `<your-windows-wifi-ip>` with the IP you found in Step 1. Example:
-
-```bash
-REACT_NATIVE_PACKAGER_HOSTNAME=192.168.0.102 npx expo start --host lan
-```
-
-A QR code will appear in the terminal.
-
----
-
-### Step 4 — Open the app on your phone
-
-1. Install **Expo Go** from the Play Store or App Store
-2. Make sure your phone is on the **same WiFi network** as your Windows machine
-3. Open Expo Go → **Scan QR code** → point at the terminal QR
-4. The app will load on your phone
-
-> **Alternative:** Open `http://localhost:8081` in a browser on Windows to test on a web browser.
-
----
-
-### Test accounts
-
-All accounts below are created by `make seed` and are ready to use immediately:
+### Seed Test Accounts
 
 | Role | Mobile | Password | Notes |
 |------|--------|----------|-------|
-| **Admin** | `00000000000` | `Admin@1234` | Use Email tab: `admin@example.com` |
-| **Provider (approved)** | `01711223344` | `Provider@1234` | Rahim Uddin — has profile + 2 skills, available |
+| **Admin** | `00000000000` | `Admin@1234` | Or Email: `admin@example.com` / `Admin@1234` |
+| **Provider (approved)** | `01711223344` | `Provider@1234` | Rahim Uddin — active, has skills seeded |
 | **Resident** | `01811223344` | `Resident@1234` | Fatema Begum |
-
-> **To register new accounts:** Select role on the Register screen. Provider registration includes a **Step 5: My Services** where you pick your service categories before submitting.  
-> New providers land on "Pending Approval" after registration. Use the Admin account + DB tools to approve them, or use the pre-seeded provider above.
 
 ---
 
@@ -100,305 +28,286 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 
 ---
 
-### Screen 1 — Tab Navigation Bar (HF-025)
+### Screen 1 — Resident Home Screen (HF-026)
 
-> **What to check:** The bottom bar shows the correct tabs for each role.
+> **What to check:** After login as Resident, the home screen shows categories, search bar, and available providers.
 
-**As a Resident:**
-
-| # | Step | Expected Result | Result |
-|---|------|-----------------|--------|
-| 1 | Log in as Resident | Bottom bar appears with 3 tabs | |
-| 2 | Check tab labels | **Home · Bookings · Profile** (in the active language) | |
-| 3 | Tap **Home** | Highlighted blue, shows home screen | |
-| 4 | Tap **Bookings** | Highlighted blue, shows bookings placeholder | |
-| 5 | Tap **Profile** | Highlighted blue, shows profile screen | |
-| 6 | "Jobs" tab | Must **not** be visible for a Resident | |
-
-**As a Provider:**
+**Navigate:** Login as Resident (`01811223344` / `Resident@1234`)
 
 | # | Step | Expected Result | Result |
 |---|------|-----------------|--------|
-| 7 | Log in as approved Provider | Bottom bar appears with 3 tabs | |
-| 8 | Check tab labels | **Home · Jobs · Profile** | |
-| 9 | "Bookings" tab | Must **not** be visible for a Provider | |
-
-**Language check:**
-
-| # | Step | Expected Result | Result |
-|---|------|-----------------|--------|
-| 10 | Go to Profile → toggle language to Bengali | Tab labels switch to বাংলা: **হোম · বুকিং · প্রোফাইল** | |
-| 11 | Toggle back to English | Labels switch back to English | |
+| 1 | Lands on Home tab after login | Resident Home screen shown (not Provider dashboard) | |
+| 2 | Greeting text | "Hi, [Name] 👋" with user's full name | |
+| 3 | Subtitle | "What do you need help with today?" | |
+| 4 | Search bar visible | Placeholder "Search services..." | |
+| 5 | Type in search bar | Category list filters in real time | |
+| 6 | Clear search | Full category grid restored | |
+| 7 | "Services" section | Grid of service categories from the database | |
+| 8 | Category card shows name | Category name in current app language | |
+| 9 | "Available Providers" section | Approved providers listed (Rahim Uddin visible) | |
+| 10 | Provider card shows name, rating, rate | Correct data from DB | |
+| 11 | Switch to Bengali | All labels and category names update | |
 
 ---
 
-### Screen 2 — Resident Home Screen (HF-026)
+### Screen 2 — Category Listing Screen (HF-027)
 
-> **What to check:** The main discovery screen for Residents.
+> **What to check:** Tapping a category shows a filtered list of providers with sort options.
 
-**Navigate:** Log in as Resident → **Home tab**
-
-| # | Step | Expected Result | Result |
-|---|------|-----------------|--------|
-| 1 | Open Home tab | Personalised greeting "Hi, [Your Name] 👋" | |
-| 2 | Category grid | Shows service cards in a 3-column grid with icons | |
-| 3 | Category icons | Each category has a relevant icon (water drop = plumbing, bolt = electrical, etc.) | |
-| 4 | Search bar | Placeholder text "Search services..." visible | |
-| 5 | Type "plumb" in search | Grid filters to show only Plumbing | |
-| 6 | Type in Bengali "প্লাম" | Grid filters by Bengali name (if category has Bengali name) | |
-| 7 | Clear the search | All categories return | |
-| 8 | "Available Providers" section | Shows up to 5 providers with name, star rating, experience | |
-| 9 | No providers in DB | Section shows "No providers available right now" | |
-| 10 | Tap a category card | Navigates to Category Listing screen | |
-| 11 | Tap a provider card | Navigates to Provider Detail screen | |
-
----
-
-### Screen 3 — Category Listing Screen (HF-027)
-
-> **What to check:** List of providers for a specific service category.
-
-**Navigate:** Home → tap any category (e.g. Plumbing)
+**Navigate:** Resident Home → tap any category card
 
 | # | Step | Expected Result | Result |
 |---|------|-----------------|--------|
-| 1 | Header | Shows the tapped category name (e.g. "Plumbing") | |
-| 2 | Back button | Returns to Home screen | |
-| 3 | Provider list | Shows only providers who offer this category | |
-| 4 | Provider card info | Name, star rating, years of experience, hourly rate, review count | |
-| 5 | Hourly rate missing | Shows "Negotiable" instead of a rate | |
-| 6 | "Top Rated" sort chip | Default active chip (blue); list sorted highest rating first | |
-| 7 | Tap "Most Experienced" | Chip turns blue, list re-sorts by most years of experience first | |
-| 8 | Tap "Lowest Rate" | List re-sorts by cheapest hourly rate first | |
-| 9 | No providers for category | Shows "No providers available for this category yet" | |
-| 10 | Tap a provider | Navigates to Provider Detail screen | |
+| 1 | Category screen opens | Slides over the tab bar (no tab bar visible) | |
+| 2 | Screen title | Category name shown in header | |
+| 3 | Provider count | "N Providers" shown below title | |
+| 4 | Sort chips visible | "Top Rated" · "Most Experienced" · "Lowest Rate" | |
+| 5 | "Top Rated" chip active by default | Providers sorted by rating (highest first) | |
+| 6 | Tap "Most Experienced" chip | List re-sorts by years of experience | |
+| 7 | Tap "Lowest Rate" chip | List re-sorts by hourly rate ascending | |
+| 8 | Provider card | Shows: name, availability badge, rating, experience, rate | |
+| 9 | Provider is in this category | Only providers with this category as a skill are shown | |
+| 10 | Category has no providers | "No providers available for this category yet" message shown | |
+| 11 | Tap Back / swipe back | Returns to Resident Home | |
 
 ---
 
-### Screen 4 — Provider Detail Screen (HF-028)
+### Screen 3 — Provider Detail Screen (HF-028)
 
-> **What to check:** Full public profile of a provider, and the Book Now button.
+> **What to check:** Tapping a provider card shows their full profile with skills, ratings, and a booking CTA.
 
-**Navigate:** Any provider card → Provider Detail
+**Navigate:** Category Listing → tap a provider card
 
 | # | Step | Expected Result | Result |
 |---|------|-----------------|--------|
-| 1 | Header | "Provider Profile" title + back button | |
-| 2 | Avatar | Large circle with provider's name initial | |
-| 3 | Name & rating | Provider's full name + star rating + review count | |
-| 4 | Available badge | Green "Available now" badge (only if provider is currently available) | |
-| 5 | Stats bar | 3 blocks: Years Experience · Hourly Rate · Total Reviews | |
-| 6 | About section | Provider's bio text (hidden if no bio entered) | |
-| 7 | Skills & Services | Chips showing all categories the provider offers (e.g. "Plumbing", "General Repair") | |
-| 8 | Reviews section | Shows "Reviews coming soon" placeholder | |
-| 9 | "Book Now" button | Amber/yellow button fixed at bottom of screen | |
-| 10 | Tap "Book Now" | Alert appears: "Booking flow coming in Sprint 3" | |
-| 11 | Back button | Returns to previous screen | |
-| 12 | Scroll | Bio, skills, reviews all accessible by scrolling | |
+| 1 | Provider detail screen opens | Slides over category screen | |
+| 2 | Hero card | Provider name, availability status, avatar initial | |
+| 3 | Stats bar | Rating / Years Experience / Hourly Rate | |
+| 4 | "Book Now" button visible | Yellow/amber CTA button at bottom | |
+| 5 | Tap "Book Now" | Alert: "Booking flow coming in Sprint 3" | |
+| 6 | "About" section | Bio text shown (or empty if not set) | |
+| 7 | "Skills & Services" section | Category chips shown for provider's skills | |
+| 8 | Primary skill highlighted | First skill shown with bolder weight | |
+| 9 | "Reviews" section | "Reviews coming soon (HF-050)" placeholder | |
+| 10 | Tap Back | Returns to category listing | |
 
 ---
 
-### Screen 5 — Provider Home / Dashboard (HF-029)
+### Screen 4 — Provider Home Screen / Dashboard (HF-029)
 
-> **What to check:** The dashboard a Provider sees when they tap the Home tab.
+> **What to check:** Provider dashboard shows availability toggle, stats, and placeholder sections.
 
-**Navigate:** Log in as approved Provider → **Home tab**
+**Navigate:** Login as Provider (`01711223344` / `Provider@1234`)
 
 | # | Step | Expected Result | Result |
 |---|------|-----------------|--------|
-| 1 | Home tab content | Shows **dashboard** (not the category grid that Residents see) | |
-| 2 | Greeting | "Hi, [Provider Name] 👋" | |
-| 3 | Subtitle | "Here's your dashboard" | |
-| 4 | Availability card | Shows a Switch (toggle) with label "Availability" | |
-| 5 | Availability status text | ON → "You are visible to residents" / OFF → "You are hidden from residents" | |
-| 6 | Flip the toggle ON | Switch moves to ON, status text updates, saved to server | |
-| 7 | Flip the toggle OFF | Switch moves to OFF, status text updates, saved to server | |
-| 8 | Stat card — Active Jobs | Shows "0" (no jobs yet — Sprint 3) | |
-| 9 | Stat card — Rating | Shows the provider's star rating from the database | |
-| 10 | Stat card — My Rate | Shows the hourly rate, or "—" if not set | |
-| 11 | Active Jobs section | Shows "Active jobs will appear here" + HF-038 placeholder | |
-| 12 | Earnings section | Shows "Earnings breakdown coming soon" + HF-060 placeholder | |
-| 13 | Verify toggle persists | Flip toggle, go to another tab and back — toggle is still in the position you set | |
+| 1 | Lands on Provider Dashboard after login | Not resident home screen | |
+| 2 | Tab bar shows | Home · Jobs · Profile (no Bookings tab) | |
+| 3 | Dashboard subtitle | "Here's your dashboard" | |
+| 4 | Availability toggle visible | Shows "Availability" label + current status | |
+| 5 | Provider is currently available | Toggle is ON; "You are visible to residents" | |
+| 6 | Tap toggle to go offline | Toggle turns OFF; "You are hidden from residents" | |
+| 7 | Tap toggle again | Toggle turns back ON; visible again | |
+| 8 | Toggle failure (no network) | **Red toast banner**: "Could not update availability. Try again." | |
+| 9 | Stats cards | Active Jobs · Rating · My Rate placeholders visible | |
+| 10 | "Active Jobs" section | Placeholder: "Active jobs will appear here" | |
+| 11 | "Earnings" section | Placeholder: "Earnings breakdown coming soon" | |
 
 ---
 
-### Screen 6 — Profile Screen (HF-030)
+### Screen 5 — Profile Screen (HF-030 + HF-030A + HF-030B)
 
-> **What to check:** Profile screen available to both Residents and Providers.
+> **What to check:** Profile screen shows personal info, My Services (provider only), preferences, and logout.
 
-**Navigate:** **Profile tab** (bottom navigation)
+---
+
+#### 5A — Personal Info (all roles)
+
+**Navigate:** Any role → Profile tab (rightmost tab)
 
 | # | Step | Expected Result | Result |
 |---|------|-----------------|--------|
-| 1 | Avatar | Large circle with your name's first letter | |
-| 2 | Camera button | Small amber camera icon overlays the avatar | |
-| 3 | Tap camera button | Alert: "Photo upload coming soon" | |
-| 4 | Name displayed | Your full name below the avatar | |
-| 5 | Role displayed | "Resident" or "Service Provider" below your name | |
-| 6 | Personal Info card | Shows: Full Name · Mobile Number · Email (if set) · Location | |
-| 7 | Tap Full Name row | Alert: "Profile editing coming soon (HF-030)" | |
-| 8 | Mobile number | Read-only — no tap action | |
-| 9 | Tap Location row | Alert: "Location update coming soon" | |
-| 10 | Language toggle | Shows current language, tapping switches the whole app | |
-| 11 | Toggle to Bengali | **Every screen**, **every label** in the app switches to Bengali | |
-| 12 | Toggle back to English | Full app switches back to English | |
-| 13 | Dark mode switch | Switch is present but toggles only the UI control (full theme in Sprint 8) | |
-| 14 | Log Out button | "Log Out" button with arrow icon, at the bottom | |
-| 15 | Tap Log Out | **Confirmation dialog** appears: "Are you sure you want to log out?" | |
-| 16 | Tap "Cancel" in dialog | Dialog closes, user stays on Profile | |
-| 17 | Tap "Log Out" in dialog | App logs out and returns to Login screen | |
+| 1 | Profile tab loads | Avatar circle with name initial, user's full name, role label | |
+| 2 | "Personal Information" card | Full Name · Mobile · Email (if set) · Location rows | |
+| 3 | Tap Full Name row (ChevronRight visible) | Alert: "Profile editing coming soon (HF-030)" | |
+| 4 | Tap Location row | Alert: "Location update coming soon" | |
+| 5 | Mobile row | No chevron (read-only) | |
+| 6 | Camera icon on avatar | Small camera badge bottom-right of avatar | |
+| 7 | Tap camera icon | Alert: "Photo upload coming soon" | |
 
 ---
 
----
+#### 5B — My Services section (provider only, HF-030A)
 
-### Screen 7 — Provider Registration: Step 5 Skills Picker (Bug Fix c)
-
-> **What to check:** When registering as a Provider, step 5 lets you select which services you offer. These are saved immediately when the account is created.
-
-**Navigate:** Register → Select "Service Provider" → complete Steps 1–4 → arrives at Step 5
+**Navigate:** Login as Provider → Profile tab
 
 | # | Step | Expected Result | Result |
 |---|------|-----------------|--------|
-| 1 | Reach Step 5 | Screen titled "My Services" with a grid of service category chips | |
-| 2 | No selection, tap "Complete" | Error alert: "Please select at least one service" | |
-| 3 | Tap "Plumbing" chip | Chip gets a blue border + checkmark, highlighted background | |
-| 4 | Tap "Electrical" chip | Second chip also selected | |
-| 5 | Tap a selected chip again | Chip deselects (border goes grey) | |
-| 6 | Select 1+ categories, tap "Complete" | Registration submits, lands on Pending Approval screen | |
-| 7 | After admin approves + provider logs in → Profile tab | "My Services" card shows the categories selected at registration | |
-| 8 | Progress bar | Shows 5 steps for Provider (5 / 5 on last step) | |
+| 1 | "My Services" card visible | Only shown for providers | |
+| 2 | Current skills listed | Category name + "Primary" badge on first skill | |
+| 3 | "Edit" button (Pencil icon) top-right of card | Visible and tappable | |
+| 4 | Tap "Edit" button | Bottom-sheet modal slides up from bottom | |
+| 5 | Modal title | "Select Services" | |
+| 6 | Modal hint | "Pick at least one service you offer" | |
+| 7 | Checklist shows all categories | One row per active category | |
+| 8 | Currently assigned categories pre-checked | Checkbox filled with primary color and checkmark | |
+| 9 | Tap an unchecked category | Checkbox fills (adds to selection) | |
+| 10 | Tap a checked category | Checkbox empties (removes from selection) | |
+| 11 | Deselect all categories → tap Save | **Red toast banner**: "Please select at least one service" — modal stays open | |
+| 12 | Select 1+ categories → tap Save | Modal closes; My Services list updates immediately | |
+| 13 | Tap Cancel | Modal closes; no changes saved | |
+| 14 | Provider with no services | "No services yet. Tap Edit to add." in muted text | |
+| 15 | Language Bengali | Category names shown in Bengali where available | |
 
 ---
 
-### Screen 8 — Provider Profile: My Services Management (Bug Fix c)
-
-> **What to check:** Approved providers can add and remove service categories from their Profile tab.
-
-**Navigate:** Log in as Provider (01711223344) → **Profile tab** → scroll to "My Services" section
+#### 5C — Preferences
 
 | # | Step | Expected Result | Result |
 |---|------|-----------------|--------|
-| 1 | Profile tab | "My Services" card appears (providers only — residents don't see this) | |
-| 2 | Pre-seeded provider | Shows 2 skill chips from seed (first one has ★ = primary) | |
-| 3 | Tap **+** button | Alert appears: "Add a Service" with list of categories not yet added | |
-| 4 | Tap a category in the alert | New skill chip appears immediately | |
-| 5 | Tap **+** when all categories added | Alert: "You have already added all available service categories" | |
-| 6 | Tap **X** on a chip | Chip disappears (skill removed) | |
-| 7 | After adding/removing, go to Home → search category | Provider now appears / disappears in that category's listing | |
-| 8 | Primary skill chip | Shown with filled blue background + ★ symbol | |
+| 1 | "Preferences" card visible | Language toggle + Dark Mode switch | |
+| 2 | Tap Language toggle | App language switches Bengali ↔ English instantly | |
+| 3 | Dark Mode switch | Toggle works (UI not fully dark — placeholder) | |
 
 ---
 
-### Screen 9 — Tab Bar: No Extra Tabs (Bug Fix b)
-
-> **What to check:** Only the correct tabs appear — no `category/[id]` or `provider/[id]` visible.
-
-**Navigate:** Log in as either role → check the bottom tab bar
+#### 5D — Logout button (HF-030B)
 
 | # | Step | Expected Result | Result |
 |---|------|-----------------|--------|
-| 1 | Log in as Resident | Tab bar shows exactly 3 tabs: Home · Bookings · Profile | |
-| 2 | Log in as Provider | Tab bar shows exactly 3 tabs: Home · Jobs · Profile | |
-| 3 | No extra tabs | No "category [id]" or "provider [id]" tab visible | |
+| 1 | Logout appears as a card row | Red icon (LogOut), "Log Out" text in red, chevron arrow | |
+| 2 | Style matches InfoRow pattern | Same card and row height as Personal Information rows | |
+| 3 | Tap logout row | **Native confirmation dialog** (not a toast): "Are you sure you want to log out?" | |
+| 4 | Tap "Cancel" in dialog | Dialog closes, stays on Profile | |
+| 5 | Tap "Log Out" in dialog | Logs out → redirects to Login screen | |
 
 ---
 
-### Screen 10 — Availability Toggle (Bug Fix a)
+### Screen 6 — Admin Approvals Screen (HF-025 + HF-023)
 
-> **What to check:** Provider can flip availability ON/OFF and it saves correctly.
+> **What to check:** Admin sees Approvals tab instead of Home, with pending provider list and approve/reject actions.
 
-**Navigate:** Log in as Provider (01711223344) → **Home tab**
+**Navigate:** Login as Admin (`00000000000` / `Admin@1234`)
 
 | # | Step | Expected Result | Result |
 |---|------|-----------------|--------|
-| 1 | Home tab | Availability card shows current status + Switch control | |
-| 2 | Toggle is ON | Text: "You are visible to residents" | |
-| 3 | Flip toggle OFF | Switch moves to OFF, text changes to "You are hidden from residents" | |
-| 4 | Go to another tab and back | Toggle stays OFF (persisted to server) | |
-| 5 | Log out and log back in | Toggle shows the last saved state | |
-| 6 | While OFF: open Resident app (01811223344), go to Home | Provider does not appear in "Available Providers" section | |
-| 7 | Flip toggle back ON | Provider reappears in Resident's home screen after refresh | |
-| 8 | New provider (no profile yet) | Toggle still works — profile auto-created on first toggle | |
+| 1 | Tab bar | Only **2 tabs**: "Approvals" (ShieldCheck icon) + "Profile" | |
+| 2 | Approvals tab loads | "Pending Approvals" title | |
+| 3 | Empty state | "All caught up!" with green checkmark if no pending providers | |
+| 4 | Pending provider row | Name · Mobile · Email · Registration date | |
+| 5 | Approve button (green) | Confirmation dialog: "Approve [Name]? They will be able to log in..." | |
+| 6 | Confirm Approve | Provider removed from list; provider can now log in | |
+| 7 | Reject button (red) | Confirmation dialog with destructive style | |
+| 8 | Confirm Reject | Provider removed from list; provider account inactive | |
+| 9 | Pull to refresh | Pending list refreshes | |
 
 ---
 
-## Part 3 — Cross-Screen Flows
+## Part 3 — Toast Notification System (HF-030C)
 
-These tests span multiple screens and verify the full user journey.
+> **What to check:** Errors appear as **red animated banners** — not plain black OS dialogs.  
+> Success messages appear **green**. Confirmations still use native OS dialogs.
+
+| # | Scenario | Expected | Result |
+|---|----------|----------|--------|
+| 1 | Any API error (login, register, toggle) | **Red banner** slides in from top of screen | |
+| 2 | Banner auto-dismisses | Disappears after ~3 seconds without user action | |
+| 3 | Validation error in registration | **Red banner** shown; screen does NOT navigate away | |
+| 4 | Toggle availability fails | **Red banner**: "Could not update availability. Try again." | |
+| 5 | Skill save fails | **Red banner** with localized error | |
+| 6 | Logout confirmation | **Native OS dialog** with Cancel/Log Out buttons — NOT a toast | |
+| 7 | Admin approve/reject confirmation | **Native OS dialog** — NOT a toast | |
+| 8 | Language Bengali | Toast message text in Bengali | |
+| 9 | Two quick errors back-to-back | Second banner replaces first (no stacking) | |
+
+---
+
+## Part 4 — Platform Settings (HF-030D / Admin-Configurable)
+
+> **What to check:** `nid_photo_source` platform setting controls NID photo capture method.
+
+### Default setting: `camera_only`
+
+| # | Step | Expected Result | Result |
+|---|------|-----------------|--------|
+| 1 | Provider registration → Step 4 | — | |
+| 2 | Tap "NID Photo (Front Side)" | **Camera** opens — not gallery | |
+| 3 | Tap "NID Photo (Back Side)" | **Camera** opens — not gallery | |
+| 4 | Tap "Profile Photo" | **Gallery** opens (always gallery for profile photo) | |
+
+### To test `camera_and_gallery` (requires DB access):
+
+```sql
+UPDATE platform_settings SET value = 'camera_and_gallery' WHERE key = 'nid_photo_source';
+```
+
+After changing: restart backend, open provider registration Step 4 — NID photos should now open the gallery.
+
+### To check all valid values:
+
+Open `packages/shared/src/constants/platform-settings.ts` — every setting key and all its valid values are documented there.
+
+---
+
+## Part 5 — Cross-Screen Flows
 
 ### Flow A — Resident discovers and views a provider
 
 | # | Step | Expected Result |
 |---|------|-----------------|
-| 1 | Log in as Resident | Lands on Home tab with category grid |
-| 2 | Tap "Electrical" category | Goes to Electrical providers list |
-| 3 | Tap "Most Experienced" sort | List re-sorts |
-| 4 | Tap first provider | Goes to Provider Detail |
-| 5 | Scroll down | Skills, bio, reviews placeholder visible |
-| 6 | Tap "Book Now" | Alert: coming in Sprint 3 |
-| 7 | Press back | Returns to Electrical listing |
-| 8 | Press back again | Returns to Home |
+| 1 | Login as Resident | Resident Home screen |
+| 2 | Tap a category (e.g. Plumbing) | Category listing opens, tab bar hidden |
+| 3 | Sort by "Lowest Rate" | Providers re-sort |
+| 4 | Tap a provider card | Provider detail slides in |
+| 5 | View provider skills | Category chips shown |
+| 6 | Tap "Book Now" | Sprint 3 placeholder message |
+| 7 | Tap back twice | Returns to Resident Home |
 
-### Flow B — Provider manages availability
-
-| # | Step | Expected Result |
-|---|------|-----------------|
-| 1 | Log in as Provider | Lands on Provider Dashboard |
-| 2 | Note the availability toggle state | ON or OFF |
-| 3 | Flip the toggle | State changes + saved to backend |
-| 4 | Navigate to Profile tab | Profile loads |
-| 5 | Navigate back to Home tab | Toggle is still in the position you set |
-
-### Flow C — Language switch mid-session
+### Flow B — Provider manages services in Profile
 
 | # | Step | Expected Result |
 |---|------|-----------------|
-| 1 | Log in as Resident (app in Bengali) | All text in Bengali |
-| 2 | Go to Profile → toggle to English | Entire app switches instantly |
-| 3 | Go back to Home | Greeting, search bar, category names — all in English |
-| 4 | Open Category Listing | Sort chips, labels — in English |
-| 5 | Toggle back to Bengali on Profile | App switches back |
+| 1 | Login as Provider | Provider Dashboard |
+| 2 | Go to Profile tab | Profile screen |
+| 3 | Tap "Edit" in My Services | Bottom-sheet modal slides up |
+| 4 | Deselect all → Save | Red toast: at least one required |
+| 5 | Select 2 services → Save | Modal closes; new list shown |
+| 6 | Verify in category listing | Provider appears under newly added category (next app load) |
 
-### Flow D — Logout and re-login
+### Flow C — Full provider onboarding + approval + login
 
 | # | Step | Expected Result |
 |---|------|-----------------|
-| 1 | Go to Profile tab | Profile screen visible |
-| 2 | Tap "Log Out" | Confirmation dialog appears |
-| 3 | Confirm logout | Returns to Login screen |
-| 4 | Log back in | Returns to the correct Home screen for your role |
+| 1 | Register new provider (all 5 steps including NID front + back via camera) | Pending Approval screen |
+| 2 | Login as Admin → Approvals tab | New provider in pending list |
+| 3 | Tap Approve → confirm | Provider removed from list |
+| 4 | Provider logs in | Provider Dashboard (not pending screen) |
+| 5 | Provider checks Profile → My Services | Skills from registration shown with Primary badge |
+| 6 | Provider opens My Services modal, adds a new category | New category appears in list |
 
 ---
 
-## Part 4 — Known Placeholders (Not Bugs)
+## Part 6 — Known Limitations
 
-These items are **intentionally incomplete** — they are built in later sprints.
-
-| What you see | This is expected | Built in |
+| What you see | Why | When fixed |
 |---|---|---|
-| "Book Now" shows a coming-soon alert | Booking flow not built yet | Sprint 3 (HF-034) |
-| Active Jobs shows placeholder text | Job feed not built yet | Sprint 3 (HF-038) |
-| Bookings tab shows placeholder | Booking list not built yet | Sprint 3 (HF-037) |
-| Jobs tab shows placeholder | Provider job feed not built yet | Sprint 3 (HF-038) |
-| Reviews says "coming soon" | Reviews module not built yet | Sprint 5 (HF-050) |
-| Earnings shows placeholder | Wallet/payments not built yet | Sprint 6 (HF-060) |
-| Dark mode switch has no effect | Full theme switching in Sprint 8 | Sprint 8 |
-| Photo upload shows "coming soon" | File upload wired in Sprint 3 | Sprint 3 (HF-033) |
-| Location update shows "coming soon" | Full edit form in Sprint 3 | Sprint 3 |
-| Admin sees dashboard with pending list, not category grid | Admin has a dedicated minimal dashboard | ✅ Built |
-| Provider name shows "—" on dashboard | `full_name` not joined in `/me/profile` response yet | Sprint 3 |
-| Category listing empty for new provider | Provider must add skills via Profile → My Services first | ✅ Now available |
+| Photo uploads store a local `file://` URI | File upload storage wired in Sprint 3 | Sprint 3 (HF-033) |
+| "Book Now" shows a placeholder message | Booking flow is Sprint 3 (HF-034) | Sprint 3 |
+| Admin approval shows name/mobile/email only — no NID photos | Full provider detail view with NID/profile photos deferred to Sprint 7 alongside web admin panel (HF-068B) | Sprint 7 |
+| Dark mode toggle has no visual effect | Dark mode theme deferred | Sprint 7 |
+| Reviews section shows "coming soon" | Review system is Sprint 5 (HF-050) | Sprint 5 |
+| Provider dashboard stats show placeholder data | Live stats require booking data (Sprint 3) | Sprint 3 |
 
 ---
 
-## Part 5 — Reporting a Bug
+## Part 7 — Reporting a Bug
 
-When reporting a bug from this checklist, please include:
+When reporting a bug from this checklist, include:
 
-1. **Test case number** — e.g. "Screen 3, step 7"
+1. **Test case number** — e.g. "Screen 5B, step 11"
 2. **What you did** — exact steps
 3. **What you expected** — from the "Expected Result" column
 4. **What actually happened** — describe or screenshot
 5. **Device + OS** — e.g. Samsung Galaxy A54, Android 14
 6. **Language** — Bengali or English when the bug occurred
+7. **Role** — Admin / Provider / Resident

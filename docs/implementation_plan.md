@@ -1,9 +1,9 @@
 # HomeFix — Full-Stack Implementation Plan
 
-> **Version:** 3.2  
+> **Version:** 3.3  
 > **Prepared by:** Sr. Software Engineer  
 > **Date:** 2026-04-19  
-> **Last Updated:** 2026-05-28  
+> **Last Updated:** 2026-05-29  
 > **Methodology:** Agile (Sprint-based, ticket-level breakdown)  
 > **Inputs:** SRS v1.0 + Architecture decisions + Post-Sprint-1 code review
 
@@ -397,6 +397,17 @@ modules/payments/
 | HF-030 | Profile screen (view/edit, photo upload, location update, language pref) | ✅ | 6h |
 
 **Deliverable:** Main app with category browsing, provider discovery, profiles.
+
+#### Sprint 2 Bug Fixes & Enhancements:
+
+| Ticket | Title | Status | Est. |
+|---|---|---|---|
+| HF-014B | Registration — Provider: NID requires **front AND back** photo; both validated before Step 5 | ✅ | 2h |
+| HF-014C | Camera policy: NID photos use `launchCameraAsync` by default (`camera_only`); admin-configurable via `platform_settings.nid_photo_source` | ✅ | 3h |
+| HF-030A | Profile — My Services: rebuilt as multi-select bottom-sheet modal (checkbox list, primary badge, at-least-one validation, Edit pencil button) | ✅ | 4h |
+| HF-030B | Profile — Logout: redesigned from outline button to red card-row matching InfoRow pattern (red icon + chevron) | ✅ | 1h |
+| HF-030C | Toast notification system: animated colored banner (red=error, green=success, blue=info) replaces `Alert.alert()` for all non-confirmation messages app-wide | ✅ | 3h |
+| HF-030D | Platform Settings: `platform_settings` table + `GET /v2/config/public` (no auth); `PlatformSettingKey` + `NidPhotoSource` enums in `packages/shared` document all valid values; admin updates via direct DB or future admin API (Sprint 6) | ✅ | 4h |
 
 ---
 
