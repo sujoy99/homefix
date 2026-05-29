@@ -1,4 +1,5 @@
 import { Model } from 'objection';
+import { ProviderSkillModel } from './provider_skill.model';
 
 export class ProviderProfileModel extends Model {
   static tableName = 'provider_profiles';
@@ -13,6 +14,8 @@ export class ProviderProfileModel extends Model {
   total_reviews!: number;
   created_at!: string;
   updated_at!: string;
+
+  skills?: ProviderSkillModel[];
 
   static relationMappings = {
     user: {

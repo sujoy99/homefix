@@ -6,6 +6,7 @@ import { providerRouter } from '@modules/providers/provider.route';
 import { adminProviderRouter } from '@modules/admin/providers/admin-providers.route';
 import { storageRouter } from '@modules/storage/storage.route';
 import { configRouter } from '@modules/config/config.route';
+import { jobRouter } from '@modules/jobs/job.route';
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use('/admin/providers', adminProviderRouter);
 router.use('/providers', providerRouter);
 router.use('/storage', storageRouter);
 router.use('/config', configRouter);
+router.use('/jobs', jobRouter);
 
 export default router;

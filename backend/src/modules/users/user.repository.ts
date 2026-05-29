@@ -5,6 +5,10 @@ import { UserWithAuth } from '@modules/auth/auth.types';
 
 export class UserRepository {
 
+    static async findById(id: string): Promise<User | undefined> {
+      return User.query().findById(id);
+    }
+
     static async findUserWithAuth(identifier: string, method: string): Promise<UserWithAuth | undefined> {
       return User.query()
         .select(
