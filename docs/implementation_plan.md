@@ -392,7 +392,7 @@ modules/payments/
 | HF-025 | Tab navigation (Resident: Home/Bookings/Profile, Provider: Home/Jobs/Profile) | ✅ | 4h |
 | HF-026 | Resident home screen (category grid with icons, search bar, "near you" section) | ✅ | 8h |
 | HF-027 | Category listing — providers filtered by category, distance, rating | ✅ | 6h |
-| HF-028 | Provider detail screen (skills, rating, reviews, "Book Now" CTA) | ⏳ | 6h |
+| HF-028 | Provider detail screen (skills, rating, reviews, "Book Now" CTA) | ✅ | 6h |
 | HF-029 | Provider home screen (dashboard: active jobs, earnings, availability toggle) | ⏳ | 6h |
 | HF-030 | Profile screen (view/edit, photo upload, location update, language pref) | ⏳ | 6h |
 

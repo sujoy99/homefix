@@ -30,4 +30,9 @@ export const providerService = {
     const res = await apiClient.get<ApiResponse<AvailableProvider[]>>('/v2/providers/available');
     return res.data.body;
   },
+
+  getProfile: async (userId: string): Promise<AvailableProvider> => {
+    const res = await apiClient.get<ApiResponse<AvailableProvider>>(`/v2/providers/${userId}`);
+    return res.data.body;
+  },
 };

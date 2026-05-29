@@ -92,6 +92,20 @@
     "nid_photo_required": "NID photo is required for providers",
     "device_id_required": "Device ID is required"
   },
+  "provider": {
+    "title": "Provider Profile",
+    "available_now": "Available now",
+    "years_exp": "yrs exp",
+    "hourly_rate": "Hourly rate",
+    "total_reviews": "Reviews",
+    "about": "About",
+    "skills": "Skills & Services",
+    "reviews": "Reviews",
+    "reviews_coming": "Reviews coming soon (HF-050)",
+    "book_now": "Book Now",
+    "booking_coming": "Booking flow coming in Sprint 3",
+    "load_error": "Could not load provider profile"
+  },
   "category": {
     "providers": "Providers",
     "sort_rating": "Top Rated",

@@ -92,6 +92,20 @@
     "nid_photo_required": "এনআইডি ফটো প্রয়োজন (প্রোভাইডারদের জন্য)",
     "device_id_required": "ডিভাইস আইডি প্রয়োজন"
   },
+  "provider": {
+    "title": "প্রোভাইডার প্রোফাইল",
+    "available_now": "এখন উপলব্ধ",
+    "years_exp": "বছরের অভিজ্ঞতা",
+    "hourly_rate": "প্রতি ঘণ্টা রেট",
+    "total_reviews": "রিভিউ",
+    "about": "পরিচিতি",
+    "skills": "দক্ষতা ও সার্ভিস",
+    "reviews": "রিভিউ",
+    "reviews_coming": "রিভিউ শীঘ্রই আসছে (HF-050)",
+    "book_now": "বুক করুন",
+    "booking_coming": "বুকিং ফ্লো স্প্রিন্ট ৩-এ আসছে",
+    "load_error": "প্রোভাইডার প্রোফাইল লোড করা যায়নি"
+  },
   "category": {
     "providers": "প্রোভাইডার",
     "sort_rating": "সর্বোচ্চ রেটিং",
