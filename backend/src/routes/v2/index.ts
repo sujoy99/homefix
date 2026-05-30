@@ -10,6 +10,8 @@ import { jobRouter } from '@modules/jobs/job.route';
 import { paymentRouter } from '@modules/payments/payment.route';
 import { adminPaymentRouter } from '@modules/payments/admin-payment.route';
 import { adminCommissionRouter } from '@modules/payments/commission/commission.route';
+import { walletRouter } from '@modules/payments/wallet/wallet.route';
+import { adminWithdrawalRouter } from '@modules/payments/wallet/admin-withdrawal.route';
 
 const router = Router();
 
@@ -19,6 +21,8 @@ router.use('/admin/rbac', rbacRouter);
 router.use('/admin/providers', adminProviderRouter);
 router.use('/admin/payments', adminPaymentRouter);
 router.use('/admin/commission', adminCommissionRouter);
+router.use('/admin/withdrawals', adminWithdrawalRouter);
+router.use('/providers', walletRouter);
 router.use('/providers', providerRouter);
 router.use('/storage', storageRouter);
 router.use('/config', configRouter);
