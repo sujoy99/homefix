@@ -8,6 +8,7 @@ import { storageRouter } from '@modules/storage/storage.route';
 import { configRouter } from '@modules/config/config.route';
 import { jobRouter } from '@modules/jobs/job.route';
 import { paymentRouter } from '@modules/payments/payment.route';
+import { adminPaymentRouter } from '@modules/payments/admin-payment.route';
 
 const router = Router();
 
@@ -15,6 +16,7 @@ router.use('/auth', authRouterV2);
 router.use('/categories', categoryRouter);
 router.use('/admin/rbac', rbacRouter);
 router.use('/admin/providers', adminProviderRouter);
+router.use('/admin/payments', adminPaymentRouter);
 router.use('/providers', providerRouter);
 router.use('/storage', storageRouter);
 router.use('/config', configRouter);
