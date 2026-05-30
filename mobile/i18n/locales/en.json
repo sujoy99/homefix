@@ -259,7 +259,10 @@
     "accept_error": "Could not accept job. Please try again.",
     "load_error": "Could not load job details.",
     "already_accepted": "This job is no longer available",
-    "already_accepted_desc": "Another provider accepted this job before you."
+    "already_accepted_desc": "Another provider accepted this job before you.",
+    "voice_note": "Voice Note",
+    "voice_play": "Play voice note",
+    "voice_pause": "Pause voice note"
   },
   "my_jobs": {
     "section_title": "My Active Jobs",

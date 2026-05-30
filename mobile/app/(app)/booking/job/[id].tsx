@@ -34,6 +34,7 @@ import { providerService } from '@/services/provider.service';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/utils/toast';
 import { resolveMediaUrl } from '@/utils/media';
+import { VoiceNotePlayer } from '@/components/shared/VoiceNotePlayer';
 import { theme } from '@/theme';
 
 // ── Status step ordering ──────────────────────────────────────────────────────
@@ -271,6 +272,9 @@ export default function JobDetailScreen() {
             {t('job_detail.description')}
           </Text>
           <Text variant="body" color="muted" style={styles.descText}>{job.description}</Text>
+          {job.voice_note_url ? (
+            <VoiceNotePlayer uri={resolveMediaUrl(job.voice_note_url)} />
+          ) : null}
         </Card>
 
         {/* ── Service address ── */}
