@@ -322,6 +322,35 @@ docs(plan): update sprint 0 status
 
 Tests are written **alongside code in every sprint** — not deferred to Sprint 8. Sprint 8 (HF-080) only adds E2E test suites and CI integration.
 
+### Within-Ticket Test Order (mandatory sequence)
+
+Every backend ticket follows this exact sequence before committing:
+
+```
+1. Implement code
+2. Write unit tests   (pure logic — no DB, no HTTP)
+3. Write integration tests (multi-table writes, state-machine guards, API error codes)
+4. npm run type-check  → must be zero errors
+5. npm test -- --testPathPattern="<module>" --forceExit  → must be 100% pass
+6. Commit
+```
+
+**What gets unit tests vs integration tests:**
+
+| Scenario | Test type | Example |
+|----------|-----------|---------|
+| Rate resolution priority (promotion > category > global) | Unit | `commission.service.test.ts` |
+| Paisa arithmetic (floor, not round) | Unit | `commission.service.test.ts` |
+| TxID format validation | Unit | `payment.schema.test.ts` |
+| Gateway selection from platform_settings | Unit (mock DB) | `payment.service.test.ts` |
+| Atomic DB write (wallet + ledger + status in one trx) | Integration | `payment.service.test.ts` |
+| Job status guard (accept blocked below 70% profile) | Integration | `job.service.test.ts` |
+| API error codes (401, 403, 400 per endpoint) | Integration | `payment.controller.test.ts` |
+
+**What does NOT need automated tests:**
+- Simple getter endpoints with no business logic (e.g. `GET /v2/admin/revenue` aggregation) — covered by manual QA
+- Trivial CRUD with no side effects — covered by integration test of the main flow that uses it
+
 | Layer | Tool | When | Coverage Target |
 |---|---|---|---|
 | Backend unit | Jest + ts-jest | Every sprint, per new service | Services + utils: 80% |

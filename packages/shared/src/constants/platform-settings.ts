@@ -14,6 +14,15 @@ export const PlatformSettingKey = {
 
   /** Default platform commission % deducted from provider earnings. */
   PLATFORM_COMMISSION_PCT: 'platform_commission_pct',
+
+  /** Active payment gateway: 'manual' (Phase 1) | 'sslcommerz' (Phase 2). */
+  ACTIVE_PAYMENT_GATEWAY: 'active_payment_gateway',
+
+  /** HomeFix bKash merchant number shown to Residents during payment. */
+  BKASH_MERCHANT_NUMBER: 'bkash_merchant_number',
+
+  /** HomeFix Nagad merchant number shown to Residents during payment. */
+  NAGAD_MERCHANT_NUMBER: 'nagad_merchant_number',
 } as const;
 
 export type PlatformSettingKey = (typeof PlatformSettingKey)[keyof typeof PlatformSettingKey];

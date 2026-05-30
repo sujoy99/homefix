@@ -30,5 +30,20 @@ export async function seed(knex: Knex): Promise<void> {
       value: '20',
       description: 'Default platform commission % deducted from provider earnings. e.g. 20 = 20%',
     },
+    {
+      key: PlatformSettingKey.ACTIVE_PAYMENT_GATEWAY,
+      value: 'manual',
+      description: "Active payment gateway. Valid: 'manual' (Phase 1 — bKash/Nagad TxID) | 'sslcommerz' (Phase 2)",
+    },
+    {
+      key: PlatformSettingKey.BKASH_MERCHANT_NUMBER,
+      value: '01700000000',
+      description: 'HomeFix bKash merchant number displayed to Residents during payment. Update with real number before go-live.',
+    },
+    {
+      key: PlatformSettingKey.NAGAD_MERCHANT_NUMBER,
+      value: '01700000001',
+      description: 'HomeFix Nagad merchant number displayed to Residents during payment. Update with real number before go-live.',
+    },
   ]);
 }

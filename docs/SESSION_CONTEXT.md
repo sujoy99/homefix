@@ -72,32 +72,40 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 ### Current Sprint
 
 **Sprint:** Sprint 5 — Payments + Wallet  
-**Status:** ⏳ Not Started  
-**Branch convention:** `feature/sprint-5-mobile`  
-**Active git branch:** `feature/sprint-4-mobile` (merge to master before starting Sprint 5)
+**Status:** 🔄 In Progress  
+**Backend branch:** `feature/sprint-5-backend`  
+**Mobile branch:** `feature/sprint-5-mobile` (not started yet)
 
-> **Why Payments before Reviews:** Reviews (Sprint 6) require `job.status = PAID` per REQ-024. Sprint 5 delivers the payment flow so Sprint 6 reviews are fully testable end-to-end without DB workarounds.
+> **Full sprint plan + step checklists:** `docs/SPRINT5_PROGRESS.md` — read this first when resuming.  
+> **Payment system design (escrow flow, commission versioning, withdrawal audit trail):** `docs/brd/PAYMENT_SYSTEM.md`  
+> **Profile completion system (weights, thresholds, guards):** `docs/brd/PROFILE_COMPLETION.md`
 
-**Backend tickets (start here — mobile payment screen depends on these):**
-- HF-054 ⏳ Payment interface — pluggable strategy pattern (`payment.interface.ts`); Phase 1: manual TxID gateway; Phase 2: SSLCommerz (same pattern as file storage)
-- HF-055 ⏳ Manual gateway — bKash/Nagad TxID entry (REQ-019, REQ-020); validates TxID format; marks job PAID; triggers commission split
-- HF-056 ⏳ Commission engine — reads configurable rate from `commission_rules` table (REQ-021); default 20%; per-category and promotion overrides supported
-- HF-056B ⏳ Admin commission rules API — CRUD endpoints + `/preview` to calculate net payout before applying
-- HF-057 ⏳ Provider wallet/ledger — credits 80% of job amount on payment (REQ-022); ledger table for audit trail
-- HF-058 ⏳ Admin revenue dashboard API — total revenue, commission by rule breakdown (REQ-023)
+**Backend ticket status:**
+- HF-054 ✅ Payment interface — pluggable gateway + 7 DB migrations + platform settings keys + `PROFILE_INCOMPLETE` error code
+- HF-055 ⏳ Manual gateway — bKash/Nagad TxID entry (REQ-019, REQ-020)
+- HF-056 ⏳ Commission engine — rate from `commission_rules` table (REQ-021)
+- HF-056B ⏳ Admin commission rules API — CRUD + `/preview`
+- HF-057 ⏳ Provider wallet/ledger + withdrawal flow with full admin audit trail (REQ-022)
+- HF-057B ⏳ Profile completion API — computed score + `PROFILE_INCOMPLETE` guard on job accept + withdraw
+- HF-058 ⏳ Admin revenue dashboard API (REQ-023)
 
-**Mobile tickets:**
-- HF-059 ⏳ Payment screen — method selection (bKash / Nagad), TxID input, order summary card with commission breakdown; only accessible when `job.status = AWAITING_PAYMENT`
-- HF-060 ⏳ Provider wallet screen — current balance, earnings history, commission breakdown per job
-- HF-061 ⏳ Payment receipt + completion flow — success screen after payment; stepper advances to PAID; "Rate your provider →" CTA wired up for Sprint 6
+**Mobile ticket status (not started — start after HF-055 backend is merged):**
+- HF-059 ⏳ Payment screen (bKash/Nagad/Cash, TxID input, HomeFix merchant number display, order summary)
+- HF-059B ⏳ Profile completion card on Profile screen + persistent banner on Provider home
+- HF-060 ⏳ Provider wallet screen (balance, transactions, withdrawal request)
+- HF-061 ⏳ Payment receipt + completion flow
 
 **Key constraints for Sprint 5:**
-- Payment gateway must be a pluggable interface — `payment.interface.ts` contract identical to `storage.interface.ts` pattern already in codebase
-- Commission rate comes from `commission_rules` table — never hardcode 20% in application logic
-- Wallet credit and commission debit must happen in the **same DB transaction** as the status change to PAID
-- TxID is user-entered (manual MFS flow) — validate format but do not verify with the payment provider (Phase 1)
-- All new UI strings need both `bn.json` and `en.json` keys
-- Read `docs/brd/PAYMENT_SYSTEM.md` before implementing any payment logic
+- **Escrow model:** Resident pays HomeFix merchant bKash number (from `platform_settings.bkash_merchant_number`); HomeFix splits and credits provider wallet; provider withdraws separately
+- **Job status:** stays `AWAITING_PAYMENT` until Admin verifies TxID; advances to `PAID` only on Admin verify (atomically with commission split + wallet credit)
+- **Gateway selected from DB:** `platform_settings.active_payment_gateway` → `'manual'` (Phase 1) | `'sslcommerz'` (Phase 2); no redeploy needed to switch
+- **Commission rate from DB:** always resolved from `commission_rules` table at payment time; rate locked onto `payments` row permanently; never hardcode 20%
+- **Wallet credit + commission debit + job→PAID in ONE DB transaction** — partial writes are not acceptable
+- **All money as paisa (integer):** 1 taka = 100 paisa; `Math.floor()` for platform fee — never `Math.round()`
+- **Profile completion threshold:** Provider must be ≥ 70% to accept jobs and request withdrawal; computed live (no stored column); returns `PROFILE_INCOMPLETE` error with missing items list
+- **Withdrawal audit trail:** Admin records `amount_sent_paisa`, `sent_at`, `admin_txid` (Admin's own bKash TxID) when marking withdrawal completed
+- **Provider MFS account:** stored in `provider_payment_accounts` table; required before first withdrawal (`NO_MFS_ACCOUNT` error if missing)
+- Read `docs/brd/PAYMENT_SYSTEM.md` and `docs/brd/PROFILE_COMPLETION.md` before implementing any payment or profile logic
 
 ---
 
@@ -114,6 +122,12 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 - **Buttons / i18n:** Never use fixed `height` on button containers — use `minHeight + paddingVertical` so Bengali and other complex-script labels are never clipped. Never use `alignItems: 'center'` on a column container that holds a `Text` child — use default `stretch` + `textAlign: 'center'` on the Text.
 - **Nested touchables:** Never put a `Button` (TouchableOpacity) inside another `TouchableOpacity` for the same action — Android clips the inner content. Use a styled `View` for the inner CTA instead.
 - **Budget icon:** Use `Banknote` (not `DollarSign`) for money amounts — appropriate for Taka (৳) context.
+- **Payment gateway:** Pluggable — `payment.interface.ts` (mirrors `storage.interface.ts`). Gateway selected at request time from `platform_settings.active_payment_gateway` via `ConfigService.getSetting()`. Registry in `payment.service.ts`. Never import a gateway directly outside that file.
+- **Money storage:** Always integer paisa (1 taka = 100 paisa). `Math.floor()` for platform fee. Display as ৳. All 5 payment tables use `integer` columns for monetary values.
+- **Commission rule resolution:** `commission.service.resolveRate(categoryId, date)` — promotion > category > global. Rate + `commission_rule_id` locked onto `payments` row at verify time. Never read the rate from anywhere else.
+- **Payment atomic transaction:** wallet credit + `platform_revenue_ledger` insert + `payments` status→`completed` + job status→`PAID` happen in a single Objection.js `transaction()` call inside the Admin verify handler.
+- **Profile completion:** Computed live by `profile-completion.service.compute(userId, role)` — no stored column. Provider threshold 70%; below threshold blocks job accept (`POST /v2/jobs/:id/accept`) and withdrawal (`POST /v2/providers/wallet/withdraw`) with `PROFILE_INCOMPLETE` error code. Resident threshold is informational only.
+- **Domain reference additions (Sprint 5):** `docs/brd/PAYMENT_SYSTEM.md` (escrow flow, commission versioning, withdrawal audit trail) · `docs/brd/PROFILE_COMPLETION.md` (field weights, thresholds, guards)
 
 ---
 
@@ -129,6 +143,14 @@ Follow these rules for every session:
 6. **No guessing SRS:** If a business rule is unclear, check `docs/brd/<domain>.md` or ask me before implementing.
 7. **Bilingual always:** Every user-facing string needs both `bn` (Bengali, default) and `en` keys in `mobile/i18n/locales/`.
 8. **Toast over Alert:** Use `toast.error()` / `toast.success()` from `@/utils/toast` for all notifications. Only use `Alert.alert()` for confirmations that need Cancel/Confirm buttons.
+9. **Tests within each ticket (mandatory sequence — never skip):**
+   ```
+   Implement → unit tests → integration tests → type-check (zero errors) → tests pass 100% → commit
+   ```
+   - Unit tests: pure logic (rate resolution, paisa math, format validation, gateway selection)
+   - Integration tests: multi-table writes, state-machine guards, API error codes (401/403/400)
+   - Simple getter endpoints with no business logic: manual QA only, no automated test required
+   - Full detail in `docs/engineering_standards.md` § "Within-Ticket Test Order"
 
 ---
 
@@ -142,6 +164,7 @@ Follow these rules for every session:
 | Booking & Discovery | `docs/brd/BOOKING_DISCOVERY.md` | REQ-007 to 014 |
 | Accessibility | `docs/brd/ACCESSIBILITY.md` | REQ-011 to 013 |
 | Review System | `docs/brd/REVIEW_SYSTEM.md` | REQ-024 to 026 |
+| Profile Completion | `docs/brd/PROFILE_COMPLETION.md` | (cross-cutting) |
 
 ---
 

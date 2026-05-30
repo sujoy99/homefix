@@ -7,6 +7,7 @@ import { adminProviderRouter } from '@modules/admin/providers/admin-providers.ro
 import { storageRouter } from '@modules/storage/storage.route';
 import { configRouter } from '@modules/config/config.route';
 import { jobRouter } from '@modules/jobs/job.route';
+import { paymentRouter } from '@modules/payments/payment.route';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/providers', providerRouter);
 router.use('/storage', storageRouter);
 router.use('/config', configRouter);
 router.use('/jobs', jobRouter);
+router.use('/payments', paymentRouter);
 
 export default router;
