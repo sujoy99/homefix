@@ -23,7 +23,13 @@ export default function SelectRoleScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+          hitSlop={8}
+        >
           <ArrowLeft size={24} color={theme.colors.text} />
         </TouchableOpacity>
       </View>
@@ -36,10 +42,13 @@ export default function SelectRoleScreen() {
           {t('auth.select_role_subtitle')}
         </Text>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.roleCard}
           onPress={() => handleSelect(UserRole.RESIDENT)}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={t('auth.resident')}
+          accessibilityHint={t('auth.resident_desc')}
         >
           <View style={[styles.iconBox, { backgroundColor: theme.colors.primary + '15' }]}>
             <User size={32} color={theme.colors.primary} />
@@ -51,10 +60,13 @@ export default function SelectRoleScreen() {
           <ChevronRight size={20} color={theme.colors.border} />
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.roleCard}
           onPress={() => handleSelect(UserRole.PROVIDER)}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={t('auth.provider')}
+          accessibilityHint={t('auth.provider_desc')}
         >
           <View style={[styles.iconBox, { backgroundColor: theme.colors.secondary + '15' }]}>
             <Briefcase size={32} color={theme.colors.secondary} />
@@ -69,7 +81,11 @@ export default function SelectRoleScreen() {
 
       <View style={styles.footer}>
         <Text variant="body" color="muted">{t('auth.already_account')} </Text>
-        <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
+        <TouchableOpacity
+          onPress={() => router.replace('/(auth)/login')}
+          accessibilityRole="link"
+          accessibilityLabel={t('auth.sign_in')}
+        >
           <Text variant="body" color="primary" weight="bold">{t('auth.sign_in')}</Text>
         </TouchableOpacity>
       </View>
@@ -87,6 +103,10 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: theme.spacing.xs,
+    minWidth: 48,
+    minHeight: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     flex: 1,

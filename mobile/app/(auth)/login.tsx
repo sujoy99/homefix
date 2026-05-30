@@ -85,15 +85,21 @@ export default function LoginScreen() {
 
           {/* Tabs for Login Method */}
           <View style={styles.tabContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.tab, loginMethod === 'mobile' && styles.activeTab]}
               onPress={() => setLoginMethod('mobile')}
+              accessibilityRole="tab"
+              accessibilityLabel={t('auth.mobile')}
+              accessibilityState={{ selected: loginMethod === 'mobile' }}
             >
               <Text color={loginMethod === 'mobile' ? 'primary' : 'muted'} weight="bold">{t('auth.mobile')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.tab, loginMethod === 'email' && styles.activeTab]}
               onPress={() => setLoginMethod('email')}
+              accessibilityRole="tab"
+              accessibilityLabel={t('auth.email')}
+              accessibilityState={{ selected: loginMethod === 'email' }}
             >
               <Text color={loginMethod === 'email' ? 'primary' : 'muted'} weight="bold">{t('auth.email')}</Text>
             </TouchableOpacity>
@@ -151,7 +157,11 @@ export default function LoginScreen() {
               )}
             />
 
-            <TouchableOpacity style={styles.forgotPass}>
+            <TouchableOpacity
+              style={styles.forgotPass}
+              accessibilityRole="button"
+              accessibilityLabel={t('auth.forgot_password', 'Forgot Password?')}
+            >
               <Text variant="caption" color="primary" weight="medium">
                 {t('auth.forgot_password', 'Forgot Password?')}
               </Text>
@@ -170,7 +180,11 @@ export default function LoginScreen() {
             <Text variant="body" color="muted">
               {t('auth.no_account', "Don't have an account?")}{' '}
             </Text>
-            <TouchableOpacity onPress={() => router.push('/(auth)/select-role')}>
+            <TouchableOpacity
+              onPress={() => router.push('/(auth)/select-role')}
+              accessibilityRole="link"
+              accessibilityLabel={t('auth.register_now', 'Register Now')}
+            >
               <Text variant="body" color="primary" weight="bold">
                 {t('auth.register_now', 'Register Now')}
               </Text>

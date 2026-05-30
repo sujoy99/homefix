@@ -32,6 +32,8 @@ export const Input = ({
       onPress={() => setIsPasswordVisible((v) => !v)}
       hitSlop={8}
       style={styles.eyeBtn}
+      accessibilityRole="button"
+      accessibilityLabel={isPasswordVisible ? t('auth.hide_password') : t('auth.show_password')}
     >
       {isPasswordVisible
         ? <EyeOff size={20} color={theme.colors.textMuted} />

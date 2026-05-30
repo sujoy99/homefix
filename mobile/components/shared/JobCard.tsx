@@ -75,7 +75,13 @@ export function JobCard({ job, categoryName, onPress }: Props) {
     : t('bookings.budget_tbd');
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={onPress ? 0.7 : 1} disabled={!onPress}>
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={onPress ? 0.7 : 1}
+      disabled={!onPress}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+    >
       <Card style={styles.card}>
         {/* Top row: title + status badge */}
         <View style={styles.topRow}>

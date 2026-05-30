@@ -17,7 +17,13 @@ export function LanguageToggle({ style }: LanguageToggleProps) {
   };
 
   return (
-    <TouchableOpacity style={[styles.container, style]} onPress={toggle} hitSlop={8}>
+    <TouchableOpacity
+      style={[styles.container, style]}
+      onPress={toggle}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={i18n.language === 'bn' ? 'Switch to English' : 'বাংলায় পরিবর্তন করুন'}
+    >
       <Globe size={14} color={theme.colors.primary} />
       <Text variant="caption" weight="bold" color="primary" style={styles.label}>
         {i18n.language === 'bn' ? 'EN' : 'বাং'}

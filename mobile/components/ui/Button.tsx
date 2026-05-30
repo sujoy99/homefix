@@ -41,6 +41,9 @@ export const Button = ({
     <TouchableOpacity
       activeOpacity={0.8}
       disabled={disabled || isLoading}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !!(disabled || isLoading) }}
       style={[
         styles.base,
         styles[`variant_${variant}`],

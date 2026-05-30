@@ -49,7 +49,12 @@ function ActiveJobCard({
   const isAwaiting = job.status === JobStatus.AWAITING_PAYMENT;
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.75}>
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.75}
+      accessibilityRole="button"
+      accessibilityLabel={job.title ?? categoryName ?? t('home.unknown_provider')}
+    >
       <Card style={activeStyles.card}>
         <View style={activeStyles.row}>
           <View style={activeStyles.info}>
@@ -197,6 +202,8 @@ export default function JobsScreen() {
         {locationDenied && (
           <TouchableOpacity
             style={styles.locationBanner}
+            accessibilityRole="button"
+            accessibilityLabel={t('feed.location_denied')}
             onPress={async () => {
               const { status } = await Location.requestForegroundPermissionsAsync();
               if (status === 'granted') {

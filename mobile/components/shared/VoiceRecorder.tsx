@@ -135,6 +135,7 @@ export function VoiceRecorder({ onRecorded }: Props) {
             onPress={startRecording}
             accessibilityRole="button"
             accessibilityLabel={t('booking.voice_record')}
+            accessibilityHint={t('booking.voice_hint')}
           >
             <Mic size={22} color={theme.colors.textInverse} />
           </TouchableOpacity>

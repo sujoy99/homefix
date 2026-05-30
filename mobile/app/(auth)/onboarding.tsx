@@ -80,7 +80,12 @@ export default function OnboardingScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <LanguageToggle />
-        <TouchableOpacity onPress={handleSkip}>
+        <TouchableOpacity
+          onPress={handleSkip}
+          accessibilityRole="button"
+          accessibilityLabel={t('onboarding.skip')}
+          hitSlop={8}
+        >
           <Text style={styles.skipText}>{t('onboarding.skip')}</Text>
         </TouchableOpacity>
       </View>
@@ -124,7 +129,13 @@ export default function OnboardingScreen() {
           ))}
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleNext} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleNext}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={currentIndex === SLIDE_KEYS.length - 1 ? t('onboarding.get_started') : t('onboarding.next')}
+        >
           <Text style={styles.buttonText}>
             {currentIndex === SLIDE_KEYS.length - 1
               ? t('onboarding.get_started')
