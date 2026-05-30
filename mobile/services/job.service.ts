@@ -73,6 +73,11 @@ export const jobService = {
     return res.data.body;
   },
 
+  getMyAssignedJobs: async (): Promise<Job[]> => {
+    const res = await apiClient.get<ApiResponse<Job[]>>('/v2/jobs/assigned');
+    return res.data.body;
+  },
+
   getProviderFeed: async (params?: {
     lat?: number;
     lon?: number;

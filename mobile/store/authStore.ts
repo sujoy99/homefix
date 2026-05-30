@@ -15,6 +15,8 @@ export interface UserSession {
   mobile?: string;
   email?: string;
   photoUrl?: string;
+  homeLat?: number | null;
+  homeLon?: number | null;
 }
 
 interface AuthState {
@@ -106,7 +108,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const { user, tokens } = await authService.login(data);
       await useAuthStore.getState().setSession(
-        { id: user.id, role: user.role as UserRole, fullName: user.full_name, mobile: user.mobile, email: user.email ?? undefined },
+        {
+          id: user.id,
+          role: user.role as UserRole,
+          fullName: user.full_name,
+          mobile: user.mobile,
+          email: user.email ?? undefined,
+          homeLat: user.home_lat ?? null,
+          homeLon: user.home_lon ?? null,
+        },
         tokens.accessToken,
         tokens.refreshToken
       );

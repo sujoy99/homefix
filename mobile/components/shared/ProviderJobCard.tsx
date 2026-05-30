@@ -1,10 +1,9 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { MapPin, DollarSign, Calendar, Navigation } from 'lucide-react-native';
+import { MapPin, Banknote, Calendar, Navigation } from 'lucide-react-native';
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
 import { theme } from '@/theme';
 import { Job } from '@/services/job.service';
 
@@ -83,7 +82,7 @@ export function ProviderJobCard({ job, categoryName, distanceKm, onPress }: Prop
             </View>
           ) : null}
           <View style={styles.metaItem}>
-            <DollarSign color={theme.colors.textMuted} size={13} />
+            <Banknote color={theme.colors.textMuted} size={13} />
             <Text variant="caption" color="muted" style={styles.metaText}>{budget}</Text>
           </View>
           <View style={styles.metaItem}>
@@ -94,14 +93,12 @@ export function ProviderJobCard({ job, categoryName, distanceKm, onPress }: Prop
           </View>
         </View>
 
-        {/* CTA */}
-        <Button
-          label={t('feed.view_job')}
-          variant="outline"
-          size="md"
-          style={styles.cta}
-          onPress={onPress}
-        />
+        {/* CTA — plain View to avoid nested-TouchableOpacity clipping on Android */}
+        <View style={styles.cta}>
+          <Text variant="body" weight="semibold" color="primary" align="center">
+            {t('feed.view_job')}
+          </Text>
+        </View>
       </Card>
     </TouchableOpacity>
   );
@@ -159,5 +156,10 @@ const styles = StyleSheet.create({
   },
   cta: {
     marginTop: theme.spacing.xs,
+    borderWidth: 1.5,
+    borderColor: theme.colors.primary,
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: theme.spacing.md,
   },
 });

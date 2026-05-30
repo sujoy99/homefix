@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
+import ImageViewing from 'react-native-image-viewing';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +15,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
   MapPin,
-  DollarSign,
+  Banknote,
   Square,
   Calendar,
   Layers,
@@ -32,6 +33,7 @@ import { categoryService } from '@/services/category.service';
 import { providerService } from '@/services/provider.service';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/utils/toast';
+import { resolveMediaUrl } from '@/utils/media';
 import { theme } from '@/theme';
 
 // ── Status step ordering ──────────────────────────────────────────────────────
@@ -65,13 +67,15 @@ export default function JobDetailScreen() {
 
   const [isAccepting,   setIsAccepting]   = useState(false);
   const [isCompleting,  setIsCompleting]  = useState(false);
+  const [viewerIndex,   setViewerIndex]   = useState(0);
+  const [viewerVisible, setViewerVisible] = useState(false);
 
   // ── Job query — 10 s polling, pauses when app is backgrounded ─────────────
   const { data: job, isLoading, isError } = useQuery({
     queryKey: ['job', id],
     queryFn:  () => jobService.getJobById(id),
     enabled:  !!id,
-    refetchInterval: 10_000,
+    refetchInterval: 30_000,
     refetchIntervalInBackground: false,
   });
 
@@ -285,7 +289,7 @@ export default function JobDetailScreen() {
         {/* ── Budget + sq footage ── */}
         <View style={styles.statsRow}>
           <Card style={[styles.statCard, styles.flex]}>
-            <DollarSign color={theme.colors.primary} size={16} />
+            <Banknote color={theme.colors.primary} size={16} />
             <Text variant="caption" color="muted" style={styles.statLabel}>
               {t('job_detail.budget')}
             </Text>
@@ -313,17 +317,33 @@ export default function JobDetailScreen() {
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photoRow}>
               {job.media_urls.map((url, i) => (
-                <Image
+                <TouchableOpacity
                   key={i}
-                  source={{ uri: url }}
-                  style={styles.photo}
-                  resizeMode="cover"
-                />
+                  onPress={() => { setViewerIndex(i); setViewerVisible(true); }}
+                  activeOpacity={0.85}
+                >
+                  <Image
+                    source={{ uri: resolveMediaUrl(url) }}
+                    style={styles.photo}
+                    resizeMode="cover"
+                  />
+                </TouchableOpacity>
               ))}
             </ScrollView>
           </Card>
         )}
       </ScrollView>
+
+      {job.media_urls?.length > 0 && (
+        <ImageViewing
+          images={job.media_urls.map((url) => ({ uri: resolveMediaUrl(url) }))}
+          imageIndex={viewerIndex}
+          visible={viewerVisible}
+          onRequestClose={() => setViewerVisible(false)}
+          swipeToCloseEnabled
+          doubleTapToZoomEnabled
+        />
+      )}
 
       {/* ── Footer CTAs ── */}
 
@@ -336,11 +356,16 @@ export default function JobDetailScreen() {
             disabled={isAccepting}
             onPress={handleAccept}
           />
-          <Button
-            label={t('job_detail.not_interested')}
-            variant="ghost"
+          <TouchableOpacity
             onPress={() => router.back()}
-          />
+            disabled={isAccepting}
+            hitSlop={12}
+            style={styles.dismissLink}
+          >
+            <Text variant="body" color="muted" align="center">
+              {t('job_detail.not_interested')}
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -523,7 +548,10 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
-    gap: theme.spacing.xs,
+    gap: theme.spacing.sm,
+  },
+  dismissLink: {
+    paddingVertical: theme.spacing.xs,
   },
 });
 

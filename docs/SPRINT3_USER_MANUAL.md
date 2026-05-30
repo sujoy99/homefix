@@ -1,9 +1,9 @@
 # HomeFix — Sprint 3 Mobile: User Manual
 
 > **Sprint:** Sprint 3 — Booking & Job Lifecycle  
-> **Covers:** HF-034 · HF-035 · HF-036 · HF-037 · HF-038 · HF-039 · HF-040 · HF-041  
+> **Covers:** HF-034 · HF-035 · HF-036 · HF-036A · HF-037 · HF-038 · HF-039 · HF-039A · HF-040 · HF-040A · HF-040B · HF-041 · HF-026A · HF-033A  
 > **Audience:** QA, Product Owner, Business Stakeholder  
-> **Last updated:** 2026-05-30
+> **Last updated:** 2026-05-30 (v2 — enhancements: AllProviders, address map geocoding, photo zoom, Not Interested redesign)
 
 ---
 
@@ -38,6 +38,30 @@ npx expo start
 ## Part 2 — Screen-by-Screen Checklist
 
 Mark each item ✅ Pass or ❌ Fail with a note.
+
+---
+
+### Screen 0 — Resident Home: Available Providers (HF-026A)
+
+> **Who:** Resident  
+> **Navigate:** Login as Resident → Home tab  
+> **What to check:** "Available Providers" section is capped; "See All" opens the full list.
+
+| # | Action | Expected |
+|---|--------|----------|
+| 1 | Home screen loads | "Available Providers" section shows at most 3 provider cards |
+| 2 | More than 3 providers exist | "See all (N) →" link appears at top-right of the section header (N = total count) |
+| 3 | 3 or fewer providers | No "See all" link shown |
+| 4 | Tap "See all (N) →" | Opens All Providers screen |
+| 5 | All Providers screen header | Back arrow + "Available Providers" title |
+| 6 | Search bar | Type a name → list filters in real time |
+| 7 | Category filter chips | Horizontal scrollable chips: "All" + one chip per service category |
+| 8 | Tap a category chip | List narrows to providers with that skill; chip highlighted in primary colour |
+| 9 | Tap "All" chip | Clears category filter; all providers shown |
+| 10 | Combined search + category | Both filters apply simultaneously |
+| 11 | No results | "No providers available right now" empty state |
+| 12 | Provider card content | Avatar initial, name, primary skill (if set), star rating + years exp, green dot if available now |
+| 13 | Tap a provider card | Opens provider detail screen |
 
 ---
 
@@ -94,13 +118,19 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 | # | Action | Expected |
 |---|--------|----------|
 | 1 | Step label | "Service Address"; progress bar at 80% |
-| 2 | Four fields shown | House/Building *(required)*, Flat/Floor *(optional)*, Road/Street *(required)*, Area/Neighbourhood *(required)* |
-| 3 | Tap Next with House empty | Red inline error: "House/building is required" |
-| 4 | Tap Next with Road empty | Red inline error: "Road/street is required" |
-| 5 | Tap Next with Area empty | Red inline error: "Area is required" |
-| 6 | Fill all required fields → Next | Moves to Step 5 |
-| 7 | Address differs from registered home | Allowed — this is where the provider will go (REQ-008) |
-| 8 | Flat field left empty | No error — it is optional |
+| 2 | Map shown at top | Interactive map with a draggable red marker; label "Pin service location on map" |
+| 3 | "Use my home address" shortcut | Button visible if user has a registered home location; tap moves map to home coordinates and auto-fills Area field |
+| 4 | Drag map marker | Area field updates automatically via reverse geocoding (Nominatim → district / subregion / city) |
+| 5 | Fill Road + Area then tap "Find on Map" | Map marker moves to the geocoded location; tries road+area, then area-only, then road-only (best BD coverage) |
+| 6 | "Find on Map" with empty Road and Area | Red toast: "Enter Road or Area first" |
+| 7 | Address not found in OSM | Blue info toast: "Location not found. Try a different address or pin manually." |
+| 8 | Four text fields below map | House/Building *(required)*, Flat/Floor *(optional)*, Road/Street *(required)*, Area/Neighbourhood *(required)* |
+| 9 | Tap Next with House empty | Red inline error: "House/building is required" |
+| 10 | Tap Next with Road empty | Red inline error: "Road/street is required" |
+| 11 | Tap Next with Area empty | Red inline error: "Area is required" |
+| 12 | Fill all required fields → Next | Moves to Step 5 |
+| 13 | Address differs from registered home | Allowed — this is where the provider will go (REQ-008) |
+| 14 | Flat field left empty | No error — it is optional |
 
 #### Step 5 — Budget & Review
 
@@ -162,8 +192,14 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 | 7 | Provider card (once accepted) | Section "Assigned Provider" with provider name and rating |
 | 8 | Job info sections | Category chip, Description, Service Address, Budget, Sq Footage (if set) |
 | 9 | Photos section | Horizontal scrollable photo row (only shown if photos were uploaded) |
-| 10 | Auto-refresh | Status stepper updates automatically within 10 seconds when provider accepts or marks complete — no manual pull needed |
-| 11 | No provider footer | Resident sees no action buttons on this screen |
+| 10 | Tap a photo thumbnail | Fullscreen viewer opens on that image |
+| 11 | Fullscreen viewer — pinch | Spread two fingers to zoom in; pinch to zoom out |
+| 12 | Fullscreen viewer — double-tap | Toggles between zoomed-in and fit-to-screen |
+| 13 | Fullscreen viewer — swipe left/right | Moves between photos when job has multiple images |
+| 14 | Fullscreen viewer — swipe down | Dismisses the viewer, returns to job detail |
+| 15 | Job with no photos | Photos section not shown; viewer never appears; no crash |
+| 16 | Auto-refresh | Status stepper updates automatically within 10 seconds when provider accepts or marks complete — no manual pull needed |
+| 17 | No provider footer | Resident sees no action buttons on this screen |
 
 ---
 
@@ -198,13 +234,15 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 | # | Action | Expected |
 |---|--------|----------|
 | 1 | Detail screen opens | Full job info: category, description, address, budget, sq footage, photos |
-| 2 | "Accept Job" button | Amber/secondary button at bottom; "Not Interested" ghost button below it |
-| 3 | Tap "Accept Job" | Button shows brief loading state → green toast: "Job accepted! Check your active jobs." → navigates back to feed |
-| 4 | Job removed from feed | Feed refreshes; accepted job no longer visible |
-| 5 | Tap "Not Interested" | Navigates back to feed; no API call; job stays in feed |
-| 6 | Concurrent accept (two providers) | Second provider sees red toast: "This job was just taken by another provider." → navigates back; job gone from their feed |
-| 7 | Network error | Red toast: "Could not accept job. Please try again." |
-| 8 | Non-pending job (already taken) | Warning banner at top: "This job is no longer available — Another provider accepted this job before you." No Accept button shown. |
+| 2 | "Accept Job" button | Amber/secondary full-width button at bottom of screen |
+| 3 | "Not Interested" | Small muted text link centred below the Accept button (not a button) |
+| 4 | Tap "Accept Job" | Button shows brief loading state → green toast: "Job accepted! Check your active jobs." → navigates back to feed |
+| 5 | Job removed from feed | Feed refreshes; accepted job no longer visible |
+| 6 | Tap "not interested" text link | Navigates back to feed; no API call; job stays in feed |
+| 7 | While Accept is loading | "not interested" link is disabled (prevents double-action) |
+| 8 | Concurrent accept (two providers) | Second provider sees red toast: "This job was just taken by another provider." → navigates back; job gone from their feed |
+| 9 | Network error | Red toast: "Could not accept job. Please try again." |
+| 10 | Non-pending job (already taken) | Warning banner at top: "This job is no longer available — Another provider accepted this job before you." No Accept button shown. |
 
 ---
 

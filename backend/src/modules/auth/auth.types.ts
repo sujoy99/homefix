@@ -18,6 +18,8 @@ export type CreateUserRepoResult = {
 
 export type UserWithAuth = User & {
   authAccounts?: AuthAccount[];
+  home_lat?: number | null;
+  home_lon?: number | null;
 };
 
 export interface JwtPayload {

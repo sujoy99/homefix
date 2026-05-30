@@ -11,7 +11,8 @@
     "back": "Back",
     "submit": "Submit",
     "complete": "Complete",
-    "edit": "Edit"
+    "edit": "Edit",
+    "all": "All"
   },
   "auth": {
     "login": "Login",
@@ -194,6 +195,7 @@
     "results_count": "{{count}} result(s)",
     "no_categories": "No services found",
     "near_you": "Available Providers",
+    "see_all": "See all ({{count}}) →",
     "no_providers": "No providers available right now",
     "unknown_provider": "Provider"
   },
@@ -258,6 +260,13 @@
     "load_error": "Could not load job details.",
     "already_accepted": "This job is no longer available",
     "already_accepted_desc": "Another provider accepted this job before you."
+  },
+  "my_jobs": {
+    "section_title": "My Active Jobs",
+    "empty": "No active jobs. Accept a job from the feed below.",
+    "status_active": "In Progress",
+    "status_awaiting": "Awaiting Payment",
+    "tap_to_complete": "Tap to mark complete"
   },
   "feed": {
     "title": "Available Jobs",
@@ -350,6 +359,14 @@
     "error_submit": "Could not post job. Please try again.",
     "error_media": "Job posted but photos could not be uploaded.",
     "select_category_first": "Please select a service category",
-    "sq_ft": "sq ft"
+    "sq_ft": "sq ft",
+    "map_label": "Pin service location on map",
+    "map_hint": "Drag the marker or tap the map to set the exact location. The area field updates automatically.",
+    "use_home_address": "Use my registered home address",
+    "find_on_map": "Find on Map",
+    "geocoding": "Finding location...",
+    "geocode_not_found": "Location not found. Try a different address or pin manually.",
+    "geocode_error": "Could not search location. Check your connection.",
+    "geocode_needs_address": "Enter Road or Area first"
   }
 }

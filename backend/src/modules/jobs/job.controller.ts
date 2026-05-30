@@ -30,6 +30,11 @@ export class JobController {
     return HttpResponse.success(res, job, 'Job fetched');
   }
 
+  static async getMyAssignedJobs(req: AuthenticatedRequest, res: Response): Promise<Response> {
+    const jobs = await JobService.getProviderAssignedJobs(req.user.sub);
+    return HttpResponse.success(res, jobs, 'Assigned jobs fetched');
+  }
+
   static async getProviderFeed(req: AuthenticatedRequest, res: Response): Promise<Response> {
     const { limit, cursor, lat, lon } = req.query as {
       limit?: string; cursor?: string; lat?: string; lon?: string;

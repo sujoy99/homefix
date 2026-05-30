@@ -5,16 +5,21 @@ import {
   Switch,
   StyleSheet,
   ActivityIndicator,
-  Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Briefcase, Star, Wallet, ToggleLeft } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { Briefcase, Star, Wallet, ToggleLeft, ChevronRight } from 'lucide-react-native';
+import { JobStatus } from '@homefix/shared';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
 import { useAuthStore } from '@/store/authStore';
 import { providerService } from '@/services/provider.service';
+import { jobService, Job } from '@/services/job.service';
+import { categoryService } from '@/services/category.service';
+import { toast } from '@/utils/toast';
 import { theme } from '@/theme';
 
 function StatCard({
@@ -39,11 +44,30 @@ export default function ProviderHomeScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['provider', 'me'],
     queryFn: () => providerService.getMyProfile(),
   });
+
+  const { data: assignedJobs = [] } = useQuery({
+    queryKey: ['providerAssignedJobs'],
+    queryFn: jobService.getMyAssignedJobs,
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: categoryService.listActive,
+  });
+
+  const categoryMap = React.useMemo(() => {
+    const m = new Map<string, string>();
+    categories.forEach((c) => m.set(c.id, c.name));
+    return m;
+  }, [categories]);
 
   const [available, setAvailable] = useState<boolean | null>(null);
   const isAvailable = available ?? profile?.is_available ?? false;
@@ -56,7 +80,7 @@ export default function ProviderHomeScreen() {
       queryClient.invalidateQueries({ queryKey: ['provider', 'me'] });
     },
     onError: () => {
-      Alert.alert(t('common.error'), t('provider_home.toggle_error'));
+      toast.error(t('provider_home.toggle_error'));
     },
   });
 
@@ -116,7 +140,7 @@ export default function ProviderHomeScreen() {
             <StatCard
               icon={<Briefcase color={theme.colors.primary} size={24} />}
               label={t('provider_home.active_jobs')}
-              value="0"
+              value={String(assignedJobs.length)}
             />
             <StatCard
               icon={<Star color={theme.colors.secondary} size={24} fill={theme.colors.secondary} />}
@@ -131,18 +155,57 @@ export default function ProviderHomeScreen() {
           </View>
         )}
 
-        {/* Active jobs placeholder */}
+        {/* Active jobs */}
         <Text variant="h4" weight="semibold" style={styles.sectionTitle}>
           {t('provider_home.active_jobs_section')}
         </Text>
-        <Card style={styles.placeholderCard}>
-          <Text variant="body" color="muted" align="center">
-            {t('provider_home.jobs_coming')}
-          </Text>
-          <Text variant="caption" color="muted" align="center" style={styles.ticketRef}>
-            HF-038
-          </Text>
-        </Card>
+
+        {assignedJobs.length === 0 ? (
+          <Card style={styles.emptyCard}>
+            <Text variant="body" color="muted" align="center">
+              {t('my_jobs.empty')}
+            </Text>
+          </Card>
+        ) : (
+          assignedJobs.map((job) => {
+            const isAwaiting = job.status === JobStatus.AWAITING_PAYMENT;
+            return (
+              <TouchableOpacity
+                key={job.id}
+                onPress={() => router.push(`/(app)/booking/job/${job.id}` as never)}
+                activeOpacity={0.75}
+              >
+                <Card style={styles.activeJobCard}>
+                  <View style={styles.activeJobRow}>
+                    <View style={styles.activeJobInfo}>
+                      <Text variant="body" weight="semibold" numberOfLines={1}>
+                        {job.title ?? categoryMap.get(job.category_id) ?? t('home.unknown_provider')}
+                      </Text>
+                      <Text variant="caption" color="muted" numberOfLines={1}>
+                        {[job.service_address?.road, job.service_address?.area].filter(Boolean).join(', ')}
+                      </Text>
+                    </View>
+                    <View style={[styles.badge, isAwaiting && styles.badgeAwaiting]}>
+                      <Text
+                        variant="caption"
+                        weight="semibold"
+                        style={{ color: isAwaiting ? theme.colors.primaryDark : theme.colors.success }}
+                      >
+                        {isAwaiting ? t('my_jobs.status_awaiting') : t('my_jobs.status_active')}
+                      </Text>
+                    </View>
+                    <ChevronRight color={theme.colors.textMuted} size={16} />
+                  </View>
+                  {!isAwaiting && (
+                    <Text variant="caption" color="muted" style={styles.hintText}>
+                      {t('my_jobs.tap_to_complete')}
+                    </Text>
+                  )}
+                </Card>
+              </TouchableOpacity>
+            );
+          })
+        )}
 
         {/* Earnings placeholder */}
         <Text variant="h4" weight="semibold" style={styles.sectionTitle}>
@@ -197,10 +260,40 @@ const styles = StyleSheet.create({
   statIcon: { marginBottom: 4 },
   statValue: { textAlign: 'center' },
   sectionTitle: { marginBottom: theme.spacing.sm, marginTop: theme.spacing.xs },
+  // Earnings placeholder (Sprint 6)
   placeholderCard: {
     padding: theme.spacing.lg,
     alignItems: 'center',
     marginBottom: theme.spacing.md,
   },
   ticketRef: { marginTop: theme.spacing.xs },
+  // Empty active jobs
+  emptyCard: {
+    padding: theme.spacing.lg,
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  // Active job cards
+  activeJobCard: {
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    gap: theme.spacing.xs,
+  },
+  activeJobRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  activeJobInfo: { flex: 1, gap: 2 },
+  badge: {
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 3,
+    borderRadius: theme.layout.radius.full,
+    backgroundColor: theme.colors.successBackground,
+    flexShrink: 0,
+  },
+  badgeAwaiting: {
+    backgroundColor: theme.colors.raw.primaryLight + '33',
+  },
+  hintText: { fontStyle: 'italic' },
 });

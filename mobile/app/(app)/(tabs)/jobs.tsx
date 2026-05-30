@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   FlatList,
+  SectionList,
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
@@ -11,8 +12,10 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Location from 'expo-location';
-import { MapPin } from 'lucide-react-native';
+import { MapPin, Briefcase } from 'lucide-react-native';
+import { JobStatus } from '@homefix/shared';
 import { Text } from '@/components/ui/Text';
+import { Card } from '@/components/ui/Card';
 import { ProviderJobCard } from '@/components/shared/ProviderJobCard';
 import { jobService, Job } from '@/services/job.service';
 import { categoryService } from '@/services/category.service';
@@ -32,6 +35,82 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+// ── Compact active-job card shown in "My Active Jobs" section ─────────────────
+function ActiveJobCard({
+  job,
+  categoryName,
+  onPress,
+}: {
+  job: Job;
+  categoryName?: string;
+  onPress: () => void;
+}) {
+  const { t } = useTranslation();
+  const isAwaiting = job.status === JobStatus.AWAITING_PAYMENT;
+
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.75}>
+      <Card style={activeStyles.card}>
+        <View style={activeStyles.row}>
+          <View style={activeStyles.info}>
+            <Text variant="body" weight="semibold" numberOfLines={1}>
+              {job.title ?? categoryName ?? t('home.unknown_provider')}
+            </Text>
+            {categoryName && (
+              <Text variant="caption" color="primary">{categoryName}</Text>
+            )}
+            <Text variant="caption" color="muted" numberOfLines={1}>
+              {[job.service_address?.road, job.service_address?.area]
+                .filter(Boolean)
+                .join(', ')}
+            </Text>
+          </View>
+          <View style={[activeStyles.badge, isAwaiting && activeStyles.badgeAwaiting]}>
+            <Text
+              variant="caption"
+              weight="semibold"
+              style={{ color: isAwaiting ? theme.colors.primaryDark : theme.colors.success }}
+            >
+              {isAwaiting ? t('my_jobs.status_awaiting') : t('my_jobs.status_active')}
+            </Text>
+          </View>
+        </View>
+        {!isAwaiting && (
+          <Text variant="caption" color="muted" style={activeStyles.hint}>
+            {t('my_jobs.tap_to_complete')}
+          </Text>
+        )}
+      </Card>
+    </TouchableOpacity>
+  );
+}
+
+const activeStyles = StyleSheet.create({
+  card: {
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    gap: theme.spacing.xs,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing.sm,
+  },
+  info: { flex: 1, gap: 2 },
+  badge: {
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 3,
+    borderRadius: theme.layout.radius.full,
+    backgroundColor: theme.colors.successBackground,
+    flexShrink: 0,
+  },
+  badgeAwaiting: {
+    backgroundColor: theme.colors.raw.primaryLight + '33',
+  },
+  hint: { fontStyle: 'italic' },
+});
+
+// ── Main screen ───────────────────────────────────────────────────────────────
 export default function JobsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -41,37 +120,39 @@ export default function JobsScreen() {
   const [locationDenied, setLocationDenied] = useState(false);
   const locationFetched = useRef(false);
 
-  // ── Get device location once on mount ──────────────────────────────────────
   useEffect(() => {
     if (locationFetched.current) return;
     locationFetched.current = true;
-
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setLocationDenied(true);
-        return;
-      }
+      if (status !== 'granted') { setLocationDenied(true); return; }
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
     })();
   }, []);
 
-  // ── Fetch feed (re-fetches when coords arrive) ─────────────────────────────
+  // ── Active/awaiting jobs (provider owns) ──────────────────────────────────
   const {
-    data: jobs = [],
-    isLoading,
-    isError,
-    refetch,
-    isRefetching,
+    data: assignedJobs = [],
+    isRefetching: refetchingAssigned,
+    refetch: refetchAssigned,
+  } = useQuery({
+    queryKey: ['providerAssignedJobs'],
+    queryFn: jobService.getMyAssignedJobs,
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
+  });
+
+  // ── Available feed ─────────────────────────────────────────────────────────
+  const {
+    data: feedJobs = [],
+    isLoading: loadingFeed,
+    isError: feedError,
+    refetch: refetchFeed,
+    isRefetching: refetchingFeed,
   } = useQuery({
     queryKey: ['providerFeed', coords?.lat, coords?.lon],
-    queryFn: () =>
-      jobService.getProviderFeed({
-        lat: coords?.lat,
-        lon: coords?.lon,
-        limit: 20,
-      }),
+    queryFn: () => jobService.getProviderFeed({ lat: coords?.lat, lon: coords?.lon, limit: 20 }),
   });
 
   const { data: categories = [] } = useQuery({
@@ -85,40 +166,25 @@ export default function JobsScreen() {
     return map;
   }, [categories]);
 
-  // ── Client-side distance decoration ───────────────────────────────────────
-  const jobsWithDistance = React.useMemo(() => {
-    if (!coords) return jobs.map((j) => ({ job: j, distanceKm: null as number | null }));
-    return jobs.map((j) => {
-      const distanceKm =
+  const feedWithDistance = React.useMemo(() => {
+    if (!coords) return feedJobs.map((j) => ({ job: j, distanceKm: null as number | null }));
+    return feedJobs.map((j) => ({
+      job: j,
+      distanceKm:
         j.service_lat !== null && j.service_lon !== null
           ? haversineKm(coords.lat, coords.lon, j.service_lat, j.service_lon)
-          : null;
-      return { job: j, distanceKm };
-    });
-  }, [jobs, coords]);
+          : null,
+    }));
+  }, [feedJobs, coords]);
 
-  const handleJobPress = (job: Job) => {
-    router.push(`/(app)/booking/job/${job.id}` as never);
+  const handleRefresh = async () => {
+    await Promise.all([refetchAssigned(), refetchFeed()]);
   };
 
-  // ── Render helpers ─────────────────────────────────────────────────────────
-  const renderEmpty = () => (
-    <View style={styles.emptyWrap}>
-      <MapPin color={theme.colors.primary} size={48} />
-      <Text variant="h4" weight="semibold" align="center" style={styles.emptyTitle}>
-        {t('feed.empty_title')}
-      </Text>
-      <Text variant="body" color="muted" align="center" style={styles.emptyDesc}>
-        {t('feed.empty_desc')}
-      </Text>
-    </View>
-  );
+  const navigateToJob = (job: Job) =>
+    router.push(`/(app)/booking/job/${job.id}` as never);
 
-  const renderError = () => (
-    <View style={styles.emptyWrap}>
-      <Text variant="body" color="muted" align="center">{t('feed.load_error')}</Text>
-    </View>
-  );
+  const isRefreshing = refetchingAssigned || refetchingFeed;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -135,9 +201,7 @@ export default function JobsScreen() {
               const { status } = await Location.requestForegroundPermissionsAsync();
               if (status === 'granted') {
                 setLocationDenied(false);
-                const pos = await Location.getCurrentPositionAsync({
-                  accuracy: Location.Accuracy.Balanced,
-                });
+                const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
                 setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
                 queryClient.invalidateQueries({ queryKey: ['providerFeed'] });
               }
@@ -152,46 +216,89 @@ export default function JobsScreen() {
         )}
       </View>
 
-      {/* Feed list */}
-      {isError ? (
-        renderError()
-      ) : (
-        <FlatList
-          data={jobsWithDistance}
-          keyExtractor={({ job }) => job.id}
-          contentContainerStyle={[
-            styles.listContent,
-            jobsWithDistance.length === 0 && styles.listContentEmpty,
-          ]}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefetching || isLoading}
-              onRefresh={refetch}
-              colors={[theme.colors.primary]}
-              tintColor={theme.colors.primary}
-            />
-          }
-          ListEmptyComponent={isLoading ? null : renderEmpty()}
-          renderItem={({ item: { job, distanceKm } }) => (
-            <ProviderJobCard
-              job={job}
-              categoryName={categoryMap.get(job.category_id)}
-              distanceKm={distanceKm}
-              onPress={() => handleJobPress(job)}
-            />
-          )}
-        />
-      )}
+      <FlatList
+        data={feedWithDistance}
+        keyExtractor={({ job }) => job.id}
+        contentContainerStyle={[
+          styles.listContent,
+          feedWithDistance.length === 0 && styles.listContentEmpty,
+        ]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing || loadingFeed}
+            onRefresh={handleRefresh}
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.primary}
+          />
+        }
+        // ── "My Active Jobs" section pinned above feed ───────────────────────
+        ListHeaderComponent={
+          <View>
+            {/* My Active Jobs */}
+            <View style={styles.sectionHeader}>
+              <Briefcase color={theme.colors.primary} size={16} />
+              <Text variant="body" weight="semibold" style={styles.sectionTitle}>
+                {t('my_jobs.section_title')}
+              </Text>
+              {assignedJobs.length > 0 && (
+                <View style={styles.countBadge}>
+                  <Text variant="caption" weight="bold" color="primary">{assignedJobs.length}</Text>
+                </View>
+              )}
+            </View>
+
+            {assignedJobs.length === 0 ? (
+              <Text variant="caption" color="muted" style={styles.emptyAssigned}>
+                {t('my_jobs.empty')}
+              </Text>
+            ) : (
+              assignedJobs.map((job) => (
+                <ActiveJobCard
+                  key={job.id}
+                  job={job}
+                  categoryName={categoryMap.get(job.category_id)}
+                  onPress={() => navigateToJob(job)}
+                />
+              ))
+            )}
+
+            {/* Feed section heading */}
+            <View style={[styles.sectionHeader, styles.feedSectionHeader]}>
+              <Text variant="body" weight="semibold" style={styles.sectionTitle}>
+                {t('feed.subtitle')}
+              </Text>
+            </View>
+          </View>
+        }
+        ListEmptyComponent={
+          loadingFeed ? null : (
+            <View style={styles.emptyWrap}>
+              <MapPin color={theme.colors.primary} size={48} />
+              <Text variant="h4" weight="semibold" align="center" style={styles.emptyTitle}>
+                {feedError ? t('feed.load_error') : t('feed.empty_title')}
+              </Text>
+              {!feedError && (
+                <Text variant="body" color="muted" align="center">{t('feed.empty_desc')}</Text>
+              )}
+            </View>
+          )
+        }
+        renderItem={({ item: { job, distanceKm } }) => (
+          <ProviderJobCard
+            job={job}
+            categoryName={categoryMap.get(job.category_id)}
+            distanceKm={distanceKm}
+            onPress={() => navigateToJob(job)}
+          />
+        )}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
+  container: { flex: 1, backgroundColor: theme.colors.background },
   header: {
     paddingHorizontal: theme.spacing.md,
     paddingTop: theme.spacing.sm,
@@ -207,28 +314,40 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 4,
   },
-  locationText: {
-    color: theme.colors.warning,
-    flex: 1,
+  locationText: { color: theme.colors.warning, flex: 1 },
+  listContent: { padding: theme.spacing.md, paddingBottom: 32 },
+  listContentEmpty: { flexGrow: 1 },
+  // Section headers
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
-  listContent: {
-    padding: theme.spacing.md,
-    paddingBottom: 32,
+  feedSectionHeader: {
+    marginTop: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
   },
-  listContentEmpty: {
-    flexGrow: 1,
+  sectionTitle: { flex: 1 },
+  countBadge: {
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 2,
+    borderRadius: theme.layout.radius.full,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+  },
+  emptyAssigned: {
+    fontStyle: 'italic',
+    marginBottom: theme.spacing.md,
+    paddingLeft: theme.spacing.xs,
   },
   emptyWrap: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: theme.spacing.xl,
     gap: theme.spacing.md,
   },
-  emptyTitle: {
-    marginTop: theme.spacing.sm,
-  },
-  emptyDesc: {
-    textAlign: 'center',
-  },
+  emptyTitle: { marginTop: theme.spacing.sm },
 });

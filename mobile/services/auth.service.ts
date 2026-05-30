@@ -24,6 +24,8 @@ export type LoginResponse = {
     email?: string | null;
     role: string;
     status: string;
+    home_lat: number | null;
+    home_lon: number | null;
   };
   tokens: {
     accessToken: string;

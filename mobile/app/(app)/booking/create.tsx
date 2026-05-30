@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   ScrollView,
@@ -10,21 +10,29 @@ import {
   Platform,
   Image,
   FlatList,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
-import { ArrowLeft, ChevronRight, Camera, CheckCircle, X } from 'lucide-react-native';
+import * as Location from 'expo-location';
+import { ArrowLeft, ChevronRight, Camera, CheckCircle, X, Home, MapPin } from 'lucide-react-native';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { LocationPicker } from '@/components/ui/LocationPicker';
 import { categoryService, Category } from '@/services/category.service';
 import { jobService, CreateJobPayload } from '@/services/job.service';
+import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/utils/toast';
+import { getApiError } from '@/utils/apiError';
 import { theme } from '@/theme';
+
+// ─── Address normaliser: trim + UPPERCASE (Bengali is unaffected; only English chars change) ──
+function normalizeAddr(str: string): string {
+  return str.trim().toUpperCase();
+}
 
 // ─── Step constants ───────────────────────────────────────────────────────────
 const STEP_CATEGORY = 0;
@@ -47,6 +55,8 @@ type BookingDraft = {
   road: string;
   area: string;
   estimated_budget: string;
+  service_lat: number | null;
+  service_lon: number | null;
 };
 
 const EMPTY_DRAFT: BookingDraft = {
@@ -60,6 +70,8 @@ const EMPTY_DRAFT: BookingDraft = {
   road: '',
   area: '',
   estimated_budget: '',
+  service_lat: null,
+  service_lon: null,
 };
 
 // ─── Field-level error type ───────────────────────────────────────────────────
@@ -69,14 +81,19 @@ export default function CreateBookingScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ categoryId?: string }>();
+  const user = useAuthStore((s) => s.user);
 
   const [step, setStep] = useState(params.categoryId ? STEP_DESCRIBE : STEP_CATEGORY);
   const [draft, setDraft] = useState<BookingDraft>({
     ...EMPTY_DRAFT,
     category_id: params.categoryId ?? '',
+    // Pre-fill map from the user's registered home location (populated at login)
+    service_lat: user?.homeLat ?? null,
+    service_lon: user?.homeLon ?? null,
   });
   const [errors, setErrors] = useState<FieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeocoding, setIsGeocoding] = useState(false);
 
   const { data: categories = [], isLoading: loadingCategories } = useQuery({
     queryKey: ['categories'],
@@ -151,6 +168,69 @@ export default function CreateBookingScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // ── Reverse-geocode a coordinate and fill the area field ──────────────────
+  const reverseGeocode = useCallback(async (lat: number, lon: number) => {
+    try {
+      const results = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lon });
+      const place = results[0];
+      if (place) {
+        const area = place.district ?? place.subregion ?? place.city ?? place.name ?? '';
+        if (area) patch({ area: normalizeAddr(area) });
+      }
+    } catch {
+      // silently ignore — user can type the area manually
+    }
+  }, []);
+
+  const handleLocationChange = useCallback((lat: number, lon: number) => {
+    patch({ service_lat: lat, service_lon: lon });
+    reverseGeocode(lat, lon);
+  }, [reverseGeocode]);
+
+  // ── Forward-geocode: "Find on Map" button → Nominatim/OSM ────────────────
+  // Strategy: try (road + area), then area-only, then road-only.
+  // OSM Bangladesh has good area/thana coverage but sparse road/building data,
+  // so the fallback puts the pin in the right neighbourhood even when the
+  // specific road isn't indexed (e.g. "Lucas More, Farmgate" → falls back to
+  // "Farmgate, Bangladesh" which OSM knows).
+  const handleFindOnMap = async () => {
+    const road = draft.road.trim();
+    const area = draft.area.trim();
+    if (!road && !area) {
+      toast.error(t('booking.geocode_needs_address'));
+      return;
+    }
+    setIsGeocoding(true);
+
+    const nominatim = async (q: string): Promise<{ lat: string; lon: string } | null> => {
+      const url =
+        `https://nominatim.openstreetmap.org/search` +
+        `?q=${encodeURIComponent(q)}&format=json&countrycodes=bd&limit=1`;
+      const resp = await fetch(url, { headers: { 'User-Agent': 'HomeFix-App/1.0' } });
+      const data: { lat: string; lon: string }[] = await resp.json();
+      return data[0] ?? null;
+    };
+
+    try {
+      // Attempt 1 — full address
+      let hit = road && area ? await nominatim(`${road}, ${area}, Bangladesh`) : null;
+      // Attempt 2 — area only (most reliable for BD neighbourhoods)
+      if (!hit && area) hit = await nominatim(`${area}, Bangladesh`);
+      // Attempt 3 — road only
+      if (!hit && road) hit = await nominatim(`${road}, Bangladesh`);
+
+      if (hit) {
+        patch({ service_lat: parseFloat(hit.lat), service_lon: parseFloat(hit.lon) });
+      } else {
+        toast.info(t('booking.geocode_not_found'));
+      }
+    } catch {
+      toast.error(t('booking.geocode_error'));
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
+
   const goNext = () => {
     if (!validateStep()) return;
     if (step < TOTAL_STEPS - 1) setStep((s) => s + 1);
@@ -168,7 +248,7 @@ export default function CreateBookingScreen() {
   const pickPhotos = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert(t('common.error'), 'Camera roll permission is required to add photos.');
+      toast.error(t('common.error'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -189,25 +269,52 @@ export default function CreateBookingScreen() {
   // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!validateStep()) return;
+
+    // Guard: verify all required fields are present regardless of which step
+    // the user navigated through (e.g. deep-link entry, back-navigation edge cases)
+    const allErrors: FieldErrors = {};
+    if (!draft.category_id) allErrors.category_id = t('booking.select_category_first');
+    if (!draft.description.trim()) allErrors.description = t('booking.description_required');
+    else if (draft.description.trim().length < 10) allErrors.description = t('booking.description_min');
+    if (!draft.house.trim()) allErrors.house = t('booking.house_required');
+    if (!draft.road.trim()) allErrors.road = t('booking.road_required');
+    if (!draft.area.trim()) allErrors.area = t('booking.area_required');
+    if (requiresArea && !draft.square_footage.trim()) allErrors.square_footage = t('booking.square_footage_required');
+
+    if (Object.keys(allErrors).length > 0) {
+      setErrors(allErrors);
+      // Navigate back to the first step that has an error
+      const errorStep =
+        allErrors.category_id                                   ? STEP_CATEGORY :
+        allErrors.description                                    ? STEP_DESCRIBE :
+        allErrors.square_footage                                 ? STEP_MEDIA   :
+        (allErrors.house || allErrors.road || allErrors.area)   ? STEP_ADDRESS  :
+        STEP_BUDGET;
+      setStep(errorStep);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const payload: CreateJobPayload = {
         category_id: draft.category_id,
         description: draft.description.trim(),
         service_address: {
-          house: draft.house.trim(),
-          flat: draft.flat.trim() || undefined,
-          road: draft.road.trim(),
-          area: draft.area.trim(),
+          house: normalizeAddr(draft.house),
+          flat: normalizeAddr(draft.flat) || undefined,
+          road: normalizeAddr(draft.road),
+          area: normalizeAddr(draft.area),
         },
+        service_lat: draft.service_lat ?? undefined,
+        service_lon: draft.service_lon ?? undefined,
       };
-      if (draft.title.trim()) payload.title = draft.title.trim();
+      if (draft.title.trim()) payload.title = normalizeAddr(draft.title);
       if (draft.estimated_budget.trim()) payload.estimated_budget = Number(draft.estimated_budget);
       if (requiresArea && draft.square_footage.trim()) payload.square_footage = Number(draft.square_footage);
 
       const job = await jobService.createJob(payload);
 
-      // Upload photos if any
+      // Upload photos if any (separate try so a photo failure doesn't lose the job)
       if (draft.photos.length > 0) {
         try {
           await jobService.uploadMedia(job.id, draft.photos);
@@ -218,8 +325,8 @@ export default function CreateBookingScreen() {
 
       toast.success(t('booking.success_title'));
       router.replace('/(app)/(tabs)/bookings' as never);
-    } catch {
-      toast.error(t('booking.error_submit'));
+    } catch (err) {
+      toast.error(getApiError(err, t));
     } finally {
       setIsSubmitting(false);
     }
@@ -381,6 +488,40 @@ export default function CreateBookingScreen() {
 
   const renderStepAddress = () => (
     <View style={styles.stepContent}>
+      {/* Map picker */}
+      <Text variant="body" weight="medium" style={styles.fieldLabel}>
+        {t('booking.map_label')}
+      </Text>
+      <Text variant="caption" color="muted" style={styles.hintText}>
+        {t('booking.map_hint')}
+      </Text>
+
+      {/* "Use my home address" shortcut */}
+      {user?.homeLat && user?.homeLon && (
+        <TouchableOpacity
+          style={styles.homeAddressBtn}
+          onPress={() => {
+            patch({ service_lat: user.homeLat!, service_lon: user.homeLon! });
+            reverseGeocode(user.homeLat!, user.homeLon!);
+          }}
+          activeOpacity={0.7}
+        >
+          <Home color={theme.colors.primary} size={15} />
+          <Text variant="caption" weight="semibold" color="primary" style={styles.homeAddressBtnText}>
+            {t('booking.use_home_address')}
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      <LocationPicker
+        latitude={draft.service_lat ?? 0}
+        longitude={draft.service_lon ?? 0}
+        onLocationChange={handleLocationChange}
+        autoDetect={draft.service_lat === null && draft.service_lon === null}
+      />
+
+      <View style={styles.divider} />
+
       {/* House */}
       <Text variant="body" weight="medium" style={styles.fieldLabel}>
         {t('booking.house_label')}<Text variant="body" color="error"> *</Text>
@@ -426,7 +567,7 @@ export default function CreateBookingScreen() {
         <Text variant="caption" color="error" style={styles.fieldError}>{errors.road}</Text>
       ) : null}
 
-      {/* Area */}
+      {/* Area — updated by reverse geocoding but also manually editable */}
       <Text variant="body" weight="medium" style={[styles.fieldLabel, styles.fieldLabelSpaced]}>
         {t('booking.area_label')}<Text variant="body" color="error"> *</Text>
       </Text>
@@ -441,6 +582,22 @@ export default function CreateBookingScreen() {
       {errors.area ? (
         <Text variant="caption" color="error" style={styles.fieldError}>{errors.area}</Text>
       ) : null}
+
+      {/* Find on Map button — forward geocodes road+area → moves map marker */}
+      <TouchableOpacity
+        style={[styles.findOnMapBtn, isGeocoding && styles.findOnMapBtnDisabled]}
+        onPress={handleFindOnMap}
+        disabled={isGeocoding}
+        activeOpacity={0.7}
+      >
+        {isGeocoding
+          ? <ActivityIndicator size="small" color={theme.colors.primary} />
+          : <MapPin color={theme.colors.primary} size={16} />
+        }
+        <Text variant="body" weight="semibold" color="primary" style={styles.findOnMapText}>
+          {isGeocoding ? t('booking.geocoding') : t('booking.find_on_map')}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -521,42 +678,44 @@ export default function CreateBookingScreen() {
   const isLastStep = step === TOTAL_STEPS - 1;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={goBack} style={styles.headerBtn} hitSlop={8}>
-          <ArrowLeft color={theme.colors.text} size={22} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text variant="h4" weight="bold" numberOfLines={1}>{t('booking.title')}</Text>
-          <Text variant="caption" color="muted">
-            {t('booking.step_of', { current: step + 1, total: TOTAL_STEPS })}
-          </Text>
+    // KeyboardAvoidingView wraps the full screen so the footer rises above the keyboard
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <SafeAreaView style={styles.container} edges={['top']}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={goBack} style={styles.headerBtn} hitSlop={8}>
+            <ArrowLeft color={theme.colors.text} size={22} />
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text variant="h4" weight="bold" numberOfLines={1}>{t('booking.title')}</Text>
+            <Text variant="caption" color="muted">
+              {t('booking.step_of', { current: step + 1, total: TOTAL_STEPS })}
+            </Text>
+          </View>
+          <View style={styles.headerBtn} />
         </View>
-        <View style={styles.headerBtn} />
-      </View>
 
-      {/* Progress bar */}
-      <View style={styles.progressTrack}>
-        <View
-          style={[
-            styles.progressFill,
-            { width: `${((step + 1) / TOTAL_STEPS) * 100}%` },
-          ]}
-        />
-      </View>
+        {/* Progress bar */}
+        <View style={styles.progressTrack}>
+          <View
+            style={[
+              styles.progressFill,
+              { width: `${((step + 1) / TOTAL_STEPS) * 100}%` },
+            ]}
+          />
+        </View>
 
-      {/* Step heading chip */}
-      <View style={styles.stepLabelRow}>
-        <Text variant="caption" weight="semibold" color="primary">{stepTitle}</Text>
-      </View>
+        {/* Step heading chip */}
+        <View style={styles.stepLabelRow}>
+          <Text variant="caption" weight="semibold" color="primary">{stepTitle}</Text>
+        </View>
 
-      {/* Step content */}
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+        {/* Scrollable step content */}
         <ScrollView
+          style={styles.flex}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -567,27 +726,27 @@ export default function CreateBookingScreen() {
           {step === STEP_ADDRESS && renderStepAddress()}
           {step === STEP_BUDGET && renderStepBudget()}
         </ScrollView>
-      </KeyboardAvoidingView>
 
-      {/* Footer CTA */}
-      <View style={styles.footer}>
-        {isLastStep ? (
-          <Button
-            label={isSubmitting ? t('booking.submitting') : t('booking.submit')}
-            variant="secondary"
-            onPress={handleSubmit}
-            disabled={isSubmitting}
-          />
-        ) : (
-          <Button
-            label={t('common.next')}
-            variant="primary"
-            onPress={goNext}
-            rightIcon={<ChevronRight color={theme.colors.textInverse} size={18} />}
-          />
-        )}
-      </View>
-    </SafeAreaView>
+        {/* Footer CTA — in normal flex flow so it rises above keyboard */}
+        <View style={styles.footer}>
+          {isLastStep ? (
+            <Button
+              label={isSubmitting ? t('booking.submitting') : t('booking.submit')}
+              variant="secondary"
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+            />
+          ) : (
+            <Button
+              label={t('common.next')}
+              variant="primary"
+              onPress={goNext}
+              rightIcon={<ChevronRight color={theme.colors.textInverse} size={18} />}
+            />
+          )}
+        </View>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -773,6 +932,36 @@ const styles = StyleSheet.create({
   },
   photoPickerText: {
     flex: 1,
+  },
+  homeAddressBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    paddingVertical: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  homeAddressBtnText: {
+    marginLeft: 2,
+  },
+  findOnMapBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.layout.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary + '10',
+  },
+  findOnMapBtnDisabled: {
+    opacity: 0.6,
+  },
+  findOnMapText: {
+    flex: 1,
+    textAlign: 'center',
   },
   // Divider
   divider: {

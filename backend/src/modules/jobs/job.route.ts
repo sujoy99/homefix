@@ -96,6 +96,25 @@ jobRouter.get(
 
 /**
  * @openapi
+ * /jobs/assigned:
+ *   get:
+ *     summary: Provider fetches their active and awaiting-payment jobs
+ *     tags: [Jobs]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Assigned jobs returned
+ */
+jobRouter.get(
+  '/assigned',
+  authGuard,
+  roleGuard(UserRole.PROVIDER),
+  asyncHandler(asAuthenticated(JobController.getMyAssignedJobs))
+);
+
+/**
+ * @openapi
  * /jobs/feed:
  *   get:
  *     summary: Provider fetches available jobs matching their skills (REQ-015)

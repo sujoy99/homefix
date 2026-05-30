@@ -74,10 +74,9 @@ export const Button = ({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: 16, // Matched with Input
+    borderRadius: 16,
     justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
+    alignItems: 'stretch',
   },
   content: {
     flexDirection: 'row',
@@ -91,15 +90,18 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.sm,
   },
   
-  // Sizes
+  // Sizes — minHeight instead of fixed height so Bengali / complex-script
+  // glyphs (stacking diacritics) are never clipped on any locale
   size_md: {
-    height: 44,
+    minHeight: 44,
+    paddingVertical: 10,
     paddingHorizontal: theme.spacing.md,
   },
   size_lg: {
-    height: 56, // Increased for premium feel
+    minHeight: 56,
+    paddingVertical: 16,
     paddingHorizontal: theme.spacing.lg,
-    ...theme.layout.shadow.md, // More prominent shadow for buttons
+    ...theme.layout.shadow.md,
   },
   
   // Variants

@@ -30,7 +30,7 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 
 ---
 
-### What Has Been Built (Sprints 0–2)
+### What Has Been Built (Sprints 0–3)
 
 **Sprint 0 — Foundation:** Docker + PostgreSQL + PostGIS, Knex migrations, Express 5 skeleton, Winston logging, JWT infrastructure, shared package scaffold.
 
@@ -41,57 +41,63 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 
 **Sprint 2 — Home + Categories:**
 - Backend: Service categories module (CRUD + `requires_area`), Provider profile + skills, Provider approval API, File storage (local disk, S3-ready).
-- Mobile: Stack+Tabs navigation (Resident: Home/Bookings/Profile, Provider: Home/Jobs/Profile, Admin: Approvals/Profile), Resident home screen (category grid, search, available providers), Category listing (sort by rating/experience/rate), Provider detail screen, Provider dashboard (availability toggle), Profile screen.
-- Enhancements: My Services multi-select modal (bottom-sheet, primary badge), logout redesigned as red card-row, **Toast notification system** (red=error, green=success — replaces Alert.alert for all non-confirmation messages), NID front + back photo upload (both required), camera-only policy for NID (admin-configurable), **Platform Settings** module (`GET /v2/config/public`, `platform_settings` table, `PlatformSettingKey` + `NidPhotoSource` enums in `packages/shared`).
-- Test docs: `docs/TESTING_SPRINT1_MOBILE.md`, `docs/TESTING_SPRINT2_MOBILE.md`.
+- Mobile: Stack+Tabs navigation (Resident: Home/Bookings/Profile, Provider: Home/Jobs/Profile, Admin: Approvals/Profile), Resident home screen (category grid, search, available providers capped to 3 + AllProvidersScreen with search + category filter), Category listing (sort by rating/experience/rate), Provider detail screen, Provider dashboard (availability toggle), Profile screen.
+- Enhancements: My Services multi-select modal, logout as red card-row, **Toast notification system** (red=error, green=success — replaces Alert.alert for all non-confirmation messages), NID front + back photo, camera-only policy, **Platform Settings** module (`GET /v2/config/public`, `platform_settings` table).
+
+**Sprint 3 — Booking & Job Lifecycle:**
+- Backend: Job/Booking module — full state machine (`PENDING → ACTIVE → AWAITING_PAYMENT → PAID`), PostGIS distance-sorted provider feed, Job media + voice note storage endpoints.
+- Mobile: 5-step booking wizard (category → describe → photos+area → address+map → budget+review), Resident bookings list (4 tabs: Upcoming/Active/Awaiting Payment/Completed), Provider job feed (distance-sorted, skills-filtered, My Active Jobs section pinned above feed), Job detail + 4-step status stepper, Provider accept job (concurrent-safe), Provider marks work complete.
+- Enhancements: Service address step with interactive map — reverse geocoding (marker drag → auto-fill Area), forward geocoding "Find on Map" (Nominatim/OSM 3-tier fallback), "Use my home address" shortcut. Photo fullscreen viewer with pinch-to-zoom (`react-native-image-viewing`). "Not Interested" redesigned as small text link.
+- Bug fixes: `resolveMediaUrl` crash on non-string media_urls; Android nested-TouchableOpacity content clip; Yoga `alignItems:center` Bengali text truncation; Button fixed-height Bengali glyph clip → `minHeight + paddingVertical`; `DollarSign` → `Banknote` icon for Taka amounts.
+- Test docs: `docs/TESTING_SPRINT3_MOBILE.md`, `docs/SPRINT3_USER_MANUAL.md`.
 
 **Seed accounts (always available after `make seed`):**
 
 | Role | Mobile | Password |
 |------|--------|----------|
 | Admin | `00000000000` | `Admin@1234` |
-| Provider (active) | `01711223344` | `Provider@1234` |
+| Provider (active, Plumbing skill) | `01711223344` | `Provider@1234` |
 | Resident (active) | `01811223344` | `Resident@1234` |
 
 ---
 
 ### Current Sprint
 
-**Sprint:** Sprint 3 — Booking & Job Lifecycle  
+**Sprint:** Sprint 4 — Voice & Accessibility  
 **Status:** ⏳ Not Started  
-**Branch convention:** `feature/HF-XXX-short-description`  
-**Active git branch:** `feature/sprint-2-mobile` (Sprint 2 work — merge to master before starting Sprint 3)
+**Branch convention:** `feature/sprint-4-mobile`  
+**Active git branch:** `feature/sprint-3-mobile` (merge to master before starting Sprint 4)
 
-**Backend tickets (start here):**
-- HF-031 ⏳ Job/Booking module — state machine (`Pending → Active → Awaiting Payment → Paid`, REQ-015 to REQ-018)
-- HF-032 ⏳ Location-based provider search (PostGIS `ST_DWithin` + `ST_Distance`, REQ-007,008)
-- HF-033 ⏳ Job media storage (photos, videos, voice notes — REQ-010)
+> Sprint 4 is **mobile-only** — no backend tickets. All backend voice/audio endpoints already exist from Sprint 3 (HF-033): `PATCH /v2/jobs/:id/voice-note` (upload), `GET /v2/jobs/:id` returns `voice_note_url`.
 
-**Mobile tickets (after backend HF-031 is done):**
-- HF-034 ⏳ Create booking flow (category → describe → photos → address → date → budget)
-- HF-035 ⏳ Area input — conditional sq. footage when `requires_area` (REQ-006)
-- HF-036 ⏳ Service address input — separate from home address (REQ-008,009)
-- HF-037 ⏳ Resident bookings list (Upcoming, Active, Awaiting Payment, Completed)
-- HF-038 ⏳ Provider job feed — available jobs by trade, sorted by distance (REQ-015)
-- HF-039 ⏳ Job accept/reject for provider (REQ-016)
-- HF-040 ⏳ Job status tracking card (real-time updates)
-- HF-041 ⏳ Provider marks "Work Complete" → Awaiting Payment (REQ-017)
+**Mobile tickets (all Sprint 4 work):**
+- HF-042 ⏳ Voice note recording in booking flow (`expo-av` — REQ-011) — microphone button always visible on booking Step 2 (Describe Issue); records, previews, and attaches to job on submit
+- HF-043 ⏳ Voice-to-Text / Speech-to-Text for booking description (REQ-012) — converts recorded voice to text; fills description field
+- HF-044 ⏳ Text-to-Voice — "Read aloud" button for providers (REQ-013) — reads job description + address aloud via `expo-speech` for low-literacy providers; available on job detail screen
+- HF-045 ⏳ Voice note playback in provider job detail — plays the resident's recorded voice note if present; uses `expo-av`
+- HF-046 ⏳ Accessibility audit — large fonts respect system font scale, minimum 48×48 px touch targets verified app-wide, high contrast pass, screen reader labels (`accessibilityLabel`, `accessibilityRole`) on all interactive elements
 
-**Known deferred items to keep in mind during Sprint 3:**
-- Photo uploads currently store `file://` URIs (not real URLs) — wiring to storage service is HF-033
-- Provider dashboard stats are placeholders — live stats need booking data
-- `GET /v2/config/public` must be available at backend start (migration + seed already run on dev DB)
+**Key constraints for Sprint 4:**
+- `expo-av` and `expo-speech` are already in the mobile stack — do **not** add new audio packages unless `expo-av` cannot do the job
+- Voice CTA (microphone icon) must always be visible on booking Step 2 — it is part of the design system mandate
+- Voice-to-Text (HF-043) requires a transcription service — use `expo-av` to record, then send audio to a free/cheap API (e.g. Whisper via OpenAI, or a local Whisper model if the user has a preference). Ask before implementing HF-043 to confirm the transcription strategy
+- All new UI strings need both `bn.json` and `en.json` keys
 
 ---
 
 ### Architecture Decisions Already Made
 
-- **Navigation:** Expo Router Stack+Tabs — `(app)/_layout.tsx` is a Stack, `(app)/(tabs)/_layout.tsx` is Tabs. Detail screens (`category/[id]`, `provider/[id]`) live at the Stack level to avoid ghost tabs.
-- **Toast system:** `store/toastStore.ts` + `utils/toast.ts` + `components/ui/Toast.tsx`. Always use `toast.error()` / `toast.success()` for notifications. Use `Alert.alert()` only for confirmations (Cancel/Confirm dialogs).
+- **Navigation:** Expo Router Stack+Tabs — `(app)/_layout.tsx` is a Stack, `(app)/(tabs)/_layout.tsx` is Tabs. Detail screens (`category/[id]`, `provider/[id]`, `booking/job/[id]`) live at the Stack level to avoid ghost tabs.
+- **Toast system:** `store/toastStore.ts` + `utils/toast.ts` + `components/ui/Toast.tsx`. Always use `toast.error()` / `toast.success()` for notifications. Only use `Alert.alert()` for confirmations (Cancel/Confirm dialogs).
 - **Platform settings:** Admin-controlled via `platform_settings` table. All valid keys and values are in `packages/shared/src/constants/platform-settings.ts`.
 - **API client:** All service files import from `@/api/client` (NOT `./api` or relative paths).
 - **Error messages:** All Zod error message keys must be wrapped in `t()` before display. Keys follow the pattern `validation.*` or `auth.*` and map to both `bn.json` and `en.json`.
-- **DB migrations:** Always create additive migrations (never edit existing ones). Use `hasColumn` / `hasTable` guards when a column might already exist from a base migration update.
+- **DB migrations:** Always create additive migrations (never edit existing ones). Use `hasColumn` / `hasTable` guards when a column might already exist.
+- **Job state machine:** `PENDING → ACTIVE → AWAITING_PAYMENT → PAID` (also `CANCELLED`). Transitions validated via `isValidJobTransition()` from `@homefix/shared`. State changes always use a DB transaction.
+- **Media URLs:** Always resolve via `resolveMediaUrl(url)` from `@/utils/media` — handles both relative paths (`/uploads/...`) and absolute URLs (S3). Never construct upload URLs manually in components.
+- **Buttons / i18n:** Never use fixed `height` on button containers — use `minHeight + paddingVertical` so Bengali and other complex-script labels are never clipped. Never use `alignItems: 'center'` on a column container that holds a `Text` child — use default `stretch` + `textAlign: 'center'` on the Text.
+- **Nested touchables:** Never put a `Button` (TouchableOpacity) inside another `TouchableOpacity` for the same action — Android clips the inner content. Use a styled `View` for the inner CTA instead.
+- **Budget icon:** Use `Banknote` (not `DollarSign`) for money amounts — appropriate for Taka (৳) context.
 
 ---
 

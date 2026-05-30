@@ -31,6 +31,13 @@ export class JobRepository {
       .orderBy('created_at', 'desc');
   }
 
+  static async findByProvider(providerId: string): Promise<Job[]> {
+    return Job.query()
+      .where('provider_id', providerId)
+      .whereIn('status', [JobStatus.ACTIVE, JobStatus.AWAITING_PAYMENT])
+      .orderBy('updated_at', 'desc');
+  }
+
   static async findProviderFeed(categoryIds: string[], query: JobFeedQuery): Promise<Job[]> {
     const limit = query.limit ?? 20;
 

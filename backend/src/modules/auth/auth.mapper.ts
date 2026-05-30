@@ -25,9 +25,13 @@ export type LoginUserResponse = {
   email?: string | null;
   role: string;
   status: string;
+  home_lat: number | null;
+  home_lon: number | null;
 };
 
-export function mapToLoginUserResponse(user: User): LoginUserResponse {
+export function mapToLoginUserResponse(
+  user: User & { home_lat?: number | null; home_lon?: number | null }
+): LoginUserResponse {
   return {
     id: user.id,
     short_code: user.short_code,
@@ -36,5 +40,7 @@ export function mapToLoginUserResponse(user: User): LoginUserResponse {
     email: user.email ?? null,
     role: user.role,
     status: user.status,
+    home_lat: user.home_lat ?? null,
+    home_lon: user.home_lon ?? null,
   };
 }
