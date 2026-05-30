@@ -30,7 +30,7 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 
 ---
 
-### What Has Been Built (Sprints 0–3)
+### What Has Been Built (Sprints 0–4)
 
 **Sprint 0 — Foundation:** Docker + PostgreSQL + PostGIS, Knex migrations, Express 5 skeleton, Winston logging, JWT infrastructure, shared package scaffold.
 
@@ -51,6 +51,14 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 - Bug fixes: `resolveMediaUrl` crash on non-string media_urls; Android nested-TouchableOpacity content clip; Yoga `alignItems:center` Bengali text truncation; Button fixed-height Bengali glyph clip → `minHeight + paddingVertical`; `DollarSign` → `Banknote` icon for Taka amounts.
 - Test docs: `docs/TESTING_SPRINT3_MOBILE.md`, `docs/SPRINT3_USER_MANUAL.md`.
 
+**Sprint 4 — Voice & Accessibility (mobile-only):**
+- `VoiceRecorder` component (`expo-av`) — idle → recording (live timer + red dot) → recorded (play/pause/delete); always visible on booking Step 2; uploads to `PATCH /v2/jobs/:id/voice-note` on submit (best-effort, separate try/catch).
+- `VoiceNotePlayer` component (`expo-av`) — play/pause toggle, progress bar, `position / duration` time display; shown in provider job detail when `voice_note_url` is present.
+- `ReadAloudButton` component (`expo-speech`) — speaks `job.description + address parts` aloud; language-aware (`bn-BD` / `en-US`); provider-only (REQ-013); stops on unmount.
+- HF-043 (Voice-to-Text) deferred — requires Whisper backend decision. Use OpenAI Whisper API or Groq (free) when ready; machine (i3-10110U, 6 GB RAM, 2 GB VRAM) is **not** suitable for self-hosted Whisper-small.
+- Accessibility audit (HF-046): `accessibilityRole` + `accessibilityLabel` on 30+ touchables app-wide; `accessibilityHint` on mic, GPS, photo picker, thumbnails; touch targets ≥ 48 px; WCAG AA contrast verified; font scale 1.5× clean.
+- 50/50 tests passing (8 suites). Test docs: `docs/TESTING_SPRINT4_MOBILE.md`, `docs/SPRINT4_USER_MANUAL.md`.
+
 **Seed accounts (always available after `make seed`):**
 
 | Role | Mobile | Password |
@@ -63,25 +71,33 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 
 ### Current Sprint
 
-**Sprint:** Sprint 4 — Voice & Accessibility  
+**Sprint:** Sprint 5 — Payments + Wallet  
 **Status:** ⏳ Not Started  
-**Branch convention:** `feature/sprint-4-mobile`  
-**Active git branch:** `feature/sprint-3-mobile` (merge to master before starting Sprint 4)
+**Branch convention:** `feature/sprint-5-mobile`  
+**Active git branch:** `feature/sprint-4-mobile` (merge to master before starting Sprint 5)
 
-> Sprint 4 is **mobile-only** — no backend tickets. All backend voice/audio endpoints already exist from Sprint 3 (HF-033): `PATCH /v2/jobs/:id/voice-note` (upload), `GET /v2/jobs/:id` returns `voice_note_url`.
+> **Why Payments before Reviews:** Reviews (Sprint 6) require `job.status = PAID` per REQ-024. Sprint 5 delivers the payment flow so Sprint 6 reviews are fully testable end-to-end without DB workarounds.
 
-**Mobile tickets (all Sprint 4 work):**
-- HF-042 ⏳ Voice note recording in booking flow (`expo-av` — REQ-011) — microphone button always visible on booking Step 2 (Describe Issue); records, previews, and attaches to job on submit
-- HF-043 ⏳ Voice-to-Text / Speech-to-Text for booking description (REQ-012) — converts recorded voice to text; fills description field
-- HF-044 ⏳ Text-to-Voice — "Read aloud" button for providers (REQ-013) — reads job description + address aloud via `expo-speech` for low-literacy providers; available on job detail screen
-- HF-045 ⏳ Voice note playback in provider job detail — plays the resident's recorded voice note if present; uses `expo-av`
-- HF-046 ⏳ Accessibility audit — large fonts respect system font scale, minimum 48×48 px touch targets verified app-wide, high contrast pass, screen reader labels (`accessibilityLabel`, `accessibilityRole`) on all interactive elements
+**Backend tickets (start here — mobile payment screen depends on these):**
+- HF-054 ⏳ Payment interface — pluggable strategy pattern (`payment.interface.ts`); Phase 1: manual TxID gateway; Phase 2: SSLCommerz (same pattern as file storage)
+- HF-055 ⏳ Manual gateway — bKash/Nagad TxID entry (REQ-019, REQ-020); validates TxID format; marks job PAID; triggers commission split
+- HF-056 ⏳ Commission engine — reads configurable rate from `commission_rules` table (REQ-021); default 20%; per-category and promotion overrides supported
+- HF-056B ⏳ Admin commission rules API — CRUD endpoints + `/preview` to calculate net payout before applying
+- HF-057 ⏳ Provider wallet/ledger — credits 80% of job amount on payment (REQ-022); ledger table for audit trail
+- HF-058 ⏳ Admin revenue dashboard API — total revenue, commission by rule breakdown (REQ-023)
 
-**Key constraints for Sprint 4:**
-- `expo-av` and `expo-speech` are already in the mobile stack — do **not** add new audio packages unless `expo-av` cannot do the job
-- Voice CTA (microphone icon) must always be visible on booking Step 2 — it is part of the design system mandate
-- Voice-to-Text (HF-043) requires a transcription service — use `expo-av` to record, then send audio to a free/cheap API (e.g. Whisper via OpenAI, or a local Whisper model if the user has a preference). Ask before implementing HF-043 to confirm the transcription strategy
+**Mobile tickets:**
+- HF-059 ⏳ Payment screen — method selection (bKash / Nagad), TxID input, order summary card with commission breakdown; only accessible when `job.status = AWAITING_PAYMENT`
+- HF-060 ⏳ Provider wallet screen — current balance, earnings history, commission breakdown per job
+- HF-061 ⏳ Payment receipt + completion flow — success screen after payment; stepper advances to PAID; "Rate your provider →" CTA wired up for Sprint 6
+
+**Key constraints for Sprint 5:**
+- Payment gateway must be a pluggable interface — `payment.interface.ts` contract identical to `storage.interface.ts` pattern already in codebase
+- Commission rate comes from `commission_rules` table — never hardcode 20% in application logic
+- Wallet credit and commission debit must happen in the **same DB transaction** as the status change to PAID
+- TxID is user-entered (manual MFS flow) — validate format but do not verify with the payment provider (Phase 1)
 - All new UI strings need both `bn.json` and `en.json` keys
+- Read `docs/brd/PAYMENT_SYSTEM.md` before implementing any payment logic
 
 ---
 

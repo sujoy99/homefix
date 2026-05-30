@@ -1,6 +1,6 @@
 # HomeFix — Full-Stack Implementation Plan
 
-> **Version:** 3.6  
+> **Version:** 3.8  
 > **Prepared by:** Sr. Software Engineer  
 > **Date:** 2026-04-19  
 > **Last Updated:** 2026-05-30  
@@ -19,8 +19,8 @@
 | Sprint 2 — Home + Categories | ✅ Completed | 2026-05-29 | 2026-05-29 |
 | Sprint 3 — Booking + Jobs | ✅ Completed | 2026-05-29 | 2026-05-30 |
 | Sprint 4 — Voice + Accessibility | ✅ Done | 2026-05-30 | 2026-05-30 |
-| Sprint 5 — Reviews + Notifications | ⏳ Not Started | — | — |
-| Sprint 6 — Payments + Wallet | ⏳ Not Started | — | — |
+| Sprint 5 — Payments + Wallet | ⏳ Not Started | — | — |
+| Sprint 6 — Reviews + Notifications + In-App Communication | ⏳ Not Started | — | — |
 | Sprint 7 — Web + Admin | ⏳ Not Started | — | — |
 | Sprint 8 — Production Readiness | ⏳ Not Started | — | — |
 
@@ -30,7 +30,7 @@
 
 > **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
 
-**Active Sprint:** Sprint 5 — Reviews, Notifications & In-App Communication  
+**Active Sprint:** Sprint 5 — Payments + Wallet  
 **Sprint Status:** ⏳ Not Started — Ready to begin  
 **Git Branch Convention:** `feature/sprint-5-mobile`
 
@@ -38,8 +38,8 @@
 
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
-| 🖥 Backend | HF-047 | Review & rating module (post-payment only — REQ-024,025,026) | — |
-| 📱 Mobile | HF-050 | Review & rating screen (star + text, post-payment only) | HF-047 |
+| 🖥 Backend | HF-054 | Payment interface (pluggable strategy pattern) | — |
+| 📱 Mobile | HF-059 | Payment screen (method selection, TxID input, order summary) | HF-054 |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
 ### How to Pick Up Work
@@ -473,9 +473,38 @@ modules/payments/
 
 ---
 
-### ⭐ Sprint 5 — Reviews, Notifications, Real-time & In-App Communication
+### 💳 Sprint 5 — Payments & Wallet
 
-**Goal:** Reviews, push notifications, GPS tracking, and a private resident↔provider communication channel so no personal phone numbers are ever shared.
+**Goal:** Full payment flow — bKash/Nagad TxID entry, configurable commission engine, provider wallet. Unlocks `PAID` job status required by Sprint 6 reviews.
+
+#### Backend:
+
+| Ticket | Title | Status | Est. |
+|---|---|---|---|
+| HF-054 | Payment interface (pluggable strategy pattern) | ⏳ | 4h |
+| HF-055 | Manual gateway (bKash/Nagad — TxID entry — REQ-019,020) | ⏳ | 6h |
+| HF-056 | Commission engine — configurable rate from `commission_rules` table (REQ-021) | ⏳ | 6h |
+| HF-056B | Admin commission rules API — CRUD + `/preview` endpoint | ⏳ | 4h |
+| HF-057 | Provider wallet/ledger (80% credit — REQ-022) | ⏳ | 6h |
+| HF-058 | Admin revenue dashboard API (REQ-023) | ⏳ | 4h |
+
+#### Mobile:
+
+| Ticket | Title | Status | Est. |
+|---|---|---|---|
+| HF-059 | Payment screen (method selection, TxID input, order summary) | ⏳ | 8h |
+| HF-060 | Provider wallet screen (balance, earnings, commission breakdown) | ⏳ | 6h |
+| HF-061 | Payment receipt + completion flow | ⏳ | 3h |
+
+**Deliverable:** Full payment flow with wallet + commission system. First sprint to produce PAID jobs end-to-end.
+
+---
+
+### ⭐ Sprint 6 — Reviews, Notifications, Real-time & In-App Communication
+
+**Goal:** Reviews (gated on PAID — now testable), push notifications, GPS tracking, and a private resident↔provider communication channel so no personal phone numbers are ever shared.
+
+> **Ordering note:** Moved after Sprint 5 (Payments) because REQ-024 requires `job.status = PAID` before a review can be submitted. Reviews are fully testable end-to-end only once the payment flow exists.
 
 #### Backend:
 
@@ -498,7 +527,7 @@ modules/payments/
 | HF-102 | In-app chat screen — per-job messaging (ACTIVE status only); bubble UI (sent/received), image attachment, real-time WebSocket with 5 s poll fallback; chat icon on job detail; no phone numbers exposed | ⏳ | 10h |
 | HF-103 | In-app voice call — `@jitsi/react-native-sdk` (Phase 1, self-hosted, free); call room opened from job detail; provider-agnostic (reads `provider` field from API response to select SDK at runtime); graceful "call unavailable" state if server unreachable | ⏳ | 8h |
 
-**Deliverable:** Reviews, notifications, GPS tracking, private messaging + voice call for active jobs.
+**Deliverable:** Reviews (fully testable end-to-end), notifications, GPS tracking, private messaging + voice call for active jobs.
 
 #### Communication Channel Architecture
 
@@ -530,31 +559,6 @@ type RoomConfig = {
 | Access control | Only job participants (resident + assigned provider) can access thread/room |
 | Trigger | Chat + call icons visible on job detail when `status = ACTIVE` |
 | Push | FCM notification on new message (backgrounded) + incoming call |
-
----
-
-### 💳 Sprint 6 — Payments & Wallet
-
-#### Backend:
-
-| Ticket | Title | Status | Est. |
-|---|---|---|---|
-| HF-054 | Payment interface (pluggable strategy pattern) | ⏳ | 4h |
-| HF-055 | Manual gateway (bKash/Nagad — TxID entry — REQ-019,020) | ⏳ | 6h |
-| HF-056 | Commission engine — configurable rate from `commission_rules` table (REQ-021) | ⏳ | 6h |
-| HF-056B | Admin commission rules API — CRUD + `/preview` endpoint | ⏳ | 4h |
-| HF-057 | Provider wallet/ledger (80% credit — REQ-022) | ⏳ | 6h |
-| HF-058 | Admin revenue dashboard API (REQ-023) | ⏳ | 4h |
-
-#### Mobile:
-
-| Ticket | Title | Status | Est. |
-|---|---|---|---|
-| HF-059 | Payment screen (method selection, TxID input, order summary) | ⏳ | 8h |
-| HF-060 | Provider wallet screen (balance, earnings, commission breakdown) | ⏳ | 6h |
-| HF-061 | Payment receipt + completion flow | ⏳ | 3h |
-
-**Deliverable:** Full payment flow with wallet + commission system.
 
 ---
 
@@ -630,8 +634,8 @@ Sprint 0: Foundation
            └──> Sprint 2: Home + Categories
                   └──> Sprint 3: Booking + Jobs
                          └──> Sprint 4: Voice + Accessibility
-                                └──> Sprint 5: Reviews + Notifications
-                                       └──> Sprint 6: Payments + Wallet
+                                └──> Sprint 5: Payments + Wallet
+                                       └──> Sprint 6: Reviews + Notifications + In-App Communication
                                               └──> Sprint 7: Web + Admin
                                                      └──> Sprint 8: Production
 ```
@@ -650,7 +654,7 @@ Every SRS requirement mapped to its implementing ticket(s):
 | REQ-004 | Role-based login | S1 | HF-015 |
 | REQ-005 | Admin add/edit/delete categories | S2, S7 | HF-021, HF-069 |
 | REQ-006 | Service "Requires Area" flag | S2, S3 | HF-021, HF-035 |
-| REQ-007 | Provider GPS auto-detect | S5 | HF-049, HF-053 |
+| REQ-007 | Provider GPS auto-detect | S6 | HF-049, HF-053 |
 | REQ-008 | Book for different location | S3 | HF-036 |
 | REQ-009 | Manual service address entry | S3 | HF-036 |
 | REQ-010 | Upload photos/videos of issue | S3 | HF-034, HF-033 |
@@ -661,15 +665,15 @@ Every SRS requirement mapped to its implementing ticket(s):
 | REQ-015 | Provider job feed by trade | S3 | HF-038 |
 | REQ-016 | Provider accepts → Active | S3 | HF-039 |
 | REQ-017 | Provider finishes → Awaiting Payment | S3 | HF-041 |
-| REQ-018 | Can't pay until Awaiting Payment | S6 | HF-059 |
-| REQ-019 | Multiple payment methods | S6 | HF-054, HF-059 |
-| REQ-020 | MFS Transaction ID input | S6 | HF-055, HF-059 |
-| REQ-021 | 20% platform commission | S6 | HF-056 |
-| REQ-022 | 80% to provider wallet | S6 | HF-057 |
-| REQ-023 | Admin revenue dashboard | S6, S7 | HF-058, HF-070 |
-| REQ-024 | Rating after payment only | S5 | HF-047, HF-050 |
-| REQ-025 | Aggregate provider rating | S5 | HF-047 |
-| REQ-026 | Rating on completed job cards | S5 | HF-050 |
+| REQ-018 | Can't pay until Awaiting Payment | S5 | HF-059 |
+| REQ-019 | Multiple payment methods | S5 | HF-054, HF-059 |
+| REQ-020 | MFS Transaction ID input | S5 | HF-055, HF-059 |
+| REQ-021 | 20% platform commission | S5 | HF-056 |
+| REQ-022 | 80% to provider wallet | S5 | HF-057 |
+| REQ-023 | Admin revenue dashboard | S5, S7 | HF-058, HF-070 |
+| REQ-024 | Rating after payment only | S6 | HF-047, HF-050 |
+| REQ-025 | Aggregate provider rating | S6 | HF-047 |
+| REQ-026 | Rating on completed job cards | S6 | HF-050 |
 
 ---
 
@@ -686,6 +690,7 @@ Every SRS requirement mapped to its implementing ticket(s):
 | 2026-05-28 | 3.3 | Sprint 2 backend complete (HF-021 to HF-024). Added fully DB-driven RBAC system (roles, permissions, role_permissions tables; admin API; PermissionCache; docs/RBAC.md). param() utility added to @utils for Express 5 route param access. 67 tests passing across 6 suites. |
 | 2026-05-30 | 3.5 | Sprint 3 enhancements + bug fixes: HF-026A (AllProvidersScreen with search + category filter, capped home section); HF-036A (address step reverse/forward geocoding + home shortcut); HF-033A (resolveMediaUrl crash fix for non-string media_urls); HF-039A (Not Interested redesigned as text link); HF-040A (photo fullscreen viewer with pinch-to-zoom); HF-040B (ImageViewing crash on jobs without photos). Total sprint 3 tickets: 14. |
 | 2026-05-30 | 3.6 | Sprint 3 closed. Additional polish tickets: HF-038A (nested TouchableOpacity Android content-clip fix); HF-038B (Yoga min-content-width Bengali truncation fix via alignItems:stretch); HF-038C (Button fixed height → minHeight+paddingVertical for complex scripts); HF-038D (DollarSign → Banknote icon). Sprint 3 total: 18 tickets. Sprint 4 opened — next ticket HF-042. |
+| 2026-05-30 | 3.8 | Sprint order rebalanced: Sprint 5 ↔ Sprint 6 swapped. Payments + Wallet moved to Sprint 5 (was 6) so PAID job status is available before Sprint 6 (was 5) reviews are built. REQ-018–023 now S5; REQ-024–026 now S6; REQ-007 (GPS) now S6. SRS traceability matrix and Sprint Flow updated accordingly. |
 | 2026-05-30 | 3.7 | Sprint 4 closed. HF-042 (VoiceRecorder, expo-av); HF-045 (VoiceNotePlayer, expo-av); HF-044 (ReadAloudButton, expo-speech, REQ-013); HF-046 (accessibility audit — 30+ touchables labelled, 48px targets, WCAG AA verified, font-scale clean). HF-043 (Voice-to-Text) deferred — requires Whisper backend. 50/50 tests. Docs: TESTING_SPRINT4_MOBILE.md + SPRINT4_USER_MANUAL.md. Current Focus updated to Sprint 5. |
 
 ---
