@@ -1,12 +1,15 @@
-import { PlatformSettingKey, JobStatus, PaymentStatus, REQUIRES_TRANSACTION_ID } from '@homefix/shared';
+import { transaction } from 'objection';
+import { PlatformSettingKey, JobStatus, PaymentStatus } from '@homefix/shared';
 import { IPaymentGateway, PaymentData } from './payment.interface';
 import { ManualPaymentGateway } from './gateways/manual.gateway';
 import { SslCommerzGateway } from './gateways/sslcommerz.gateway';
 import { ConfigService } from '@modules/config/config.service';
 import { JobRepository } from '@modules/jobs/job.repository';
 import { PaymentRepository } from './payment.repository';
+import { CommissionService } from './commission/commission.service';
 import { CreatePaymentDTO } from './payment.dto';
 import { PaymentRow } from './payment.types';
+import { Payment } from './payment.model';
 import { NotFoundError, BadRequestError, ForbiddenError } from '@errors/http-errors';
 import { ErrorCode } from '@errors/error-code';
 
@@ -82,13 +85,14 @@ async function verifyPayment(paymentId: string, adminId: string): Promise<Paymen
     );
   }
 
-  // Commission split + wallet credit + job→PAID wired atomically in HF-056/057.
-  const verified = await PaymentRepository.verify(paymentId, adminId);
-  if (!verified) {
-    throw new NotFoundError(ErrorCode.PAYMENT_NOT_FOUND, 'Payment not found after verify');
-  }
-
-  return verified as unknown as PaymentRow;
+  return transaction(Payment.knex(), async (trx) => {
+    const verified = await PaymentRepository.verify(paymentId, adminId, trx);
+    if (!verified) {
+      throw new NotFoundError(ErrorCode.PAYMENT_NOT_FOUND, 'Payment not found after verify');
+    }
+    await CommissionService.applyCommission(paymentId, trx);
+    return verified as unknown as PaymentRow;
+  });
 }
 
 export const paymentService = { resolveGateway, submitPayment, verifyPayment };

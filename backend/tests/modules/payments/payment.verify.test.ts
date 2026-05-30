@@ -5,12 +5,14 @@ jest.mock('../../../src/modules/config/config.service', () => ({
 }));
 
 import { PaymentRepository } from '../../../src/modules/payments/payment.repository';
+import { CommissionService } from '../../../src/modules/payments/commission/commission.service';
 import { paymentService } from '../../../src/modules/payments/payment.service';
 
 const ADMIN_ID   = 'a1eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 const PAYMENT_ID = 'b2eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 
-const makePayment = (overrides = {}) => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const makePayment = (overrides: Record<string, unknown> = {}): any => ({
   id: PAYMENT_ID,
   job_id: 'c3eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
   resident_id: 'd4eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
@@ -27,18 +29,21 @@ const makePayment = (overrides = {}) => ({
   verified_at: null,
   verified_by_admin_id: null,
   ...overrides,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-} as any);
+});
 
 let spyFindById: jest.SpyInstance;
 let spyVerify: jest.SpyInstance;
+let spyApplyCommission: jest.SpyInstance;
 
 beforeEach(() => {
-  spyFindById = jest.spyOn(PaymentRepository, 'findById').mockResolvedValue(undefined);
-  spyVerify   = jest.spyOn(PaymentRepository, 'verify').mockResolvedValue(undefined);
+  spyFindById        = jest.spyOn(PaymentRepository, 'findById').mockResolvedValue(undefined);
+  spyVerify          = jest.spyOn(PaymentRepository, 'verify').mockResolvedValue(undefined);
+  spyApplyCommission = jest.spyOn(CommissionService, 'applyCommission').mockResolvedValue(undefined);
 });
 
 afterEach(() => jest.restoreAllMocks());
+
+// ─── Guard tests (execute before the transaction is opened) ──────────────────
 
 describe('paymentService.verifyPayment() — guards', () => {
   it('throws NotFoundError (404) when payment does not exist', async () => {
@@ -62,8 +67,10 @@ describe('paymentService.verifyPayment() — guards', () => {
   });
 });
 
+// ─── Success path ─────────────────────────────────────────────────────────────
+
 describe('paymentService.verifyPayment() — success', () => {
-  it('calls PaymentRepository.verify with the correct payment ID and admin ID', async () => {
+  it('calls PaymentRepository.verify with payment ID, admin ID, and a transaction', async () => {
     const verifiedAt = new Date().toISOString();
     spyFindById.mockResolvedValueOnce(makePayment({ status: PaymentStatus.SUBMITTED }));
     spyVerify.mockResolvedValueOnce(
@@ -72,7 +79,20 @@ describe('paymentService.verifyPayment() — success', () => {
 
     await paymentService.verifyPayment(PAYMENT_ID, ADMIN_ID);
 
-    expect(spyVerify).toHaveBeenCalledWith(PAYMENT_ID, ADMIN_ID);
+    expect(spyVerify).toHaveBeenCalledWith(PAYMENT_ID, ADMIN_ID, expect.anything());
+  });
+
+  it('calls CommissionService.applyCommission with the same transaction handle as verify', async () => {
+    spyFindById.mockResolvedValueOnce(makePayment({ status: PaymentStatus.SUBMITTED }));
+    spyVerify.mockResolvedValueOnce(makePayment({ status: PaymentStatus.VERIFIED }));
+
+    await paymentService.verifyPayment(PAYMENT_ID, ADMIN_ID);
+
+    // Both must receive the exact same trx object — guarantees atomicity
+    const trxPassedToVerify    = spyVerify.mock.calls[0][2];
+    const trxPassedToCommission = spyApplyCommission.mock.calls[0][1];
+    expect(trxPassedToCommission).toBe(trxPassedToVerify);
+    expect(spyApplyCommission).toHaveBeenCalledWith(PAYMENT_ID, trxPassedToVerify);
   });
 
   it('returns payment with VERIFIED status', async () => {
@@ -97,5 +117,12 @@ describe('paymentService.verifyPayment() — success', () => {
     const result = await paymentService.verifyPayment(PAYMENT_ID, ADMIN_ID);
 
     expect(result.verified_at).toBe(verifiedAt);
+  });
+
+  it('throws NotFoundError (404) if verify returns undefined (race condition)', async () => {
+    spyFindById.mockResolvedValueOnce(makePayment({ status: PaymentStatus.SUBMITTED }));
+    spyVerify.mockResolvedValueOnce(undefined);
+
+    await expect(paymentService.verifyPayment(PAYMENT_ID, ADMIN_ID)).rejects.toMatchObject({ statusCode: 404 });
   });
 });
