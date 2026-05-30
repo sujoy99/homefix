@@ -367,6 +367,16 @@
     "geocoding": "Finding location...",
     "geocode_not_found": "Location not found. Try a different address or pin manually.",
     "geocode_error": "Could not search location. Check your connection.",
-    "geocode_needs_address": "Enter Road or Area first"
+    "geocode_needs_address": "Enter Road or Area first",
+    "voice_label": "Voice Note (optional)",
+    "voice_hint": "Tap the mic to record",
+    "voice_record": "Record voice note",
+    "voice_stop": "Stop recording",
+    "voice_play": "Play voice note",
+    "voice_pause": "Pause voice note",
+    "voice_delete": "Delete voice note",
+    "voice_recording": "Recording...",
+    "voice_recorded": "Recording saved — submit to attach",
+    "error_voice": "Job posted but voice note could not be uploaded."
   }
 }

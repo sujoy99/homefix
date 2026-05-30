@@ -97,4 +97,15 @@ export const jobService = {
     const res = await apiClient.patch<ApiResponse<Job>>(`/v2/jobs/${id}/complete`);
     return res.data.body;
   },
+
+  uploadVoiceNote: async (jobId: string, fileUri: string): Promise<Job> => {
+    const form = new FormData();
+    const filename = `voice_${Date.now()}.m4a`;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    form.append('file', { uri: fileUri, name: filename, type: 'audio/m4a' } as any);
+    const res = await apiClient.patch<ApiResponse<Job>>(`/v2/jobs/${jobId}/voice-note`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data.body;
+  },
 };

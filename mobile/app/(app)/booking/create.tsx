@@ -20,6 +20,7 @@ import * as Location from 'expo-location';
 import { ArrowLeft, ChevronRight, Camera, CheckCircle, X, Home, MapPin } from 'lucide-react-native';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
+import { VoiceRecorder } from '@/components/shared/VoiceRecorder';
 import { Card } from '@/components/ui/Card';
 import { LocationPicker } from '@/components/ui/LocationPicker';
 import { categoryService, Category } from '@/services/category.service';
@@ -49,6 +50,7 @@ type BookingDraft = {
   title: string;
   description: string;
   photos: ImagePicker.ImagePickerAsset[];
+  voiceNote: string | null;
   square_footage: string;
   house: string;
   flat: string;
@@ -64,6 +66,7 @@ const EMPTY_DRAFT: BookingDraft = {
   title: '',
   description: '',
   photos: [],
+  voiceNote: null,
   square_footage: '',
   house: '',
   flat: '',
@@ -323,6 +326,15 @@ export default function CreateBookingScreen() {
         }
       }
 
+      // Upload voice note if recorded (separate try so failure doesn't lose the job)
+      if (draft.voiceNote) {
+        try {
+          await jobService.uploadVoiceNote(job.id, draft.voiceNote);
+        } catch {
+          toast.error(t('booking.error_voice'));
+        }
+      }
+
       toast.success(t('booking.success_title'));
       router.replace('/(app)/(tabs)/bookings' as never);
     } catch (err) {
@@ -418,6 +430,9 @@ export default function CreateBookingScreen() {
       {errors.description ? (
         <Text variant="caption" color="error" style={styles.fieldError}>{errors.description}</Text>
       ) : null}
+
+      {/* Voice note — always visible per design mandate (REQ-011) */}
+      <VoiceRecorder onRecorded={(uri) => patch({ voiceNote: uri })} />
     </View>
   );
 
