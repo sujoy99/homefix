@@ -1,9 +1,9 @@
 # HomeFix — Full-Stack Implementation Plan
 
-> **Version:** 3.3  
+> **Version:** 3.6  
 > **Prepared by:** Sr. Software Engineer  
 > **Date:** 2026-04-19  
-> **Last Updated:** 2026-05-29  
+> **Last Updated:** 2026-05-30  
 > **Methodology:** Agile (Sprint-based, ticket-level breakdown)  
 > **Inputs:** SRS v1.0 + Architecture decisions + Post-Sprint-1 code review
 
@@ -17,8 +17,8 @@
 | Sprint 1 — Auth Screens | ✅ Completed | 2026-04-19 | 2026-05-28 |
 | Sprint 1 Hardening — Code Review Fixes | ✅ Completed | 2026-05-28 | 2026-05-28 |
 | Sprint 2 — Home + Categories | ✅ Completed | 2026-05-29 | 2026-05-29 |
-| Sprint 3 — Booking + Jobs | 🔄 In Progress | 2026-05-29 | — |
-| Sprint 4 — Voice + Accessibility | ⏳ Not Started | — | — |
+| Sprint 3 — Booking + Jobs | ✅ Completed | 2026-05-29 | 2026-05-30 |
+| Sprint 4 — Voice + Accessibility | 🔄 In Progress | 2026-05-30 | — |
 | Sprint 5 — Reviews + Notifications | ⏳ Not Started | — | — |
 | Sprint 6 — Payments + Wallet | ⏳ Not Started | — | — |
 | Sprint 7 — Web + Admin | ⏳ Not Started | — | — |
@@ -30,16 +30,16 @@
 
 > **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
 
-**Active Sprint:** Sprint 3 — Booking & Job Lifecycle  
-**Sprint Status:** 🔄 Backend Complete — Mobile In Progress  
-**Git Branch Convention:** `feature/sprint-3-backend` / `feature/sprint-3-mobile`
+**Active Sprint:** Sprint 4 — Voice & Accessibility  
+**Sprint Status:** 🔄 Not Started — Ready to begin  
+**Git Branch Convention:** `feature/sprint-4-mobile`
 
 ### Next Ticket Per Platform
 
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
-| 🖥 Backend | ✅ HF-031/032/033 Done | All backend tickets complete | — |
-| 📱 Mobile | **HF-034** | Create booking flow | ✅ HF-031 Done |
+| 🖥 Backend | — | No Sprint 4 backend tickets | — |
+| 📱 Mobile | HF-042 | Voice note recording in booking (expo-av — REQ-011) | — |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
 ### How to Pick Up Work
@@ -427,16 +427,31 @@ modules/payments/
 
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
-| HF-034 | Create booking flow (category → describe → photos → address → date → budget) | ⏳ | 10h |
-| HF-035 | Area input — conditional sq. footage when `requires_area` (REQ-006) | ⏳ | 3h |
-| HF-036 | Service address input — separate from home address (REQ-008,009) | ⏳ | 4h |
-| HF-037 | Resident bookings list (Upcoming, Active, Awaiting Payment, Completed) | ⏳ | 6h |
-| HF-038 | Provider job feed — available jobs by trade, sorted by distance (REQ-015) | ⏳ | 6h |
-| HF-039 | Job accept/reject for provider (REQ-016) | ⏳ | 4h |
-| HF-040 | Job status tracking card (real-time updates) | ⏳ | 6h |
-| HF-041 | Provider marks "Work Complete" → Awaiting Payment (REQ-017) | ⏳ | 3h |
+| HF-034 | Create booking flow (category → describe → photos → address → date → budget) | ✅ | 10h |
+| HF-035 | Area input — conditional sq. footage when `requires_area` (REQ-006) | ✅ | 3h |
+| HF-036 | Service address input — separate from home address (REQ-008,009) | ✅ | 4h |
+| HF-037 | Resident bookings list (Upcoming, Active, Awaiting Payment, Completed) | ✅ | 6h |
+| HF-038 | Provider job feed — available jobs by trade, sorted by distance (REQ-015) | ✅ | 6h |
+| HF-039 | Job accept/reject for provider (REQ-016) | ✅ | 4h |
+| HF-040 | Job status tracking card (real-time updates) | ✅ | 6h |
+| HF-041 | Provider marks "Work Complete" → Awaiting Payment (REQ-017) | ✅ | 3h |
 
 **Deliverable:** End-to-end booking flow with status machine.
+
+#### Sprint 3 Bug Fixes & Enhancements:
+
+| Ticket | Title | Status | Est. |
+|---|---|---|---|
+| HF-026A | Resident home "Available Providers" section: cap display to 3 cards; "See all (N) →" link navigates to new `AllProvidersScreen` (`/(app)/providers`) with full list, name search bar, and category filter chips | ✅ | 3h |
+| HF-036A | Booking address step map enhancements: (1) reverse geocoding — dragging marker auto-fills Area field via `expo-location.reverseGeocodeAsync`; (2) forward geocoding "Find on Map" button — Nominatim/OSM 3-tier fallback (road+area → area-only → road-only, `countrycodes=bd`); (3) "Use my home address" shortcut — prefills map from user's registered home coordinates and reverse-geocodes to fill Area | ✅ | 4h |
+| HF-033A | Bug — `resolveMediaUrl` crashes when `media_urls` contains non-string items (stale DB rows with `{ url, key }` object shape); add `typeof` guard + object `.url` fallback so old records degrade to empty image instead of throwing | ✅ | 1h |
+| HF-039A | Job detail — "Not Interested" button redesign: replaced full-height 56 px ghost button with a small centred muted text link below Accept; Accept Job remains the sole prominent CTA; dismiss link disabled while accept is in-flight | ✅ | 1h |
+| HF-040A | Job detail — photo fullscreen viewer: tap any thumbnail → fullscreen modal with pinch-to-zoom, double-tap zoom toggle, swipe left/right between images, swipe-down to dismiss (`react-native-image-viewing`) | ✅ | 2h |
+| HF-040B | Bug — `ImageViewing` mounted unconditionally caused crash on jobs without photos (`images=[]` + `imageIndex=0`); now conditionally rendered only when `media_urls.length > 0` | ✅ | 0.5h |
+| HF-038A | Bug — `ProviderJobCard` had nested `TouchableOpacity` (outer card + inner Button); on Android nested touchables clip inner content causing Bengali multi-word labels to truncate; replaced inner Button with styled `View` — outer card touchable handles navigation | ✅ | 1h |
+| HF-038B | Bug — `alignItems: 'center'` on column containers (CTA View, Button base) causes Yoga to compute child Text width at minimum-content-width (longest single word) instead of full container width; multi-word Bengali labels wrap and only first word is visible; fixed by using `alignItems: 'stretch'` (default) on all button/CTA containers — `textAlign: 'center'` handles visual centering | ✅ | 1h |
+| HF-038C | Bug — `Button` had fixed `height: 44 / 56`; Bengali Unicode glyphs with stacking diacritics (matras) are taller than Latin at same font size and were vertically clipped; replaced with `minHeight + paddingVertical` so buttons grow to fit any script | ✅ | 0.5h |
+| HF-038D | UI — Budget icon changed from `DollarSign` to `Banknote` in `ProviderJobCard` (job feed) and job detail screen; more appropriate for Taka (৳) amounts in Bangladesh context | ✅ | 0.5h |
 
 ---
 
@@ -458,7 +473,9 @@ modules/payments/
 
 ---
 
-### ⭐ Sprint 5 — Reviews, Notifications & Real-time
+### ⭐ Sprint 5 — Reviews, Notifications, Real-time & In-App Communication
+
+**Goal:** Reviews, push notifications, GPS tracking, and a private resident↔provider communication channel so no personal phone numbers are ever shared.
 
 #### Backend:
 
@@ -467,6 +484,8 @@ modules/payments/
 | HF-047 | Review & rating module (post-payment only — REQ-024,025,026) | ⏳ | 6h |
 | HF-048 | Push notification service (FCM) | ⏳ | 8h |
 | HF-049 | Provider background GPS tracking API (REQ-007) | ⏳ | 4h |
+| HF-100 | In-app messaging — `job_messages` table; `POST /v2/jobs/:id/messages`; `GET /v2/jobs/:id/messages` (cursor-paginated); WebSocket room per job (Socket.IO); push notification to recipient when backgrounded | ⏳ | 10h |
+| HF-101 | Pluggable VoIP call service — `call.interface.ts` contract; Phase 1: `jitsi.provider.ts` (self-hosted Jitsi Meet, free); Phase 2: `agora.provider.ts` (swap in later); `POST /v2/jobs/:id/call/room` returns `{ provider, roomName, serverUrl?, token? }` | ⏳ | 8h |
 
 #### Mobile:
 
@@ -476,8 +495,41 @@ modules/payments/
 | HF-051 | Push notification setup (expo-notifications, deep linking) | ⏳ | 6h |
 | HF-052 | Notification center (bell icon, badge, read/unread) | ⏳ | 6h |
 | HF-053 | Provider location tracking (background GPS) | ⏳ | 6h |
+| HF-102 | In-app chat screen — per-job messaging (ACTIVE status only); bubble UI (sent/received), image attachment, real-time WebSocket with 5 s poll fallback; chat icon on job detail; no phone numbers exposed | ⏳ | 10h |
+| HF-103 | In-app voice call — `@jitsi/react-native-sdk` (Phase 1, self-hosted, free); call room opened from job detail; provider-agnostic (reads `provider` field from API response to select SDK at runtime); graceful "call unavailable" state if server unreachable | ⏳ | 8h |
 
-**Deliverable:** Reviews, push notifications, provider GPS tracking.
+**Deliverable:** Reviews, notifications, GPS tracking, private messaging + voice call for active jobs.
+
+#### Communication Channel Architecture
+
+```
+modules/calls/
+├── call.interface.ts       ← Contract: createRoom(jobId) → RoomConfig, endRoom(roomId)
+├── call.service.ts         ← Provider-agnostic; reads CALL_PROVIDER env var
+└── providers/
+    ├── jitsi.provider.ts   ← Phase 1 (default): self-hosted Jitsi Meet (FREE)
+    └── agora.provider.ts   ← Phase 2: Agora RTC (swap in by changing CALL_PROVIDER=agora)
+```
+
+```typescript
+// RoomConfig returned to mobile — mobile picks the right SDK based on provider field
+type RoomConfig = {
+  provider: 'jitsi' | 'agora';
+  roomName: string;
+  serverUrl?: string;   // Jitsi: e.g. https://meet.homefix.app
+  token?: string;       // Both: JWT room token (Jitsi) or RTC token (Agora)
+};
+```
+
+| Concern | Decision |
+|---------|---------|
+| Phase 1 default | Self-hosted Jitsi Meet — **completely free**, full control |
+| Phase 2 migration | Change `CALL_PROVIDER=agora` in env; no mobile code change needed |
+| Mobile SDK | `@jitsi/react-native-sdk` (Phase 1) / `agora-rn-sdk` (Phase 2) — loaded conditionally |
+| Messages storage | `job_messages(id, job_id, sender_id, content, type, created_at)` |
+| Access control | Only job participants (resident + assigned provider) can access thread/room |
+| Trigger | Chat + call icons visible on job detail when `status = ACTIVE` |
+| Push | FCM notification on new message (backgrounded) + incoming call |
 
 ---
 
@@ -632,6 +684,8 @@ Every SRS requirement mapped to its implementing ticket(s):
 | 2026-05-28 | 3.2 | Post-Sprint-1 code review completed. Sprint 1 Hardening sprint added (HF-085 to HF-099, 15 tickets). Current Focus updated to Sprint 1 Hardening. Sprint 2 blocked until Group 1 + Group 2 hardening tickets are complete. Total tickets: 96. |
 | 2026-05-29 | 3.4 | Sprint 2 mobile complete + QA bug fixes (availability toggle, tab bar structure, provider skills flow, admin approval screen). HF-068B added: mobile admin screen must be upgraded in Sprint 7 alongside HF-068 web panel to include provider detail view with NID/photo attachments before approve/reject. |
 | 2026-05-28 | 3.3 | Sprint 2 backend complete (HF-021 to HF-024). Added fully DB-driven RBAC system (roles, permissions, role_permissions tables; admin API; PermissionCache; docs/RBAC.md). param() utility added to @utils for Express 5 route param access. 67 tests passing across 6 suites. |
+| 2026-05-30 | 3.5 | Sprint 3 enhancements + bug fixes: HF-026A (AllProvidersScreen with search + category filter, capped home section); HF-036A (address step reverse/forward geocoding + home shortcut); HF-033A (resolveMediaUrl crash fix for non-string media_urls); HF-039A (Not Interested redesigned as text link); HF-040A (photo fullscreen viewer with pinch-to-zoom); HF-040B (ImageViewing crash on jobs without photos). Total sprint 3 tickets: 14. |
+| 2026-05-30 | 3.6 | Sprint 3 closed. Additional polish tickets: HF-038A (nested TouchableOpacity Android content-clip fix); HF-038B (Yoga min-content-width Bengali truncation fix via alignItems:stretch); HF-038C (Button fixed height → minHeight+paddingVertical for complex scripts); HF-038D (DollarSign → Banknote icon). Sprint 3 total: 18 tickets. Sprint 4 opened — next ticket HF-042. |
 
 ---
 

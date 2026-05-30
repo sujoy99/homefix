@@ -1,255 +1,348 @@
-# HomeFix — Sprint 3 Mobile: Manual Test Guide
+# HomeFix — Sprint 3 Mobile: User Manual
 
 > **Sprint:** Sprint 3 — Booking & Job Lifecycle  
-> **Covers:** HF-034 · HF-035 · HF-036 · HF-037 · HF-038 · HF-039 · HF-040 · HF-041  
+> **Covers:** HF-034 · HF-035 · HF-036 · HF-036A · HF-037 · HF-038 · HF-039 · HF-039A · HF-040 · HF-040A · HF-040B · HF-041 · HF-026A · HF-033A  
 > **Audience:** QA, Product Owner, Business Stakeholder  
-> **Status:** 🚧 Template — to be completed when mobile tickets are implemented  
-> **Last updated:** 2026-05-29
+> **Last updated:** 2026-05-30 (v2 — enhancements: AllProviders, address map geocoding, photo zoom, Not Interested redesign)
 
 ---
 
 ## Part 1 — Environment Setup
 
-See [SPRINT2_USER_MANUAL.md](SPRINT2_USER_MANUAL.md) Part 1 for backend start, mobile start, and seed instructions. The commands are the same.
+### Start the backend
 
-**Additional requirement for Sprint 3:** The backend Sprint 3 branch must be running (or merged to master). Run `make migrate` to apply the jobs table migration before testing.
+```bash
+# From repo root
+make start       # Start containers (backend + DB)
+make migrate     # Apply jobs table migration (required for Sprint 3)
+```
 
-### Seed Test Accounts
+### Start the mobile app
 
-| Role | Mobile | Password | Notes |
-|------|--------|----------|-------|
-| **Admin** | `00000000000` | `Admin@1234` | — |
-| **Provider (approved)** | `01711223344` | `Provider@1234` | Rahim Uddin — has Plumbing skill |
+```bash
+cd mobile
+npx expo start
+# Scan QR code with Expo Go (Android) or press 'i' for iOS simulator
+```
+
+### Seed accounts
+
+| Role | Mobile | Password | Name |
+|------|--------|----------|------|
 | **Resident** | `01811223344` | `Resident@1234` | Fatema Begum |
+| **Provider (approved)** | `01711223344` | `Provider@1234` | Rahim Uddin — Plumbing skill |
+| **Admin** | `00000000000` | `Admin@1234` | — |
 
 ---
 
-## Part 2 — Test Checklist by Screen
+## Part 2 — Screen-by-Screen Checklist
 
 Mark each item ✅ Pass or ❌ Fail with a note.
 
 ---
 
-### Screen 1 — Create Booking Flow (HF-034 + HF-035 + HF-036)
+### Screen 0 — Resident Home: Available Providers (HF-026A)
 
-> **What to check:** Resident taps a category, fills in the job details across multiple steps, and submits a booking.  
-> **Navigate:** Resident Home → tap a category → tap "Book Now"
+> **Who:** Resident  
+> **Navigate:** Login as Resident → Home tab  
+> **What to check:** "Available Providers" section is capped; "See All" opens the full list.
 
-#### Step 1A: Category + Square Footage (HF-035)
+| # | Action | Expected |
+|---|--------|----------|
+| 1 | Home screen loads | "Available Providers" section shows at most 3 provider cards |
+| 2 | More than 3 providers exist | "See all (N) →" link appears at top-right of the section header (N = total count) |
+| 3 | 3 or fewer providers | No "See all" link shown |
+| 4 | Tap "See all (N) →" | Opens All Providers screen |
+| 5 | All Providers screen header | Back arrow + "Available Providers" title |
+| 6 | Search bar | Type a name → list filters in real time |
+| 7 | Category filter chips | Horizontal scrollable chips: "All" + one chip per service category |
+| 8 | Tap a category chip | List narrows to providers with that skill; chip highlighted in primary colour |
+| 9 | Tap "All" chip | Clears category filter; all providers shown |
+| 10 | Combined search + category | Both filters apply simultaneously |
+| 11 | No results | "No providers available right now" empty state |
+| 12 | Provider card content | Avatar initial, name, primary skill (if set), star rating + years exp, green dot if available now |
+| 13 | Tap a provider card | Opens provider detail screen |
 
-| # | Step | Expected Result | Result |
-|---|------|-----------------|--------|
-| 1 | Tap "Book Now" on Provider Detail or category card | Booking flow opens | |
-| 2 | Category is pre-selected | Category name shown and cannot be changed on this screen | |
-| 3 | Category is "Painting" (`requires_area`) | A "Square Footage" numeric field appears | |
-| 4 | Category is "Plumbing" (no `requires_area`) | No square footage field | |
-| 5 | Leave square footage empty for Painting → Next | **Red toast**: "Square footage is required for this service" | |
-| 6 | Fill square footage with a valid number → Next | Proceeds to next step | |
+---
 
-#### Step 1B: Describe the Problem (HF-034)
+### Screen 1 — Create Booking Flow (HF-034 · HF-035 · HF-036)
 
-| # | Step | Expected Result | Result |
-|---|------|-----------------|--------|
-| 1 | Text description field shown | Placeholder: "Describe the problem..." | |
-| 2 | Type a description (10+ characters) | Character count shown; no error | |
-| 3 | Try to proceed with < 10 characters | **Red toast**: "Description must be at least 10 characters" | |
-| 4 | Type a description and tap Next | Proceeds to photo step | |
+> **Who:** Resident  
+> **Navigate:** Home screen → tap any category card → tap "Book Now" on any provider  
+> **OR:** Home → "Near you" provider card → "Book Now"  
+> **What to check:** 5-step wizard with a progress bar at the top and "Step X of 5" label.
 
-#### Step 1C: Upload Photos (HF-034)
+#### Step 1 — Select Service (Category)
 
-| # | Step | Expected Result | Result |
-|---|------|-----------------|--------|
-| 1 | "Add Photos" button visible | Camera/gallery icon with hint text | |
-| 2 | Tap "Add Photos" | Photo picker or camera opens | |
-| 3 | Select 2 photos | Thumbnails shown in a row | |
-| 4 | Tap X on a photo thumbnail | Photo removed | |
-| 5 | Try to add 11 photos after 10 selected | **Red toast**: "Maximum 10 photos allowed" | |
-| 6 | Photos are optional | Can skip to next step without selecting any | |
+| # | Action | Expected |
+|---|--------|----------|
+| 1 | Booking flow opens | Screen title "New Booking", progress bar at 20%, chip label "Select Service" |
+| 2 | Coming from provider detail | The provider's primary category is pre-selected (highlighted with blue tick) |
+| 3 | Tap a different category | New category highlighted; old one deselected |
+| 4 | Tap Next without selecting any | Red inline error: "Please select a service category" |
+| 5 | Tap Next with a category selected | Moves to Step 2 |
+| 6 | Tap ← back arrow | Returns to previous screen |
 
-#### Step 1D: Service Address (HF-036)
+#### Step 2 — Describe Issue
 
-| # | Step | Expected Result | Result |
-|---|------|-----------------|--------|
-| 1 | Address form shown | House, Flat (optional), Road, Area fields | |
-| 2 | "Use Current Location" option | GPS auto-fills the Area field | |
-| 3 | Leave "House" empty → Next | **Red toast**: "House/building number is required" | |
-| 4 | Leave "Road" empty → Next | **Red toast**: "Road is required" | |
-| 5 | Fill all required fields → Next | Proceeds | |
-| 6 | Address can differ from registered home | Allowed — this is where the provider must go (REQ-008) | |
+| # | Action | Expected |
+|---|--------|----------|
+| 1 | Step label | "Describe Issue"; progress bar at 40% |
+| 2 | Optional title field | Labelled "Job Title (optional)"; can be left empty |
+| 3 | Description field | Required; placeholder "Describe the problem in detail (at least 10 characters)..." |
+| 4 | Tap Next with empty description | Red inline error: "Description is required" |
+| 5 | Tap Next with 5-character description | Red inline error: "Description must be at least 10 characters" |
+| 6 | Valid description (10+ chars) → Next | Moves to Step 3 |
 
-#### Step 1E: Date & Budget (HF-034)
+#### Step 3 — Photos & Details
 
-| # | Step | Expected Result | Result |
-|---|------|-----------------|--------|
-| 1 | Date picker shown | Defaults to today or tomorrow | |
-| 2 | Select a past date | **Red toast**: "Date must be today or in the future" | |
-| 3 | Budget field shown | Numeric input with "৳" symbol, labelled "Estimated Budget" | |
-| 4 | Leave budget empty | Allowed — budget is optional | |
-| 5 | Enter a valid budget | ৳ symbol shows; positive number required | |
+| # | Action | Expected |
+|---|--------|----------|
+| 1 | Step label | "Photos & Details"; progress bar at 60% |
+| **For area-based services (e.g. Painting):** | | |
+| 2 | Square footage input appears | Labelled "Area (square feet)" with red asterisk |
+| 3 | Tap Next with empty sq footage | Red inline error: "Square footage is required for this service" |
+| 4 | Enter non-numeric value | Red inline error: "Enter a valid positive number" |
+| 5 | Enter valid sq footage → Next | Proceeds |
+| **For all services:** | | |
+| 6 | "Add Photos (optional)" button visible | Dashed border button with camera icon |
+| 7 | Tap Add Photos | Photo gallery opens; multi-select allowed |
+| 8 | Select 3 photos | Thumbnails appear in a horizontal row |
+| 9 | Tap ✕ on a thumbnail | Photo removed from selection |
+| 10 | Photos are optional | Can tap Next without selecting any photos |
+| 11 | Max 5 photos | After 5 selected, "Add Photos" button disappears |
+| 12 | Non-area service | No square footage field; only photo picker shown |
 
-#### Step 1F: Review & Confirm
+#### Step 4 — Service Address
 
-| # | Step | Expected Result | Result |
-|---|------|-----------------|--------|
-| 1 | Review screen shows summary | Category, description, address, budget, photos listed | |
-| 2 | Tap "Confirm Booking" | Job created; **Green toast**: "Booking submitted!" | |
-| 3 | Redirected to Bookings tab | New job at top with "Pending" badge | |
-| 4 | No network → tap Confirm | **Red toast**: "Could not submit booking. Check your connection." | |
+| # | Action | Expected |
+|---|--------|----------|
+| 1 | Step label | "Service Address"; progress bar at 80% |
+| 2 | Map shown at top | Interactive map with a draggable red marker; label "Pin service location on map" |
+| 3 | "Use my home address" shortcut | Button visible if user has a registered home location; tap moves map to home coordinates and auto-fills Area field |
+| 4 | Drag map marker | Area field updates automatically via reverse geocoding (Nominatim → district / subregion / city) |
+| 5 | Fill Road + Area then tap "Find on Map" | Map marker moves to the geocoded location; tries road+area, then area-only, then road-only (best BD coverage) |
+| 6 | "Find on Map" with empty Road and Area | Red toast: "Enter Road or Area first" |
+| 7 | Address not found in OSM | Blue info toast: "Location not found. Try a different address or pin manually." |
+| 8 | Four text fields below map | House/Building *(required)*, Flat/Floor *(optional)*, Road/Street *(required)*, Area/Neighbourhood *(required)* |
+| 9 | Tap Next with House empty | Red inline error: "House/building is required" |
+| 10 | Tap Next with Road empty | Red inline error: "Road/street is required" |
+| 11 | Tap Next with Area empty | Red inline error: "Area is required" |
+| 12 | Fill all required fields → Next | Moves to Step 5 |
+| 13 | Address differs from registered home | Allowed — this is where the provider will go (REQ-008) |
+| 14 | Flat field left empty | No error — it is optional |
+
+#### Step 5 — Budget & Review
+
+| # | Action | Expected |
+|---|--------|----------|
+| 1 | Step label | "Budget & Review"; progress bar at 100% |
+| 2 | Budget field | Labelled "Estimated Budget (৳) — optional"; numeric keyboard |
+| 3 | Enter negative or zero budget | Red inline error: "Enter a valid positive amount" |
+| 4 | Leave budget empty | Allowed — budget is optional |
+| 5 | Review summary card shown | Lists: Service, Description, Address, Photos count, Budget |
+| 6 | Budget not entered | Shows "Not specified" in review |
+| 7 | Tap "Post Job" | Loading spinner on button; API call made |
+| 8 | Success | Green toast: "Job Posted!"; navigates to Bookings tab |
+| 9 | Network error | Red toast: "Could not post job. Please try again." |
+| 10 | Press Back from Step 5 | Returns to Step 4; all entered data preserved |
 
 ---
 
 ### Screen 2 — Resident Bookings List (HF-037)
 
-> **What to check:** Resident sees all their bookings, sorted by status with tab filters.  
-> **Navigate:** Resident → "Bookings" tab (second tab in bottom bar)
+> **Who:** Resident  
+> **Navigate:** Bottom tab bar → "Bookings" (calendar icon)  
+> **What to check:** Four status tabs filter jobs; the "+" FAB launches a new booking.
 
-| # | Step | Expected Result | Result |
-|---|------|-----------------|--------|
-| 1 | Bookings tab opens | Tabs: Upcoming · Active · Awaiting Payment · Completed | |
-| 2 | New submitted job appears | Under "Upcoming" tab with "Pending" badge (amber colour) | |
-| 3 | Active job (provider accepted) | Under "Active" tab with blue badge | |
-| 4 | Awaiting payment job | Under "Awaiting Payment" tab with orange badge | |
-| 5 | Paid job | Under "Completed" tab with green badge | |
-| 6 | Tab badge count | Each tab shows a count of jobs | |
-| 7 | Job card shows | Category name, area, date, status badge | |
-| 8 | Tap a job card | Job detail / status tracking screen opens | |
-| 9 | No jobs in a tab | "No bookings here yet" empty state shown | |
-| 10 | Pull to refresh | List updates from server | |
-| 11 | Language Bengali | All labels and badges in Bengali | |
+| # | Action | Expected |
+|---|--------|----------|
+| 1 | Bookings tab opens | Header: "My Bookings" + blue "+" circle (FAB) at top right |
+| 2 | Four filter chips below header | "Upcoming" · "Active" · "Awaiting Payment" · "Completed" |
+| 3 | Tab shows count | Each tab with jobs shows "(N)" suffix, e.g. "Upcoming (2)" |
+| 4 | Newly posted job | Appears in "Upcoming" tab with amber "Pending" badge |
+| 5 | Accepted job | Appears in "Active" tab with blue "Active" badge |
+| 6 | Work-complete job | Appears in "Awaiting Payment" tab with purple badge |
+| 7 | Paid job | Appears in "Completed" tab with green "Paid" badge |
+| 8 | Cancelled job | Appears in "Completed" tab with grey "Cancelled" badge |
+| 9 | Job card content | Shows: job title (or category if no title), category chip, service address, budget (৳ or "Not set"), posted date |
+| 10 | Switch to tab with 0 jobs | Empty state illustration + descriptive text |
+| 11 | "Upcoming" empty state | Shows "New Booking" button inside empty state |
+| 12 | Tap "+" FAB | Opens booking flow |
+| 13 | Tap a job card | Opens job detail / status tracking screen |
+| 14 | Pull down to refresh | Spinner shown; list reloads from API |
+| 15 | Bengali language | All tab labels and badges in Bengali |
 
 ---
 
-### Screen 3 — Job Status Tracking Card (HF-040)
+### Screen 3 — Job Status Tracking (HF-040)
 
-> **What to check:** Resident can track job status in real time after a provider accepts.  
-> **Navigate:** Bookings tab → tap any job card
+> **Who:** Resident  
+> **Navigate:** Bookings tab → tap any job card  
+> **What to check:** Visual 4-step stepper tracks job progress in real time.
 
-| # | Step | Expected Result | Result |
-|---|------|-----------------|--------|
-| 1 | Status tracking screen opens | Shows current status with a step indicator bar | |
-| 2 | Status: Pending | "Looking for a provider…" message | |
-| 3 | Status: Active | Provider name visible; "On the way!" or equivalent | |
-| 4 | Status: Awaiting Payment | "Work completed — please pay" banner | |
-| 5 | Step indicator | Pending → Active → Awaiting Payment → Paid (4 steps) | |
-| 6 | Job description shown | Resident's original problem description | |
-| 7 | Service address shown | Address entered at booking time | |
-| 8 | Budget shown | "Estimated Budget: ৳ X,XXX" | |
-| 9 | Photos shown | Uploaded photos in a horizontal scroll row | |
-| 10 | Pull to refresh | Status updates from server | |
+| # | Action | Expected |
+|---|--------|----------|
+| 1 | Detail screen opens | Title "Job Detail"; back arrow top-left |
+| 2 | Status stepper visible | Card labelled "Job Status" at top of scroll |
+| 3 | PENDING job | "Posted" step: pulsing blue dot; steps 2–4 greyed out |
+| 4 | ACTIVE job | "Posted" step: green ✓ with green connector; "Provider Found" step: pulsing blue dot |
+| 5 | AWAITING_PAYMENT job | Steps 1–2 green ✓; "Work Complete" pulsing |
+| 6 | PAID job | All 4 steps green ✓ |
+| 7 | Provider card (once accepted) | Section "Assigned Provider" with provider name and rating |
+| 8 | Job info sections | Category chip, Description, Service Address, Budget, Sq Footage (if set) |
+| 9 | Photos section | Horizontal scrollable photo row (only shown if photos were uploaded) |
+| 10 | Tap a photo thumbnail | Fullscreen viewer opens on that image |
+| 11 | Fullscreen viewer — pinch | Spread two fingers to zoom in; pinch to zoom out |
+| 12 | Fullscreen viewer — double-tap | Toggles between zoomed-in and fit-to-screen |
+| 13 | Fullscreen viewer — swipe left/right | Moves between photos when job has multiple images |
+| 14 | Fullscreen viewer — swipe down | Dismisses the viewer, returns to job detail |
+| 15 | Job with no photos | Photos section not shown; viewer never appears; no crash |
+| 16 | Auto-refresh | Status stepper updates automatically within 10 seconds when provider accepts or marks complete — no manual pull needed |
+| 17 | No provider footer | Resident sees no action buttons on this screen |
 
 ---
 
 ### Screen 4 — Provider Job Feed (HF-038)
 
-> **What to check:** Provider sees available jobs that match their skills, sorted by distance.  
-> **Navigate:** Login as Provider → "Jobs" tab (middle tab)
+> **Who:** Provider  
+> **Navigate:** Login as Provider → "Jobs" tab (briefcase icon)  
+> **What to check:** Feed shows matching PENDING jobs sorted by distance from provider's location.
 
-| # | Step | Expected Result | Result |
-|---|------|-----------------|--------|
-| 1 | Jobs tab loads | "Available Jobs" heading shown | |
-| 2 | Jobs match provider's skill category | Rahim (Plumbing) only sees Plumbing jobs | |
-| 3 | Jobs sorted by distance | Nearest service address appears first | |
-| 4 | Job card shows | Category, area name, time since posted, estimated budget | |
-| 5 | Budget formatted | "৳ 1,500" — ৳ symbol prefix | |
-| 6 | No budget specified | "Budget not specified" shown | |
-| 7 | Feed is empty | "No available jobs in your area" empty state | |
-| 8 | Accepted/Active jobs hidden | Only PENDING jobs appear in the feed | |
-| 9 | Pull to refresh | Feed updates from server | |
-| 10 | Language Bengali | Feed in Bengali | |
+| # | Action | Expected |
+|---|--------|----------|
+| 1 | First launch | Location permission prompt appears |
+| 2 | Grant permission | Feed loads; each card shows distance badge (e.g. "3.2 km away") |
+| 3 | Job within 1 km | Distance badge shows "Nearby" instead of a number |
+| 4 | Deny permission | Yellow banner: "Enable location for distance sorting"; feed still loads (sorted by date instead) |
+| 5 | Tap yellow banner | Permission dialog re-appears |
+| 6 | Jobs match provider's trade | Rahim (Plumbing) sees only Plumbing jobs |
+| 7 | Only PENDING jobs visible | Already-accepted jobs do not appear |
+| 8 | Job card content | Category chip, description preview (first 100 chars + "…"), distance badge, address, budget, posted date, "View Job" button |
+| 9 | No budget | Shows "Not specified" |
+| 10 | Feed empty | Empty state: "No jobs available" with explanation text |
+| 11 | Pull to refresh | Feed reloads |
 
 ---
 
-### Screen 5 — Provider Accepts a Job (HF-039)
+### Screen 5 — Provider Job Detail & Accept (HF-039)
 
-> **What to check:** Provider taps a job, reviews the details, and accepts it.  
-> **Navigate:** Provider → Jobs tab → tap a job card
+> **Who:** Provider  
+> **Navigate:** Jobs tab → tap a job card or "View Job" button  
+> **What to check:** Provider reviews job details and accepts without a confirmation dialog.
 
-| # | Step | Expected Result | Result |
-|---|------|-----------------|--------|
-| 1 | Job detail screen opens | Full description, photos, address, budget shown | |
-| 2 | "Accept Job" button shown | Prominent CTA at the bottom | |
-| 3 | Tap "Accept Job" | **Confirmation dialog**: "Accept this job? You will be assigned as the provider." | |
-| 4 | Tap "Cancel" in dialog | Dialog closes; job unchanged | |
-| 5 | Tap "Accept" in dialog | Status → Active; **Green toast**: "Job accepted!" | |
-| 6 | Job removed from feed | Feed refreshes; this job no longer visible | |
-| 7 | No network → tap Accept | **Red toast**: "Could not accept job. Try again." | |
+| # | Action | Expected |
+|---|--------|----------|
+| 1 | Detail screen opens | Full job info: category, description, address, budget, sq footage, photos |
+| 2 | "Accept Job" button | Amber/secondary full-width button at bottom of screen |
+| 3 | "Not Interested" | Small muted text link centred below the Accept button (not a button) |
+| 4 | Tap "Accept Job" | Button shows brief loading state → green toast: "Job accepted! Check your active jobs." → navigates back to feed |
+| 5 | Job removed from feed | Feed refreshes; accepted job no longer visible |
+| 6 | Tap "not interested" text link | Navigates back to feed; no API call; job stays in feed |
+| 7 | While Accept is loading | "not interested" link is disabled (prevents double-action) |
+| 8 | Concurrent accept (two providers) | Second provider sees red toast: "This job was just taken by another provider." → navigates back; job gone from their feed |
+| 9 | Network error | Red toast: "Could not accept job. Please try again." |
+| 10 | Non-pending job (already taken) | Warning banner at top: "This job is no longer available — Another provider accepted this job before you." No Accept button shown. |
 
 ---
 
 ### Screen 6 — Provider Marks Work Complete (HF-041)
 
-> **What to check:** After completing the work, provider marks the job as done. Resident status updates to "Awaiting Payment".  
-> **Navigate:** Provider → Jobs tab → Active Jobs section → tap an active job
+> **Who:** Provider  
+> **Navigate:** Jobs tab → tap an active job you own  
+> **What to check:** Provider marks work done; status moves to Awaiting Payment.
 
-| # | Step | Expected Result | Result |
-|---|------|-----------------|--------|
-| 1 | Active job shown | "Mark Work Complete" button visible | |
-| 2 | Tap "Mark Work Complete" | **Confirmation dialog**: "Mark work as done? Resident will be prompted to pay." | |
-| 3 | Tap "Cancel" | Dialog closes; job still Active | |
-| 4 | Tap "Confirm" | Status → Awaiting Payment; **Green toast**: "Work marked as complete!" | |
-| 5 | Resident view updates | Resident's Bookings tab shows job under "Awaiting Payment" | |
-| 6 | "Mark Complete" button hidden | Cannot be tapped again once done | |
-| 7 | No network → tap Confirm | **Red toast**: "Could not update job. Try again." | |
+| # | Action | Expected |
+|---|--------|----------|
+| 1 | Open an ACTIVE job you accepted | "Mark Work Complete" amber button at bottom |
+| 2 | Tap "Mark Work Complete" | Button shows "Marking..." (disabled) → green toast: "Job marked as complete. Resident has been notified." |
+| 3 | After marking | Button disappears; status stepper shows AWAITING_PAYMENT |
+| 4 | Resident's Bookings tab | Job moves to "Awaiting Payment" tab within 10 s |
+| 5 | Network error | Red toast: "Could not mark job complete. Please try again." |
+| 6 | Job not yours (different provider_id) | "Mark Work Complete" button not shown |
+| 7 | Job is PENDING (not yet active) | "Mark Work Complete" button not shown; Accept button shown instead |
 
 ---
 
-## Part 3 — Cross-Screen Flows
+## Part 3 — End-to-End Flows
 
-### Flow A — Full Booking Lifecycle (Resident + Provider)
+### Flow A — Full Job Lifecycle
 
-| # | Who | Step | Expected Result |
-|---|-----|------|-----------------|
-| 1 | Resident | Login → Home → tap Plumbing → Book Now | Booking flow starts |
-| 2 | Resident | Fill description, photos, address, budget → Confirm | **Green toast** "Booking submitted!"; appears in Bookings tab as Pending |
-| 3 | Provider | Login → Jobs tab | New Plumbing job visible in feed |
-| 4 | Provider | Tap job → Accept → Confirm | Job moves to Active; removed from feed |
-| 5 | Resident | Bookings → Active tab | Job shown as Active; provider name visible |
-| 6 | Provider | Active job → Mark Complete → Confirm | Status → Awaiting Payment |
-| 7 | Resident | Bookings → Awaiting Payment tab | Job shown; "Work completed — please pay" banner |
+| # | Who | Action | Expected |
+|---|-----|--------|----------|
+| 1 | Resident | Home → tap Plumbing → Book Now on any provider | Booking flow opens; Plumbing pre-selected |
+| 2 | Resident | Fill description, address, budget → tap "Post Job" | Green toast "Job Posted!"; Bookings tab shows job as Upcoming |
+| 3 | Provider | Jobs tab | New Plumbing job appears in feed with distance badge |
+| 4 | Provider | Tap job → Accept Job | Green toast "Job accepted!"; job removed from feed |
+| 5 | Resident | Bookings → Active tab | Job listed as Active; provider name card visible on detail screen |
+| 6 | Provider | Active job detail → Mark Work Complete | Green toast; status → Awaiting Payment |
+| 7 | Resident | Bookings → Awaiting Payment tab | Job listed; stepper shows 3 of 4 steps complete |
 
 ---
 
 ### Flow B — Painting Job (requires_area)
 
-| # | Who | Step | Expected Result |
-|---|-----|------|-----------------|
-| 1 | Resident | Book a Painting job | Square footage field appears |
-| 2 | Resident | Skip square footage → Next | Red toast error |
-| 3 | Resident | Enter 350 sq. ft. → submit | Job created successfully |
-| 4 | Provider | View job detail | "350 sq. ft." shown on the job card |
+| # | Who | Action | Expected |
+|---|-----|--------|----------|
+| 1 | Resident | Book a Painting job | Step 3 shows "Area (square feet)" required field |
+| 2 | Resident | Leave sq footage blank → Next | Red inline error: "Square footage is required for this service" |
+| 3 | Resident | Enter 350 → complete booking | Job created with sq footage = 350 |
+| 4 | Provider | View job in feed | "350 sq ft" shown in job detail stats row |
 
 ---
 
-### Flow C — Service Address Separate from Home
+### Flow C — Service Address Different from Home (REQ-008)
 
-| # | Who | Step | Expected Result |
-|---|-----|------|-----------------|
-| 1 | Resident | Enter an address different from their registered home | Allowed — no warning |
-| 2 | Provider | View job in feed | Service address (not resident's home) shown |
-| 3 | Provider | Jobs sorted by service address proximity | Jobs closest to the work location appear first |
+| # | Who | Action | Expected |
+|---|-----|--------|----------|
+| 1 | Resident | Enter address different from registered home | No warning; address accepted |
+| 2 | Provider | View job detail | Service address (booking address) shown — not the resident's registered home |
 
 ---
 
-## Part 4 — Known Limitations (This Sprint)
+### Flow D — Concurrent Accept (Race Condition)
 
-| What you see | Why | When fixed |
+| # | Who | Action | Expected |
+|---|-----|--------|----------|
+| 1 | Provider A | Opens a PENDING job → tap Accept Job | Job accepted; status → Active |
+| 2 | Provider B | Had same job open and also taps Accept Job | Red toast: "This job was just taken by another provider." → navigates back; job gone from feed |
+| 3 | Backend | Only one `PATCH /v2/jobs/:id/accept` succeeds | State machine ensures atomicity; no duplicate active assignments |
+
+---
+
+## Part 4 — Language Check (Bilingual)
+
+Switch language to Bengali (বাংলা) via Profile → Language and verify:
+
+| Screen | Key strings to verify in Bengali |
+|--------|----------------------------------|
+| Booking flow | Step labels, field labels, error messages, "কাজ পোস্ট করুন" (Post Job) |
+| Bookings tab | Tab names: "আসন্ন", "সক্রিয়", "পেমেন্ট বাকি", "সম্পন্ন" |
+| Job detail | "কাজের স্ট্যাটাস", step labels, "কাজ গ্রহণ করুন", "কাজ সম্পন্ন হিসেবে চিহ্নিত করুন" |
+| Provider feed | "উপলব্ধ কাজ", distance labels, "কাজ দেখুন" |
+
+---
+
+## Part 5 — Known Limitations (Sprint 3)
+
+| What you see | Why | Fixed in |
 |---|---|---|
-| No payment option after "Awaiting Payment" | Payment module is Sprint 6 (HF-056) | Sprint 6 |
-| No push notification when provider accepts | Sprint 5 (HF-048) | Sprint 5 |
-| Voice note recording not available | Sprint 4 (HF-042) | Sprint 4 |
-| Voice note playback shows placeholder | Sprint 4 (HF-045) | Sprint 4 |
-| Provider dashboard stats still placeholders | Live stats come from job data this sprint | Sprint 3 |
+| No payment option after "Awaiting Payment" | Payment module (Sprint 6, HF-059) | Sprint 6 |
+| No push notification when provider accepts | Push notifications (Sprint 5, HF-048) | Sprint 5 |
+| Voice note button missing | Voice features (Sprint 4, HF-042) | Sprint 4 |
+| Provider home dashboard stats are placeholders | Live stats come from job data; dashboard wired in Sprint 3 | Sprint 3 ✅ |
+| Status stepper uses 10 s polling, not instant | WebSocket/push real-time (Sprint 5) | Sprint 5 |
 
 ---
 
-## Part 5 — Reporting a Bug
+## Part 6 — Bug Report Template
 
-When reporting a bug from this checklist, include:
+When reporting a bug, include:
 
-1. **Screen + Step number** — e.g. "Screen 1, Step 1D, row 3"
-2. **What you did** — exact taps/inputs
-3. **What you expected** — from the "Expected Result" column
+1. **Screen + row number** — e.g. "Screen 3, row 4"
+2. **What you did** — exact taps and inputs
+3. **Expected result** — from the "Expected" column
 4. **What actually happened** — describe, screenshot, or screen recording
 5. **Device + OS** — e.g. Samsung Galaxy A54, Android 14
-6. **Language** — Bengali or English when the bug occurred
-7. **Role** — Admin / Provider / Resident
+6. **Language** — Bengali or English
+7. **Role** — Resident / Provider / Admin

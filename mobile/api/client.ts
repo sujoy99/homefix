@@ -8,10 +8,13 @@ import Constants from 'expo-constants';
 const debuggerHost = Constants.expoConfig?.hostUri;
 const localhost = debuggerHost?.split(':')[0] || 'localhost';
 
+// Server root (no /api suffix) — used for resolving static asset URLs
+export const SERVER_ROOT = Platform.OS === 'web'
+  ? 'http://localhost:4000'
+  : `http://${localhost}:4000`;
+
 // Use localhost for web, and your computer's dynamic local IP for Expo Go
-const BASE_URL = Platform.OS === 'web'
-  ? 'http://localhost:4000/api'
-  : `http://${localhost}:4000/api`;
+const BASE_URL = `${SERVER_ROOT}/api`;
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -38,8 +41,8 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Never trigger refresh for auth endpoints — a 401 there means bad credentials, not an expired session
-    const isAuthEndpoint = /\/auth\/(login|register|refresh)/.test(originalRequest.url ?? '');
+    // Never trigger refresh on auth management endpoints — 401 there is always a terminal failure
+    const isAuthEndpoint = /\/auth\/(login|register|refresh|logout)/.test(originalRequest.url ?? '');
 
     // If error is 401 and not already retried
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {

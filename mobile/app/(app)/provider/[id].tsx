@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -182,9 +181,11 @@ export default function ProviderDetailScreen() {
         <Button
           label={t('provider.book_now')}
           variant="secondary"
-          onPress={() =>
-            Alert.alert(t('provider.book_now'), t('provider.booking_coming'))
-          }
+          onPress={() => {
+            const primarySkill = provider.skills?.find((s) => s.is_primary) ?? provider.skills?.[0];
+            const params = primarySkill ? `?categoryId=${primarySkill.category_id}` : '';
+            router.push(`/(app)/booking/create${params}` as never);
+          }}
         />
       </View>
     </SafeAreaView>

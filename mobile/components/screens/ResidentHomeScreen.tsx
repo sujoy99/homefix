@@ -186,6 +186,16 @@ export default function ResidentHomeScreen() {
 
         <View style={styles.sectionHeader}>
           <Text variant="h4" weight="semibold">{t('home.near_you')}</Text>
+          {providers.length > 3 && (
+            <TouchableOpacity
+              onPress={() => router.push('/(app)/providers' as never)}
+              hitSlop={8}
+            >
+              <Text variant="caption" color="primary" weight="semibold">
+                {t('home.see_all', { count: providers.length })}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {loadingProviders ? (
@@ -196,7 +206,7 @@ export default function ResidentHomeScreen() {
           </Card>
         ) : (
           <View>
-            {providers.slice(0, 5).map((p) => (
+            {providers.slice(0, 3).map((p) => (
               <ProviderCard
                 key={p.id}
                 item={p}

@@ -48,6 +48,11 @@ export class JobService {
     return jobs as unknown as Job[];
   }
 
+  static async getProviderAssignedJobs(providerId: string): Promise<Job[]> {
+    const jobs = await JobRepository.findByProvider(providerId);
+    return jobs as unknown as Job[];
+  }
+
   static async getProviderFeed(providerId: string, query: JobFeedQuery): Promise<Job[]> {
     const profile = await ProviderRepository.findByUserId(providerId);
     if (!profile || !profile.skills?.length) {

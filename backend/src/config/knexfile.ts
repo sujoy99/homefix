@@ -22,7 +22,7 @@ const knexConfig: Record<Environment, Knex.Config> = {
       user: required('DB_USER'),
       password: required('DB_PASSWORD'),
     },
-    pool: { min: 2, max: 10 },
+    pool: { min: 2, max: 20, acquireTimeoutMillis: 8000 },
     migrations: {
       directory: __dirname + '/../db/migrations',
       extension: 'ts',

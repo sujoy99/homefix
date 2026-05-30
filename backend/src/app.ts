@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { env } from '@config/env';
 import { securityHeaders } from '@middlewares/helmet';
 import { globalRateLimiter } from '@middlewares/rate-limiter';
@@ -78,6 +79,22 @@ app.use(requestLogger);
  * - Protected in production
  */
 app.use('/docs', swaggerRouter);
+
+/**
+ * ------------------------------
+ * Static file serving — uploaded media
+ * ------------------------------
+ * Serves /uploads/<filename> so mobile clients can display job photos,
+ * NID images, and voice notes stored by LocalStorageProvider.
+ * In production swap LocalStorageProvider for S3 — this route is then unused.
+ */
+app.use(
+  '/uploads',
+  express.static(path.resolve(process.cwd(), 'uploads'), {
+    maxAge: '7d',
+    immutable: true,
+  })
+);
 
 /**
  * ------------------------------

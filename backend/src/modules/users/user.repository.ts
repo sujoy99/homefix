@@ -17,7 +17,10 @@ export class UserRepository {
           'mobile',
           'email',
           'status',
-          'role'
+          'role',
+          // Extract lat/lon from PostGIS geography — null when no location set
+          User.raw('ST_Y(area::geometry) as home_lat'),
+          User.raw('ST_X(area::geometry) as home_lon'),
         )
         .withGraphFetched('authAccounts')
         .modifyGraph('authAccounts', (builder) => {
