@@ -18,7 +18,7 @@
 | Sprint 1 Hardening — Code Review Fixes | ✅ Completed | 2026-05-28 | 2026-05-28 |
 | Sprint 2 — Home + Categories | ✅ Completed | 2026-05-29 | 2026-05-29 |
 | Sprint 3 — Booking + Jobs | ✅ Completed | 2026-05-29 | 2026-05-30 |
-| Sprint 4 — Voice + Accessibility | 🔄 In Progress | 2026-05-30 | — |
+| Sprint 4 — Voice + Accessibility | ✅ Done | 2026-05-30 | 2026-05-30 |
 | Sprint 5 — Reviews + Notifications | ⏳ Not Started | — | — |
 | Sprint 6 — Payments + Wallet | ⏳ Not Started | — | — |
 | Sprint 7 — Web + Admin | ⏳ Not Started | — | — |
@@ -30,16 +30,16 @@
 
 > **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
 
-**Active Sprint:** Sprint 4 — Voice & Accessibility  
-**Sprint Status:** 🔄 Not Started — Ready to begin  
-**Git Branch Convention:** `feature/sprint-4-mobile`
+**Active Sprint:** Sprint 5 — Reviews, Notifications & In-App Communication  
+**Sprint Status:** ⏳ Not Started — Ready to begin  
+**Git Branch Convention:** `feature/sprint-5-mobile`
 
 ### Next Ticket Per Platform
 
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
-| 🖥 Backend | — | No Sprint 4 backend tickets | — |
-| 📱 Mobile | HF-042 | Voice note recording in booking (expo-av — REQ-011) | — |
+| 🖥 Backend | HF-047 | Review & rating module (post-payment only — REQ-024,025,026) | — |
+| 📱 Mobile | HF-050 | Review & rating screen (star + text, post-payment only) | HF-047 |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
 ### How to Pick Up Work
@@ -463,11 +463,11 @@ modules/payments/
 
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
-| HF-042 | Voice note recording in booking (expo-av — REQ-011) | ⏳ | 6h |
-| HF-043 | Voice-to-Text / Speech-to-Text (REQ-012) | ⏳ | 6h |
-| HF-044 | Text-to-Voice — "Read aloud" button for providers (REQ-013) | ⏳ | 4h |
-| HF-045 | Voice note playback in provider job view | ⏳ | 3h |
-| HF-046 | Accessibility audit — large fonts, high contrast, screen reader | ⏳ | 4h |
+| HF-042 | Voice note recording in booking (expo-av — REQ-011) | ✅ | 6h |
+| HF-043 | Voice-to-Text / Speech-to-Text (REQ-012) | 🔮 Future | 6h |
+| HF-044 | Text-to-Voice — "Read aloud" button for providers (REQ-013) | ✅ | 4h |
+| HF-045 | Voice note playback in provider job view | ✅ | 3h |
+| HF-046 | Accessibility audit — large fonts, high contrast, screen reader | ✅ | 4h |
 
 **Deliverable:** Full voice accessibility — record, transcribe, read aloud.
 
@@ -686,6 +686,7 @@ Every SRS requirement mapped to its implementing ticket(s):
 | 2026-05-28 | 3.3 | Sprint 2 backend complete (HF-021 to HF-024). Added fully DB-driven RBAC system (roles, permissions, role_permissions tables; admin API; PermissionCache; docs/RBAC.md). param() utility added to @utils for Express 5 route param access. 67 tests passing across 6 suites. |
 | 2026-05-30 | 3.5 | Sprint 3 enhancements + bug fixes: HF-026A (AllProvidersScreen with search + category filter, capped home section); HF-036A (address step reverse/forward geocoding + home shortcut); HF-033A (resolveMediaUrl crash fix for non-string media_urls); HF-039A (Not Interested redesigned as text link); HF-040A (photo fullscreen viewer with pinch-to-zoom); HF-040B (ImageViewing crash on jobs without photos). Total sprint 3 tickets: 14. |
 | 2026-05-30 | 3.6 | Sprint 3 closed. Additional polish tickets: HF-038A (nested TouchableOpacity Android content-clip fix); HF-038B (Yoga min-content-width Bengali truncation fix via alignItems:stretch); HF-038C (Button fixed height → minHeight+paddingVertical for complex scripts); HF-038D (DollarSign → Banknote icon). Sprint 3 total: 18 tickets. Sprint 4 opened — next ticket HF-042. |
+| 2026-05-30 | 3.7 | Sprint 4 closed. HF-042 (VoiceRecorder, expo-av); HF-045 (VoiceNotePlayer, expo-av); HF-044 (ReadAloudButton, expo-speech, REQ-013); HF-046 (accessibility audit — 30+ touchables labelled, 48px targets, WCAG AA verified, font-scale clean). HF-043 (Voice-to-Text) deferred — requires Whisper backend. 50/50 tests. Docs: TESTING_SPRINT4_MOBILE.md + SPRINT4_USER_MANUAL.md. Current Focus updated to Sprint 5. |
 
 ---
 
