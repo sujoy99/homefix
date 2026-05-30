@@ -262,7 +262,10 @@
     "already_accepted_desc": "আপনার আগেই অন্য একজন প্রোভাইডার এই কাজটি গ্রহণ করেছেন।",
     "voice_note": "ভয়েস নোট",
     "voice_play": "ভয়েস নোট চালান",
-    "voice_pause": "ভয়েস নোট বিরতি করুন"
+    "voice_pause": "ভয়েস নোট বিরতি করুন",
+    "read_aloud": "পড়ে শোনান",
+    "read_aloud_stop": "পড়া বন্ধ করুন",
+    "read_aloud_hint": "কাজের বিবরণ ও ঠিকানা জোরে পড়বে"
   },
   "my_jobs": {
     "section_title": "আমার সক্রিয় কাজ",

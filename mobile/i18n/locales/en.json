@@ -262,7 +262,10 @@
     "already_accepted_desc": "Another provider accepted this job before you.",
     "voice_note": "Voice Note",
     "voice_play": "Play voice note",
-    "voice_pause": "Pause voice note"
+    "voice_pause": "Pause voice note",
+    "read_aloud": "Read Aloud",
+    "read_aloud_stop": "Stop Reading",
+    "read_aloud_hint": "Reads job description and address aloud"
   },
   "my_jobs": {
     "section_title": "My Active Jobs",

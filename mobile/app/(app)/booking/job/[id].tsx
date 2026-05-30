@@ -35,6 +35,7 @@ import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/utils/toast';
 import { resolveMediaUrl } from '@/utils/media';
 import { VoiceNotePlayer } from '@/components/shared/VoiceNotePlayer';
+import { ReadAloudButton } from '@/components/shared/ReadAloudButton';
 import { theme } from '@/theme';
 
 // ── Status step ordering ──────────────────────────────────────────────────────
@@ -59,7 +60,7 @@ const STEPS: StepDef[] = [
 ];
 
 export default function JobDetailScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -275,6 +276,13 @@ export default function JobDetailScreen() {
           {job.voice_note_url ? (
             <VoiceNotePlayer uri={resolveMediaUrl(job.voice_note_url)} />
           ) : null}
+          {/* Read Aloud — provider only (REQ-013) */}
+          {isProvider && (
+            <ReadAloudButton
+              text={[job.description, ...addressParts].join('. ')}
+              language={i18n.language === 'en' ? 'en-US' : 'bn-BD'}
+            />
+          )}
         </Card>
 
         {/* ── Service address ── */}
