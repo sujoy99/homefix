@@ -1,3 +1,4 @@
+import { transaction } from 'objection';
 import { MfsAccountRepository } from './mfs-account.repository';
 import { ProviderPaymentAccount } from './wallet.model';
 import { BadRequestError, NotFoundError } from '@errors/http-errors';
@@ -23,16 +24,18 @@ async function createAccount(
   const isFirst = count === 0;
   const makePrimary = data.is_primary ?? isFirst;
 
-  if (makePrimary) {
-    await MfsAccountRepository.clearPrimary(userId);
-  }
+  return transaction(ProviderPaymentAccount.knex(), async (trx) => {
+    if (makePrimary) {
+      await MfsAccountRepository.clearPrimary(userId, trx);
+    }
 
-  return MfsAccountRepository.create({
-    user_id: userId,
-    mfs_type: data.mfs_type,
-    account_number: data.account_number,
-    account_name: data.account_name,
-    is_primary: makePrimary,
+    return MfsAccountRepository.create({
+      user_id: userId,
+      mfs_type: data.mfs_type,
+      account_number: data.account_number,
+      account_name: data.account_name,
+      is_primary: makePrimary,
+    }, trx);
   });
 }
 
@@ -42,10 +45,12 @@ async function setPrimary(userId: string, accountId: string): Promise<ProviderPa
     throw new NotFoundError(ErrorCode.RESOURCE_NOT_FOUND, 'Payment account not found');
   }
 
-  await MfsAccountRepository.clearPrimary(userId);
-  const updated = await MfsAccountRepository.setPrimary(accountId);
-  if (!updated) throw new NotFoundError(ErrorCode.RESOURCE_NOT_FOUND, 'Payment account not found');
-  return updated;
+  return transaction(ProviderPaymentAccount.knex(), async (trx) => {
+    await MfsAccountRepository.clearPrimary(userId, trx);
+    const updated = await MfsAccountRepository.setPrimary(accountId, trx);
+    if (!updated) throw new NotFoundError(ErrorCode.RESOURCE_NOT_FOUND, 'Payment account not found');
+    return updated;
+  });
 }
 
 async function deleteAccount(userId: string, accountId: string): Promise<void> {

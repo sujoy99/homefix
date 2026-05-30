@@ -1,3 +1,4 @@
+import type { TransactionOrKnex } from 'objection';
 import { PartialModelObject } from 'objection';
 import { ProviderPaymentAccount } from './wallet.model';
 
@@ -17,18 +18,18 @@ export class MfsAccountRepository {
     return ProviderPaymentAccount.query().findById(id);
   }
 
-  static async create(data: PartialModelObject<ProviderPaymentAccount>): Promise<ProviderPaymentAccount> {
-    return ProviderPaymentAccount.query().insertAndFetch(data);
+  static async create(data: PartialModelObject<ProviderPaymentAccount>, trx?: TransactionOrKnex): Promise<ProviderPaymentAccount> {
+    return ProviderPaymentAccount.query(trx).insertAndFetch(data);
   }
 
-  static async clearPrimary(userId: string): Promise<void> {
-    await ProviderPaymentAccount.query()
+  static async clearPrimary(userId: string, trx?: TransactionOrKnex): Promise<void> {
+    await ProviderPaymentAccount.query(trx)
       .patch({ is_primary: false } as PartialModelObject<ProviderPaymentAccount>)
       .where('user_id', userId);
   }
 
-  static async setPrimary(id: string): Promise<ProviderPaymentAccount | undefined> {
-    return ProviderPaymentAccount.query().patchAndFetchById(id, {
+  static async setPrimary(id: string, trx?: TransactionOrKnex): Promise<ProviderPaymentAccount | undefined> {
+    return ProviderPaymentAccount.query(trx).patchAndFetchById(id, {
       is_primary: true,
     } as PartialModelObject<ProviderPaymentAccount>);
   }

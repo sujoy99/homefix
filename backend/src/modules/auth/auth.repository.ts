@@ -1,4 +1,5 @@
 import { transaction, PartialModelObject, Transaction, UniqueViolationError } from 'objection';
+import type { TransactionOrKnex } from 'objection';
 import { User } from '@modules/users/user.model';
 import { AuthAccount } from './auth.model';
 import { UserResgistrationRequest } from '@modules/users/user.types';
@@ -66,64 +67,57 @@ export class AuthRepository {
   }
 
   /**
-   * Create user and auth account (V2)
+   * Core user + auth_account inserts — must run inside a caller-provided transaction.
+   * Used by createUser (self-contained) and auth.service.ts register (joins the
+   * outer transaction that also writes provider_profiles + provider_skills).
+   */
+  static async insertUserAndAuth(
+    data: UserResgistrationRequest,
+    trx: TransactionOrKnex
+  ): Promise<CreateUserRepoResult> {
+    const db = User.knex();
+
+    // db.raw() for PostGIS and gen_random_uuid() are valid Knex expressions that
+    // Objection passes straight to pg — the object is cast at the boundary.
+    const userData = {
+      full_name: data.full_name,
+      mobile: data.mobile,
+      nid: data.nid,
+      role: data.role,
+      status: data.status,
+      email: data.email ?? null,
+      photo_url: data.photo_url ?? null,
+      nid_photo_url: data.nid_photo_url ?? null,
+      area: db.raw(`ST_SetSRID(ST_MakePoint(?, ?), 4326)`, [data.longitude, data.latitude]),
+    } as unknown as PartialModelObject<User>;
+
+    const user = await User.query(trx).insert(userData).returning([
+      'id', 'short_code', 'full_name', 'mobile', 'role', 'status',
+    ]);
+
+    const authData = {
+      user_id: user.id,
+      auth_method: data.auth_method,
+      password_hash: data.hashedPassword ?? null,
+      refresh_token_version: db.raw('gen_random_uuid()'),
+    } as unknown as PartialModelObject<AuthAccount>;
+
+    const authAccount = await AuthAccount.query(trx).insert(authData).returning([
+      'id', 'auth_method',
+    ]);
+
+    return { user, auth: authAccount };
+  }
+
+  /**
+   * Create user and auth account (V2) — self-contained transaction.
+   * Use insertUserAndAuth when you need to join an outer transaction.
    */
   static async createUser(data: UserResgistrationRequest): Promise<CreateUserRepoResult> {
     try {
-    return await transaction(User.knex(), async (trx) => {
-      /**
-       * 1. Prepare user insert object
-       */
-      const userData: PartialModelObject<User> = {
-        full_name: data.full_name,
-        mobile: data.mobile,
-        nid: data.nid,
-        role: data.role,
-        status: data.status,
-        email: data.email ?? null,
-        photo_url: data.photo_url ?? null,
-        nid_photo_url: data.nid_photo_url ?? null,
-        area: trx.raw(
-          `ST_SetSRID(ST_MakePoint(?, ?), 4326)`,
-          [data.longitude, data.latitude]
-        ) as any,
-      };
-
-      /**
-       * 2. Insert user
-       */
-      const user = await User.query(trx).insert(userData).returning([
-        'id',
-        'short_code',
-        'full_name',
-        'mobile',
-        'role',
-        'status',
-      ]);
-
-      /**
-       * 3. Prepare auth account
-       */
-      const authData: PartialModelObject<AuthAccount> = {
-        user_id: user.id,
-        auth_method: data.auth_method,
-        password_hash: data.hashedPassword ?? null,
-        refresh_token_version: trx.raw('gen_random_uuid()') as any,
-      };
-
-      /**
-       * 4. Insert auth account
-       */
-      const authAccount = await AuthAccount.query(trx).insert(authData).returning([
-        'id',
-        'auth_method',
-      ]);
-
-      return {
-        user,
-        auth: authAccount,
-      };
-    });
+      return await transaction(User.knex(), async (trx) =>
+        AuthRepository.insertUserAndAuth(data, trx)
+      );
     } catch (err) {
       if (err instanceof UniqueViolationError) throw mapUniqueViolation(err.constraint);
       throw err;

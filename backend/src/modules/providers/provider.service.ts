@@ -1,5 +1,7 @@
+import { transaction } from 'objection';
 import { ProviderRepository } from './provider.repository';
 import { CategoryRepository } from '@modules/categories/category.repository';
+import { ProviderProfileModel } from './provider_profile.model';
 import { CreateProviderProfileInput, UpdateProviderProfileInput, AddSkillInput, ProviderProfileWithSkills } from './provider.types';
 import { NotFoundError, DuplicateError, ForbiddenError, UnauthorizedError } from '@errors/http-errors';
 import { ErrorCode } from '@errors/error-code';
@@ -28,18 +30,22 @@ export class ProviderService {
   }
 
   static async updateProfile(userId: string, role: UserRole, data: UpdateProviderProfileInput): Promise<ProviderProfileWithSkills> {
-    let profile = await ProviderRepository.findByUserId(userId);
-    if (!profile) {
+    const existing = await ProviderRepository.findByUserId(userId);
+
+    if (!existing) {
       if (role !== UserRole.PROVIDER) {
         throw new ForbiddenError(ErrorCode.FORBIDDEN, 'Only providers can have a profile');
       }
-      profile = await ProviderRepository.create({ user_id: userId });
-      profile = await ProviderRepository.findByUserId(userId) ?? profile;
-    }
-
-    const updated = await ProviderRepository.update(profile.id, data);
-    if (!updated) {
-      throw new NotFoundError(ErrorCode.RESOURCE_NOT_FOUND, 'Provider profile not found');
+      // Create profile and apply the update atomically so a failed update
+      // never leaves an empty orphan profile row.
+      await transaction(ProviderProfileModel.knex(), async (trx) => {
+        const created = await ProviderRepository.create({ user_id: userId }, trx);
+        const patched = await ProviderRepository.update(created.id, data, trx);
+        if (!patched) throw new NotFoundError(ErrorCode.RESOURCE_NOT_FOUND, 'Provider profile not found');
+      });
+    } else {
+      const updated = await ProviderRepository.update(existing.id, data);
+      if (!updated) throw new NotFoundError(ErrorCode.RESOURCE_NOT_FOUND, 'Provider profile not found');
     }
 
     return ProviderRepository.findByUserId(userId) as unknown as Promise<ProviderProfileWithSkills>;
