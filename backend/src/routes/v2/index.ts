@@ -9,6 +9,7 @@ import { configRouter } from '@modules/config/config.route';
 import { jobRouter } from '@modules/jobs/job.route';
 import { paymentRouter } from '@modules/payments/payment.route';
 import { adminPaymentRouter } from '@modules/payments/admin-payment.route';
+import { adminCommissionRouter } from '@modules/payments/commission/commission.route';
 
 const router = Router();
 
@@ -17,6 +18,7 @@ router.use('/categories', categoryRouter);
 router.use('/admin/rbac', rbacRouter);
 router.use('/admin/providers', adminProviderRouter);
 router.use('/admin/payments', adminPaymentRouter);
+router.use('/admin/commission', adminCommissionRouter);
 router.use('/providers', providerRouter);
 router.use('/storage', storageRouter);
 router.use('/config', configRouter);

@@ -481,10 +481,10 @@ modules/payments/
 
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
-| HF-054 | Payment interface (pluggable strategy pattern) | ⏳ | 4h |
-| HF-055 | Manual gateway (bKash/Nagad — TxID entry — REQ-019,020) | ⏳ | 6h |
-| HF-056 | Commission engine — configurable rate from `commission_rules` table (REQ-021) | ⏳ | 6h |
-| HF-056B | Admin commission rules API — CRUD + `/preview` endpoint | ⏳ | 4h |
+| HF-054 | Payment interface (pluggable strategy pattern) | ✅ | 4h |
+| HF-055 | Manual gateway (bKash/Nagad — TxID entry — REQ-019,020) | ✅ | 6h |
+| HF-056 | Commission engine — configurable rate from `commission_rules` table (REQ-021) | ✅ | 6h |
+| HF-056B | Admin commission rules API — CRUD + `/preview` endpoint | ✅ | 4h |
 | HF-057 | Provider wallet/ledger — 80% credit on payment + withdrawal flow with full audit trail (REQ-022) | ⏳ | 8h |
 | HF-057B | Profile completion API — computed endpoint + `PROFILE_INCOMPLETE` guard on job accept + withdraw | ⏳ | 4h |
 | HF-058 | Admin revenue dashboard API (REQ-023) | ⏳ | 4h |

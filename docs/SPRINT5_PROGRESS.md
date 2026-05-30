@@ -3,7 +3,7 @@
 > **Backend Branch:** `feature/sprint-5-backend`
 > **Mobile Branch:** `feature/sprint-5-mobile`
 > **Last updated:** 2026-05-30
-> **Tests:** 60/60 passing
+> **Tests:** 186/186 passing
 
 ---
 
@@ -16,7 +16,7 @@
 | HF-054 | Payment interface — pluggable strategy pattern | ✅ Done | — |
 | HF-055 | Manual gateway — bKash/Nagad TxID entry | ✅ Done | 4bbd53b |
 | HF-056 | Commission engine — configurable rate from `commission_rules` | ✅ Done | — |
-| HF-056B | Admin commission rules API — CRUD + `/preview` | ⏳ Pending | — |
+| HF-056B | Admin commission rules API — CRUD + `/preview` | ✅ Done | — |
 | HF-057 | Provider wallet/ledger — 80% credit on payment + withdrawal flow | ⏳ Pending | — |
 | HF-057B | Profile completion API — computed endpoint + `PROFILE_INCOMPLETE` guard | ⏳ Pending | — |
 | HF-058 | Admin revenue dashboard API | ⏳ Pending | — |
