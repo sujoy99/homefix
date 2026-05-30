@@ -34,6 +34,8 @@ import { providerService } from '@/services/provider.service';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from '@/utils/toast';
 import { resolveMediaUrl } from '@/utils/media';
+import { VoiceNotePlayer } from '@/components/shared/VoiceNotePlayer';
+import { ReadAloudButton } from '@/components/shared/ReadAloudButton';
 import { theme } from '@/theme';
 
 // ── Status step ordering ──────────────────────────────────────────────────────
@@ -58,7 +60,7 @@ const STEPS: StepDef[] = [
 ];
 
 export default function JobDetailScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -271,6 +273,16 @@ export default function JobDetailScreen() {
             {t('job_detail.description')}
           </Text>
           <Text variant="body" color="muted" style={styles.descText}>{job.description}</Text>
+          {job.voice_note_url ? (
+            <VoiceNotePlayer uri={resolveMediaUrl(job.voice_note_url)} />
+          ) : null}
+          {/* Read Aloud — provider only (REQ-013) */}
+          {isProvider && (
+            <ReadAloudButton
+              text={[job.description, ...addressParts].join('. ')}
+              language={i18n.language === 'en' ? 'en-US' : 'bn-BD'}
+            />
+          )}
         </Card>
 
         {/* ── Service address ── */}
@@ -321,6 +333,9 @@ export default function JobDetailScreen() {
                   key={i}
                   onPress={() => { setViewerIndex(i); setViewerVisible(true); }}
                   activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('job_detail.photo_index', { index: i + 1 })}
+                  accessibilityHint={t('job_detail.photo_hint')}
                 >
                   <Image
                     source={{ uri: resolveMediaUrl(url) }}
@@ -449,9 +464,16 @@ function StatusStepper({
 
 // ─── Header sub-component ─────────────────────────────────────────────────────
 function Header({ onBack, title }: { onBack: () => void; title: string }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.header}>
-      <TouchableOpacity onPress={onBack} style={styles.backBtn} hitSlop={8}>
+      <TouchableOpacity
+        onPress={onBack}
+        style={styles.backBtn}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.back')}
+      >
         <ArrowLeft color={theme.colors.text} size={22} />
       </TouchableOpacity>
       <Text variant="h4" weight="bold" style={styles.headerTitle}>{title}</Text>
@@ -472,7 +494,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
-  backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+  backBtn: { width: 48, height: 48, justifyContent: 'center', alignItems: 'center' },
   headerTitle: { flex: 1, textAlign: 'center' },
   loader: { marginTop: theme.spacing['2xl'] },
   errorWrap: { flex: 1, justifyContent: 'center', padding: theme.spacing.xl },

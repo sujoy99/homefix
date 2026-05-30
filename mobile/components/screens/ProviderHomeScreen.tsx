@@ -174,6 +174,8 @@ export default function ProviderHomeScreen() {
                 key={job.id}
                 onPress={() => router.push(`/(app)/booking/job/${job.id}` as never)}
                 activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityLabel={job.title ?? categoryMap.get(job.category_id) ?? t('home.unknown_provider')}
               >
                 <Card style={styles.activeJobCard}>
                   <View style={styles.activeJobRow}>

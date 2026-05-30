@@ -44,7 +44,12 @@ export function ProviderJobCard({ job, categoryName, distanceKm, onPress }: Prop
       : null;
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.75}>
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.75}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+    >
       <Card style={styles.card}>
         {/* Top row: title + distance badge */}
         <View style={styles.topRow}>

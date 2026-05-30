@@ -68,6 +68,8 @@ export default function AllProvidersScreen() {
           router.push({ pathname: '/(app)/provider/[id]', params: { id: item.user_id } })
         }
         activeOpacity={0.75}
+        accessibilityRole="button"
+        accessibilityLabel={name}
       >
         <Card style={styles.providerCard}>
           <View style={styles.avatar}>
@@ -99,7 +101,13 @@ export default function AllProvidersScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={8}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+        >
           <ArrowLeft color={theme.colors.text} size={22} />
         </TouchableOpacity>
         <Text variant="h4" weight="bold" style={styles.headerTitle}>
@@ -136,6 +144,9 @@ export default function AllProvidersScreen() {
               style={[styles.chip, active && styles.chipActive]}
               onPress={() => setSelectedCategory(item.id)}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={item.id === null ? t('common.all') : item.name}
+              accessibilityState={{ selected: active }}
             >
               <Text
                 variant="caption"
@@ -181,7 +192,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
-  backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+  backBtn: { width: 48, height: 48, justifyContent: 'center', alignItems: 'center' },
   headerTitle: { flex: 1, textAlign: 'center' },
   searchWrap: {
     flexDirection: 'row',

@@ -60,7 +60,13 @@ function CategoryCard({ item, onPress }: { item: Category; onPress: () => void }
   const Icon = categoryIcon(item.slug);
 
   return (
-    <TouchableOpacity style={styles.categoryCard} onPress={onPress} activeOpacity={0.75}>
+    <TouchableOpacity
+      style={styles.categoryCard}
+      onPress={onPress}
+      activeOpacity={0.75}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
       <View style={styles.categoryIconWrap}>
         <Icon color={theme.colors.primary} size={28} />
       </View>
@@ -77,7 +83,13 @@ function ProviderCard({ item, onPress }: { item: AvailableProvider; onPress: () 
   const rating = parseFloat(item.rating_avg ?? '0').toFixed(1);
 
   return (
-    <TouchableOpacity style={styles.providerCard} onPress={onPress} activeOpacity={0.75}>
+    <TouchableOpacity
+      style={styles.providerCard}
+      onPress={onPress}
+      activeOpacity={0.75}
+      accessibilityRole="button"
+      accessibilityLabel={name}
+    >
       <View style={styles.providerAvatar}>
         <Text variant="h3" weight="bold" color="inverse">
           {name.charAt(0).toUpperCase()}
@@ -190,6 +202,8 @@ export default function ResidentHomeScreen() {
             <TouchableOpacity
               onPress={() => router.push('/(app)/providers' as never)}
               hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t('home.see_all', { count: providers.length })}
             >
               <Text variant="caption" color="primary" weight="semibold">
                 {t('home.see_all', { count: providers.length })}

@@ -134,6 +134,8 @@ export default function BookingsScreen() {
           onPress={() => router.push('/(app)/booking/create' as never)}
           hitSlop={8}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={t('bookings.new_booking')}
         >
           <Plus color={theme.colors.textInverse} size={20} />
         </TouchableOpacity>
@@ -155,6 +157,9 @@ export default function BookingsScreen() {
               style={[styles.tab, isActive && styles.tabActive]}
               onPress={() => setActiveTab(tab.key)}
               activeOpacity={0.7}
+              accessibilityRole="tab"
+              accessibilityLabel={t(tab.labelKey)}
+              accessibilityState={{ selected: isActive }}
             >
               <Text
                 variant="caption"

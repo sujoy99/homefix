@@ -57,6 +57,9 @@ function PendingProviderCard({
           onPress={onApprove}
           disabled={isLoading}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={t('admin.approve')}
+          accessibilityState={{ disabled: isLoading }}
         >
           <CheckCircle color={theme.colors.surface} size={16} />
           <Text variant="caption" weight="semibold" color="inverse" style={styles.btnLabel}>
@@ -69,6 +72,9 @@ function PendingProviderCard({
           onPress={onReject}
           disabled={isLoading}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={t('admin.reject')}
+          accessibilityState={{ disabled: isLoading }}
         >
           <XCircle color={theme.colors.surface} size={16} />
           <Text variant="caption" weight="semibold" color="inverse" style={styles.btnLabel}>

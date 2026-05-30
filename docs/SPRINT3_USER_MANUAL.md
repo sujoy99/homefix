@@ -329,7 +329,7 @@ Switch language to Bengali (বাংলা) via Profile → Language and verify
 |---|---|---|
 | No payment option after "Awaiting Payment" | Payment module (Sprint 6, HF-059) | Sprint 6 |
 | No push notification when provider accepts | Push notifications (Sprint 5, HF-048) | Sprint 5 |
-| Voice note button missing | Voice features (Sprint 4, HF-042) | Sprint 4 |
+| Voice note button missing | Voice features (Sprint 4, HF-042) | ✅ Sprint 4 |
 | Provider home dashboard stats are placeholders | Live stats come from job data; dashboard wired in Sprint 3 | Sprint 3 ✅ |
 | Status stepper uses 10 s polling, not instant | WebSocket/push real-time (Sprint 5) | Sprint 5 |
 

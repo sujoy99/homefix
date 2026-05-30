@@ -61,7 +61,9 @@
     "logout": "Log Out",
     "step_skills": "My Services",
     "skills_subtitle": "Select the services you provide to residents",
-    "skills_min": "Please select at least one service"
+    "skills_min": "Please select at least one service",
+    "show_password": "Show password",
+    "hide_password": "Hide password"
   },
   "onboarding": {
     "skip": "Skip",
@@ -259,7 +261,15 @@
     "accept_error": "Could not accept job. Please try again.",
     "load_error": "Could not load job details.",
     "already_accepted": "This job is no longer available",
-    "already_accepted_desc": "Another provider accepted this job before you."
+    "already_accepted_desc": "Another provider accepted this job before you.",
+    "photo_index": "Photo {{index}}",
+    "photo_hint": "Double-tap to view full screen",
+    "voice_note": "Voice Note",
+    "voice_play": "Play voice note",
+    "voice_pause": "Pause voice note",
+    "read_aloud": "Read Aloud",
+    "read_aloud_stop": "Stop Reading",
+    "read_aloud_hint": "Reads job description and address aloud"
   },
   "my_jobs": {
     "section_title": "My Active Jobs",
@@ -367,6 +377,17 @@
     "geocoding": "Finding location...",
     "geocode_not_found": "Location not found. Try a different address or pin manually.",
     "geocode_error": "Could not search location. Check your connection.",
-    "geocode_needs_address": "Enter Road or Area first"
+    "geocode_needs_address": "Enter Road or Area first",
+    "remove_photo": "Remove photo {{index}}",
+    "voice_label": "Voice Note (optional)",
+    "voice_hint": "Tap the mic to record",
+    "voice_record": "Record voice note",
+    "voice_stop": "Stop recording",
+    "voice_play": "Play voice note",
+    "voice_pause": "Pause voice note",
+    "voice_delete": "Delete voice note",
+    "voice_recording": "Recording...",
+    "voice_recorded": "Recording saved — submit to attach",
+    "error_voice": "Job posted but voice note could not be uploaded."
   }
 }

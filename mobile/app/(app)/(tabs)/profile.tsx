@@ -58,7 +58,12 @@ function InfoRow({
 
   if (onPress) {
     return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+      >
         {content}
       </TouchableOpacity>
     );
@@ -181,7 +186,13 @@ export default function ProfileScreen() {
                 {(user?.fullName?.charAt(0) ?? 'U').toUpperCase()}
               </Text>
             </View>
-            <TouchableOpacity style={styles.cameraBtn} onPress={handlePhotoUpload} hitSlop={4}>
+            <TouchableOpacity
+              style={styles.cameraBtn}
+              onPress={handlePhotoUpload}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={t('profile.photo_upload')}
+            >
               <Camera color={theme.colors.textInverse} size={16} />
             </TouchableOpacity>
           </View>
@@ -238,6 +249,9 @@ export default function ProfileScreen() {
                   onPress={openServicePicker}
                   disabled={loadingProfile || skillsBusy}
                   hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.edit')}
+                  accessibilityState={{ disabled: loadingProfile || skillsBusy }}
                 >
                   <Pencil color={theme.colors.primary} size={16} />
                   <Text variant="caption" color="primary" weight="medium" style={styles.editBtnLabel}>
@@ -249,7 +263,12 @@ export default function ProfileScreen() {
               {loadingProfile ? (
                 <ActivityIndicator color={theme.colors.primary} style={{ marginVertical: 8 }} />
               ) : mySkills.length === 0 ? (
-                <TouchableOpacity onPress={openServicePicker} style={styles.noServicesBtn}>
+                <TouchableOpacity
+                  onPress={openServicePicker}
+                  style={styles.noServicesBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('profile.no_services_tap')}
+                >
                   <Text variant="caption" color="muted">{t('profile.no_services_tap')}</Text>
                 </TouchableOpacity>
               ) : (
@@ -303,6 +322,9 @@ export default function ProfileScreen() {
                           style={styles.modalRow}
                           onPress={() => toggleTemp(cat.id)}
                           activeOpacity={0.7}
+                          accessibilityRole="checkbox"
+                          accessibilityLabel={label}
+                          accessibilityState={{ checked: selected }}
                         >
                           <Text variant="body" style={styles.modalRowLabel}>{label}</Text>
                           <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
@@ -318,6 +340,8 @@ export default function ProfileScreen() {
                     <TouchableOpacity
                       style={[styles.modalBtn, styles.cancelBtn]}
                       onPress={() => setShowServicePicker(false)}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('common.cancel')}
                     >
                       <Text variant="body" weight="semibold" color="primary">{t('common.cancel')}</Text>
                     </TouchableOpacity>
@@ -366,7 +390,13 @@ export default function ProfileScreen() {
 
         {/* Logout */}
         <Card style={[styles.section, styles.logoutCard]}>
-          <TouchableOpacity style={styles.logoutRow} onPress={handleLogout} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.logoutRow}
+            onPress={handleLogout}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t('auth.logout')}
+          >
             <View style={styles.logoutIconWrap}>
               <LogOut color={theme.colors.error} size={18} />
             </View>

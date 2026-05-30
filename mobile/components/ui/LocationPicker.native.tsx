@@ -91,7 +91,14 @@ export function LocationPicker({ latitude, longitude, onLocationChange, autoDete
 
       <Text style={styles.hint}>{t('auth.location_hint')}</Text>
 
-      <TouchableOpacity style={styles.gpsBtn} onPress={requestGPS} disabled={loading}>
+      <TouchableOpacity
+        style={styles.gpsBtn}
+        onPress={requestGPS}
+        disabled={loading}
+        accessibilityRole="button"
+        accessibilityLabel={t('auth.get_location')}
+        accessibilityHint={t('auth.location_hint')}
+      >
         <Navigation size={18} color={theme.colors.primary} />
         <Text style={styles.gpsBtnText}>{t('auth.get_location')}</Text>
       </TouchableOpacity>

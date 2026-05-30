@@ -50,7 +50,12 @@ function ProviderListItem({ item, onPress }: { item: AvailableProvider; onPress:
     : t('category.rate_negotiable');
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.75}>
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.75}
+      accessibilityRole="button"
+      accessibilityLabel={name}
+    >
       <Card style={styles.providerItem}>
         <View style={styles.providerRow}>
           <View style={styles.avatar}>
@@ -101,7 +106,13 @@ export default function CategoryScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={8}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+        >
           <ArrowLeft color={theme.colors.text} size={22} />
         </TouchableOpacity>
         <Text variant="h4" weight="bold" style={styles.headerTitle} numberOfLines={1}>
@@ -117,6 +128,9 @@ export default function CategoryScreen() {
             key={opt.key}
             style={[styles.sortChip, sort === opt.key && styles.sortChipActive]}
             onPress={() => setSort(opt.key)}
+            accessibilityRole="button"
+            accessibilityLabel={t(opt.labelKey)}
+            accessibilityState={{ selected: sort === opt.key }}
           >
             <Text
               variant="caption"
@@ -174,8 +188,8 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.border,
   },
   backBtn: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
   },

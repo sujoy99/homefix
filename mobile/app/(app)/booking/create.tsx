@@ -20,6 +20,7 @@ import * as Location from 'expo-location';
 import { ArrowLeft, ChevronRight, Camera, CheckCircle, X, Home, MapPin } from 'lucide-react-native';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
+import { VoiceRecorder } from '@/components/shared/VoiceRecorder';
 import { Card } from '@/components/ui/Card';
 import { LocationPicker } from '@/components/ui/LocationPicker';
 import { categoryService, Category } from '@/services/category.service';
@@ -49,6 +50,7 @@ type BookingDraft = {
   title: string;
   description: string;
   photos: ImagePicker.ImagePickerAsset[];
+  voiceNote: string | null;
   square_footage: string;
   house: string;
   flat: string;
@@ -64,6 +66,7 @@ const EMPTY_DRAFT: BookingDraft = {
   title: '',
   description: '',
   photos: [],
+  voiceNote: null,
   square_footage: '',
   house: '',
   flat: '',
@@ -323,6 +326,15 @@ export default function CreateBookingScreen() {
         }
       }
 
+      // Upload voice note if recorded (separate try so failure doesn't lose the job)
+      if (draft.voiceNote) {
+        try {
+          await jobService.uploadVoiceNote(job.id, draft.voiceNote);
+        } catch {
+          toast.error(t('booking.error_voice'));
+        }
+      }
+
       toast.success(t('booking.success_title'));
       router.replace('/(app)/(tabs)/bookings' as never);
     } catch (err) {
@@ -357,6 +369,9 @@ export default function CreateBookingScreen() {
                 style={[styles.categoryRow, isSelected && styles.categoryRowSelected]}
                 onPress={() => patch({ category_id: item.id, category: item })}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={item.name}
+                accessibilityState={{ selected: isSelected }}
               >
                 <Text
                   variant="body"
@@ -418,6 +433,9 @@ export default function CreateBookingScreen() {
       {errors.description ? (
         <Text variant="caption" color="error" style={styles.fieldError}>{errors.description}</Text>
       ) : null}
+
+      {/* Voice note — always visible per design mandate (REQ-011) */}
+      <VoiceRecorder onRecorded={(uri) => patch({ voiceNote: uri })} />
     </View>
   );
 
@@ -464,7 +482,9 @@ export default function CreateBookingScreen() {
               <TouchableOpacity
                 style={styles.removePhotoBtn}
                 onPress={() => removePhoto(idx)}
-                hitSlop={8}
+                hitSlop={16}
+                accessibilityRole="button"
+                accessibilityLabel={t('booking.remove_photo', { index: idx + 1 })}
               >
                 <X color={theme.colors.textInverse} size={14} />
               </TouchableOpacity>
@@ -474,7 +494,14 @@ export default function CreateBookingScreen() {
       )}
 
       {draft.photos.length < 5 && (
-        <TouchableOpacity style={styles.photoPickerBtn} onPress={pickPhotos} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.photoPickerBtn}
+          onPress={pickPhotos}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={t('booking.add_photos')}
+          accessibilityHint={t('booking.add_photos_hint')}
+        >
           <Camera color={theme.colors.primary} size={22} />
           <Text variant="body" color="primary" weight="medium" style={styles.photoPickerText}>
             {draft.photos.length === 0
@@ -505,6 +532,8 @@ export default function CreateBookingScreen() {
             reverseGeocode(user.homeLat!, user.homeLon!);
           }}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={t('booking.use_home_address')}
         >
           <Home color={theme.colors.primary} size={15} />
           <Text variant="caption" weight="semibold" color="primary" style={styles.homeAddressBtnText}>
@@ -686,7 +715,13 @@ export default function CreateBookingScreen() {
       <SafeAreaView style={styles.container} edges={['top']}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={goBack} style={styles.headerBtn} hitSlop={8}>
+          <TouchableOpacity
+            onPress={goBack}
+            style={styles.headerBtn}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.back')}
+          >
             <ArrowLeft color={theme.colors.text} size={22} />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
@@ -802,8 +837,8 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.border,
   },
   headerBtn: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
   },
