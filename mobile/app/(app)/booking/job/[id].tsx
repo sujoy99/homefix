@@ -115,6 +115,8 @@ export default function JobDetailScreen() {
         toast.error(t('job_detail.accept_concurrent'));
         queryClient.invalidateQueries({ queryKey: ['providerFeed'] });
         router.back();
+      } else if (errorCode === 'PROFILE_INCOMPLETE') {
+        toast.error(t('errors.PROFILE_INCOMPLETE'));
       } else {
         toast.error(t('job_detail.accept_error'));
       }

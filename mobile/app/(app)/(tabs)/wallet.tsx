@@ -469,6 +469,7 @@ export default function WalletScreen() {
     onSuccess: () => {
       toast.success(t('wallet.account_add_success'));
       queryClient.invalidateQueries({ queryKey: ['mfsAccounts'] });
+      queryClient.invalidateQueries({ queryKey: ['profileCompletion'] });
     },
     onError: () => toast.error(t('wallet.account_add_error')),
   });
@@ -483,6 +484,7 @@ export default function WalletScreen() {
     onSuccess: () => {
       toast.success(t('wallet.account_remove_success'));
       queryClient.invalidateQueries({ queryKey: ['mfsAccounts'] });
+      queryClient.invalidateQueries({ queryKey: ['profileCompletion'] });
     },
     onError: () => toast.error(t('wallet.account_remove_error')),
   });

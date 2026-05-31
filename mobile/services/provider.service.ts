@@ -59,4 +59,26 @@ export const providerService = {
     });
     return res.data.body;
   },
+
+  updateMyProfile: async (data: {
+    bio?: string | null;
+    hourly_rate?: number | null;
+    experience_years?: number;
+    photo_url?: string | null;
+    latitude?: number;
+    longitude?: number;
+  }): Promise<AvailableProvider> => {
+    const res = await apiClient.patch<ApiResponse<AvailableProvider>>('/v2/providers/me/profile', data);
+    return res.data.body;
+  },
+
+  uploadPhoto: async (uri: string): Promise<string> => {
+    const filename = uri.split('/').pop() ?? `photo_${Date.now()}.jpg`;
+    const form = new FormData();
+    form.append('file', { uri, name: filename, type: 'image/jpeg' } as unknown as Blob);
+    const res = await apiClient.post<ApiResponse<{ url: string }>>('/v2/storage/upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data.body.url;
+  },
 };

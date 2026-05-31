@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { PlatformSettingKey, NidPhotoSource } from '@homefix/shared';
+import { PlatformSettingKey, NidPhotoSource, ProfilePhotoSource } from '@homefix/shared';
 
 /**
  * Platform Settings seed.
@@ -24,6 +24,11 @@ export async function seed(knex: Knex): Promise<void> {
       key: PlatformSettingKey.NID_PHOTO_SOURCE,
       value: NidPhotoSource.CAMERA_ONLY,
       description: `NID photo source during provider registration. Valid: '${NidPhotoSource.CAMERA_ONLY}' | '${NidPhotoSource.CAMERA_AND_GALLERY}'`,
+    },
+    {
+      key: PlatformSettingKey.PROFILE_PHOTO_SOURCE,
+      value: ProfilePhotoSource.CAMERA_ONLY,
+      description: `Profile photo source during provider profile edit. Valid: '${ProfilePhotoSource.CAMERA_ONLY}' | '${ProfilePhotoSource.CAMERA_AND_GALLERY}'`,
     },
     {
       key: PlatformSettingKey.PLATFORM_COMMISSION_PCT,

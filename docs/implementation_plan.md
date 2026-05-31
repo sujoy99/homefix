@@ -499,6 +499,7 @@ modules/payments/
 | HF-059B | Profile completion card on Profile screen (both roles) + persistent banner on Provider home | ✅ | 4h |
 | HF-060 | Provider wallet screen (balance, earnings, commission breakdown, withdrawal request) | ✅ | 6h |
 | HF-061 | Payment receipt + completion flow | ✅ | 3h |
+| HF-061B | Provider profile edit screen — bio, hourly rate, experience years, profile photo, home location (GPS). Profile completion card updates in real time after save. Name and mobile are read-only. | ✅ | 4h |
 
 **Deliverable:** Full payment flow with wallet + commission system. Profile completion enforcement. Admin revenue dashboard. First sprint to produce PAID jobs end-to-end.
 
