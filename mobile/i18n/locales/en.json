@@ -176,7 +176,19 @@
     "job_row_payment": "Payment",
     "load_error": "Could not load revenue data. Pull to retry.",
     "load_more": "Load More",
-    "taka": "৳{{amount}}"
+    "taka": "৳{{amount}}",
+    "verify_payments_cta": "Verify Pending Payments"
+  },
+  "admin_payments": {
+    "title": "Verify Payments",
+    "resident": "Resident",
+    "verify": "Verify",
+    "verifying": "Verifying…",
+    "verified_success": "Payment verified. Wallet credited.",
+    "verified_error": "Could not verify payment. Please try again.",
+    "pending_count": "{{count}} payment(s) awaiting verification",
+    "empty_title": "All caught up!",
+    "empty_desc": "No payments are waiting for verification."
   },
   "admin": {
     "title": "Admin Dashboard",
@@ -358,7 +370,8 @@
     "budget_tbd": "Not set",
     "area": "Area",
     "address": "Address",
-    "load_error": "Could not load bookings. Pull to retry."
+    "load_error": "Could not load bookings. Pull to retry.",
+    "payment_submitted_badge": "Payment Submitted"
   },
   "payment": {
     "title": "Payment",
@@ -391,7 +404,14 @@
     "awaiting_verification": "Awaiting verification",
     "cash_note": "Pay the provider directly in cash. The job will be marked as paid once verified.",
     "note_label": "Note",
-    "already_submitted": "Payment already submitted"
+    "already_submitted": "Payment already submitted",
+    "already_submitted_notice": "Payment submitted — awaiting admin verification. You will be notified once confirmed.",
+    "merchant_send_title": "Step 1: Send Money",
+    "merchant_number_label": "{{method}} Merchant Number",
+    "merchant_copy": "Copy",
+    "merchant_copied": "Copied!",
+    "merchant_step2": "Step 2: Enter the transaction ID from your {{method}} app below",
+    "merchant_loading": "Loading merchant details…"
   },
   "receipt": {
     "title": "Payment Receipt",

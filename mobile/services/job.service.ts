@@ -1,6 +1,6 @@
 import { ImagePickerAsset } from 'expo-image-picker';
 import { apiClient } from '@/api/client';
-import { JobStatus } from '@homefix/shared';
+import type { JobStatus, PaymentStatus } from '@homefix/shared';
 
 export type ServiceAddress = {
   house: string;
@@ -24,6 +24,7 @@ export type Job = {
   service_lon: number | null;
   estimated_budget: number | string | null;
   square_footage: number | string | null;
+  payment_status: PaymentStatus | null;
   created_at: string;
   updated_at: string;
 };

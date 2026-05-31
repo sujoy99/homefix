@@ -51,6 +51,30 @@ export class PaymentRepository {
     } as PartialModelObject<Payment>);
   }
 
+  static async findByJobIds(jobIds: string[]): Promise<Record<string, Payment>> {
+    if (jobIds.length === 0) return {};
+    const rows = await Payment.query().whereIn('job_id', jobIds);
+    return Object.fromEntries(rows.map((p) => [p.job_id, p]));
+  }
+
+  static async listPendingWithDetails(): Promise<Record<string, unknown>[]> {
+    return Payment.knex()
+      .select(
+        'payments.*',
+        'jobs.title as job_title',
+        'jobs.category_id',
+        'categories.name as category_name',
+        'residents.full_name as resident_name',
+        'residents.mobile as resident_mobile',
+      )
+      .from('payments')
+      .join('jobs', 'jobs.id', 'payments.job_id')
+      .join('categories', 'categories.id', 'jobs.category_id')
+      .join('users as residents', 'residents.id', 'payments.resident_id')
+      .where('payments.status', 'submitted')
+      .orderBy('payments.created_at', 'asc');
+  }
+
   static async applyCommissionFields(
     id: string,
     fields: CommissionFieldsInput,

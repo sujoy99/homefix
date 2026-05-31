@@ -29,6 +29,7 @@ import { Card } from '@/components/ui/Card';
 import { jobService } from '@/services/job.service';
 import { categoryService } from '@/services/category.service';
 import { paymentService } from '@/services/payment.service';
+import { configService } from '@/services/config.service';
 import { toast } from '@/utils/toast';
 import { theme } from '@/theme';
 
@@ -37,7 +38,7 @@ import { theme } from '@/theme';
 type MethodConfig = {
   method: PaymentMethod;
   labelKey: string;
-  icon: React.ReactNode;
+  icon: React.ReactElement<{ color?: string; size?: number }>;
   color: string;
 };
 
@@ -101,9 +102,27 @@ export default function PaymentScreen() {
     queryFn: categoryService.listActive,
   });
 
+  const { data: config } = useQuery({
+    queryKey: ['publicConfig'],
+    queryFn: configService.getPublic,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const categoryName = categories.find((c) => c.id === job?.category_id)?.name;
 
   const requiresTxid = selectedMethod ? REQUIRES_TRANSACTION_ID.has(selectedMethod) : false;
+
+  const merchantNumber =
+    selectedMethod === PaymentMethod.BKASH
+      ? config?.bkash_merchant_number
+      : selectedMethod === PaymentMethod.NAGAD
+        ? config?.nagad_merchant_number
+        : null;
+
+  const methodLabel =
+    selectedMethod === PaymentMethod.BKASH ? t('payment.method_bkash') :
+    selectedMethod === PaymentMethod.NAGAD ? t('payment.method_nagad') :
+    selectedMethod === PaymentMethod.BANK_TRANSFER ? t('payment.method_bank_transfer') : '';
 
   const budgetTaka = job?.estimated_budget
     ? parseFloat(String(job.estimated_budget))
@@ -259,7 +278,7 @@ export default function PaymentScreen() {
                     accessibilityState={{ checked: selected }}
                   >
                     <View style={[styles.methodIcon, { backgroundColor: cfg.color + '20' }]}>
-                      {React.cloneElement(cfg.icon as React.ReactElement, { color: cfg.color })}
+                      {React.cloneElement(cfg.icon as React.ReactElement<{ color?: string }>, { color: cfg.color })}
                     </View>
                     <Text
                       variant="caption"
@@ -288,6 +307,37 @@ export default function PaymentScreen() {
             </Card>
           )}
 
+          {/* Merchant instruction — bKash / Nagad */}
+          {merchantNumber ? (
+            <Card style={[styles.section, styles.merchantCard]}>
+              <Text variant="body" weight="semibold" style={styles.merchantTitle}>
+                {t('payment.merchant_send_title')}
+              </Text>
+              <Text variant="caption" color="muted">
+                {t('payment.merchant_number_label', { method: methodLabel })}
+              </Text>
+              <View style={styles.merchantNumberRow}>
+                <Text
+                  variant="h4"
+                  weight="bold"
+                  style={styles.merchantNumber}
+                  selectable
+                >
+                  {merchantNumber}
+                </Text>
+              </View>
+              {amountInput ? (
+                <Text variant="caption" color="muted">
+                  {t('payment.merchant_step2', { method: methodLabel })}
+                </Text>
+              ) : null}
+            </Card>
+          ) : requiresTxid && !config ? (
+            <Card style={[styles.section, styles.merchantCard]}>
+              <Text variant="caption" color="muted">{t('payment.merchant_loading')}</Text>
+            </Card>
+          ) : null}
+
           {/* TxID input */}
           {requiresTxid && (
             <Card style={styles.section}>
@@ -299,7 +349,7 @@ export default function PaymentScreen() {
                 placeholder={t('payment.txid_placeholder')}
                 placeholderTextColor={theme.colors.textMuted}
                 value={txid}
-                onChangeText={(v) => { setTxid(v); setTxidError(''); }}
+                onChangeText={(v) => { setTxid(v.toUpperCase()); setTxidError(''); }}
                 autoCapitalize="characters"
                 autoCorrect={false}
                 maxLength={20}
@@ -431,6 +481,23 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.successBackground,
     borderWidth: 1,
     borderColor: theme.colors.success,
+  },
+  merchantCard: {
+    backgroundColor: theme.colors.warningBackground,
+    borderWidth: 1,
+    borderColor: theme.colors.warning,
+  },
+  merchantTitle: {
+    marginBottom: theme.spacing.xs,
+  },
+  merchantNumberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xs,
+  },
+  merchantNumber: {
+    letterSpacing: 1.5,
+    color: theme.colors.primary,
   },
   input: {
     height: 48,

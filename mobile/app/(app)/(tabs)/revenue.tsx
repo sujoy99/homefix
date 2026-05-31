@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import {
   TrendingUp,
@@ -16,6 +17,7 @@ import {
   BarChart2,
   Briefcase,
   ChevronRight,
+  ShieldCheck,
 } from 'lucide-react-native';
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
@@ -231,6 +233,7 @@ const jobStyles = StyleSheet.create({
 
 export default function RevenueScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const [period, setPeriod] = useState<Period>('monthly');
   const [showAllJobs, setShowAllJobs] = useState(false);
 
@@ -295,6 +298,20 @@ export default function RevenueScreen() {
           />
         }
       >
+        {/* Verify payments CTA */}
+        <TouchableOpacity
+          style={styles.verifyCard}
+          onPress={() => router.push('/(app)/admin/payments' as never)}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+        >
+          <ShieldCheck color={theme.colors.warning} size={20} />
+          <Text variant="body" weight="semibold" style={styles.verifyCardText}>
+            {t('revenue.verify_payments_cta')}
+          </Text>
+          <ChevronRight color={theme.colors.warning} size={18} />
+        </TouchableOpacity>
+
         {/* Total revenue hero */}
         <Card style={styles.heroCard}>
           <View style={styles.heroIcon}>
@@ -420,6 +437,20 @@ const styles = StyleSheet.create({
   errorWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: theme.spacing.xl, gap: theme.spacing.md },
   retryBtn: { paddingVertical: theme.spacing.sm },
   scroll: { padding: theme.spacing.md, paddingBottom: theme.spacing.xl, gap: theme.spacing.sm },
+  verifyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.warningBackground,
+    borderRadius: theme.layout.radius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.warning,
+  },
+  verifyCardText: {
+    flex: 1,
+    color: theme.colors.warning,
+  },
   heroCard: {
     padding: theme.spacing.md,
     gap: theme.spacing.xs,

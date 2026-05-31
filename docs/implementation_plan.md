@@ -494,7 +494,8 @@ modules/payments/
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
 | HF-058B | Admin revenue dashboard mobile screen (totals, period chart, rule breakdown, per-job list) | ✅ | 4h |
-| HF-059 | Payment screen (method selection, TxID input, order summary) | ✅ | 8h |
+| HF-058C | Admin payment verification screen (list SUBMITTED payments, verify action) | ✅ | 4h |
+| HF-059 | Payment screen (method selection, TxID input, order summary, merchant number) | ✅ | 8h |
 | HF-059B | Profile completion card on Profile screen (both roles) + persistent banner on Provider home | ✅ | 4h |
 | HF-060 | Provider wallet screen (balance, earnings, commission breakdown, withdrawal request) | ✅ | 6h |
 | HF-061 | Payment receipt + completion flow | ✅ | 3h |

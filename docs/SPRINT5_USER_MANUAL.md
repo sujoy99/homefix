@@ -1,7 +1,7 @@
 # HomeFix — Sprint 5 Mobile: User Manual
 
 > **Sprint:** Sprint 5 — Payments & Wallet (Mobile)
-> **Covers:** HF-058B · HF-059 · HF-059B · HF-060 · HF-061
+> **Covers:** HF-058B · HF-058C · HF-059 · HF-059B · HF-060 · HF-061
 > **Audience:** QA, Product Owner, Business Stakeholder
 > **Last updated:** 2026-05-31
 
@@ -18,6 +18,8 @@ Sprint 5 closes the payment loop end-to-end and gives each role their own financ
 | Provider wallet — balance, earnings, withdrawal | Providers | REQ-022 |
 | Profile completion card + provider banner | Both (providers gated) | REQ-017B |
 | Admin revenue dashboard | Admin | REQ-023 |
+| Admin payment verification screen — list + one-tap verify | Admin | REQ-020 |
+| Double-payment protection — submitted banner + badge | Residents | REQ-019 |
 
 ---
 
@@ -72,8 +74,10 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 | # | Action | Expected |
 |---|--------|----------|
 | 1 | Job detail opens for an AWAITING_PAYMENT job | Status stepper shows "Work Complete" as current step |
-| 2 | Footer button | "Pay Now" (green/primary) button visible at bottom |
+| 2 | Footer button (no payment yet submitted) | "Pay Now" (green/primary) button visible at bottom |
 | 3 | Jobs in other statuses (PENDING, ACTIVE, PAID) | No "Pay Now" button |
+| 4 | Tap "Pay Now", submit payment, navigate back to job detail | Pay Now button is **gone** — replaced by yellow banner: "Payment submitted — awaiting admin verification" |
+| 5 | Bookings tab → "Awaiting Payment" tab after submitting payment | JobCard shows green **"Payment Submitted"** badge instead of "Awaiting Payment" — prevents accidental re-payment |
 
 ---
 
@@ -98,30 +102,45 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 | 5 | Tap Nagad | Nagad card highlighted (orange); bKash deselects |
 | 6 | Tap Cash | Cash card highlighted (green); cash note text appears |
 
+#### Merchant instruction card (bKash / Nagad)
+
+| # | Action | Expected |
+|---|--------|----------|
+| 7 | Select bKash | Yellow instruction card appears: "Step 1: Send Money" |
+| 8 | Merchant number row | HomeFix bKash merchant number shown in large selectable text (e.g. `01700000000`) |
+| 9 | Label above number | "bKash Merchant Number" |
+| 10 | Once amount is filled | "Step 2: Enter the transaction ID from your bKash app below" appears |
+| 11 | Select Nagad | Card updates to show Nagad merchant number |
+| 12 | Select Bank Transfer | No merchant card (no merchant number for this method) |
+| 13 | Select Cash or Card | Merchant card disappears entirely |
+| 14 | Config loading | "Loading merchant details…" shown briefly until config resolves |
+
+> **How to use:** Resident opens their bKash/Nagad app → Send Money → enters the merchant number shown → completes the transfer → copies the transaction ID → pastes it in the TxID field below.
+
 #### TxID input (bKash / Nagad / Bank Transfer)
 
 | # | Action | Expected |
 |---|--------|----------|
-| 7 | Select bKash | "Transaction ID" input appears |
-| 8 | Hint text | "Enter the transaction ID from your bKash/Nagad app" |
-| 9 | Select Cash or Card | TxID input disappears entirely |
+| 15 | Select bKash | "Transaction ID" input appears below merchant card |
+| 16 | Hint text | "Enter the transaction ID from your bKash/Nagad app" |
+| 17 | Select Cash or Card | TxID input disappears entirely |
 
 #### Validation
 
 | # | Action | Expected |
 |---|--------|----------|
-| 10 | Tap Submit with no method selected | Button is disabled (greyed out) |
-| 11 | Select bKash, leave TxID empty, tap Submit | "Transaction ID is required" error under the field |
-| 12 | Enter TxID `abc` (< 8 chars) and tap Submit | "Transaction ID must be 8–20 alphanumeric characters" error |
-| 13 | Enter TxID `TXN12345678` (valid) | No error |
-| 14 | Leave amount blank, tap Submit | "Amount is required" error |
+| 18 | Tap Submit with no method selected | Button is disabled (greyed out) |
+| 19 | Select bKash, leave TxID empty, tap Submit | "Transaction ID is required" error under the field |
+| 20 | Enter TxID `abc` (< 8 chars) and tap Submit | "Transaction ID must be 8–20 alphanumeric characters" error |
+| 21 | Enter TxID `TXN12345678` (valid) | No error |
+| 22 | Leave amount blank, tap Submit | "Amount is required" error |
 
 #### Successful submission
 
 | # | Action | Expected |
 |---|--------|----------|
-| 15 | Valid bKash payment + valid TxID + valid amount → Submit | Loading spinner; navigates to Receipt screen |
-| 16 | Valid cash payment + valid amount → Submit | Navigates to Receipt screen without TxID requirement |
+| 23 | Valid bKash payment + valid TxID + valid amount → Submit | Loading spinner; navigates to Receipt screen |
+| 24 | Valid cash payment + valid amount → Submit | Navigates to Receipt screen without TxID requirement |
 
 ---
 
@@ -280,6 +299,50 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 
 ---
 
+### Screen 7 — Admin Payment Verification (HF-058C)
+
+> **Who:** Admin
+> **Navigate:** Revenue tab → "Verify Pending Payments" card (yellow) at top
+
+#### Entry point
+
+| # | Action | Expected |
+|---|--------|----------|
+| 1 | Revenue tab loads as Admin | Yellow card "Verify Pending Payments →" visible at top of screen |
+| 2 | No payments pending | Yellow card is still shown (entry point always visible) |
+| 3 | Tap the card | Navigates to Admin Payments screen |
+
+#### Pending payment list
+
+| # | Action | Expected |
+|---|--------|----------|
+| 4 | Screen loads with pending payments | Header row: "X payments awaiting verification" |
+| 5 | Each row shows: job title or category | Bold title, category name below |
+| 6 | Amount badge | ৳ amount next to Banknote icon in primary colour |
+| 7 | Resident info | "Resident: {name} · {mobile}" |
+| 8 | Method + TxID | Method icon (bKash pink / Nagad orange / Card / Bank / Cash) + method name + "· TxID: {id}" if provided |
+| 9 | Submitted timestamp | Clock icon + "3 Jun 2026, 10:45" format |
+| 10 | Pull-to-refresh | List reloads |
+
+#### Verify action
+
+| # | Action | Expected |
+|---|--------|----------|
+| 11 | Tap "Verify" button on a row | Button shows "Verifying…" and is disabled |
+| 12 | Verification succeeds | Row disappears; success toast "Payment verified successfully" |
+| 13 | Verification fails (network error) | Error toast "Could not verify payment. Please try again." |
+| 14 | After verify: Revenue dashboard | Total revenue increased by the commission amount |
+| 15 | After verify: Provider wallet | Provider wallet balance credited with 80% of payment |
+| 16 | After verify: Job status | Job moves to PAID status |
+
+#### Empty state
+
+| # | Action | Expected |
+|---|--------|----------|
+| 17 | All payments verified | Large green ✓ icon, "All caught up!" title, "No pending payments to verify" |
+
+---
+
 ## Part 3 — Bilingual Check
 
 | Screen | Key | Bengali (bn) | English (en) |
@@ -287,6 +350,9 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 | Payment | Select method label | পেমেন্ট পদ্ধতি বেছে নিন | Select Payment Method |
 | Payment | bKash | বিকাশ | bKash |
 | Payment | TxID label | ট্রানজেকশন আইডি | Transaction ID |
+| Payment | Merchant card title | ধাপ ১: টাকা পাঠান | Step 1: Send Money |
+| Payment | Merchant number label | বিকাশ মার্চেন্ট নম্বর | bKash Merchant Number |
+| Payment | Step 2 instruction | ধাপ ২: আপনার বিকাশ অ্যাপ থেকে ট্রানজেকশন আইডি নিচে লিখুন | Step 2: Enter the transaction ID from your bKash app below |
 | Payment | Submit button | পেমেন্ট জমা দিন | Submit Payment |
 | Receipt | Title | পেমেন্ট রসিদ | Payment Receipt |
 | Receipt | Done CTA | বুকিংয়ে ফিরুন | Back to Bookings |
@@ -295,6 +361,16 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 | Wallet | Withdraw button | উত্তোলনের অনুরোধ | Request Withdrawal |
 | Revenue | Tab label | রাজস্ব | Revenue |
 | Revenue | Total | মোট রাজস্ব | Total Revenue |
+| Revenue | Verify CTA | মুলতুবি পেমেন্ট যাচাই করুন | Verify Pending Payments |
+| Bookings | Payment submitted badge | পেমেন্ট জমা দেওয়া হয়েছে | Payment Submitted |
+| Job detail | Submitted banner | পেমেন্ট জমা দেওয়া হয়েছে — অ্যাডমিন যাচাইয়ের অপেক্ষায় | Payment submitted — awaiting admin verification |
+| Admin payments | Screen title | পেমেন্ট যাচাইকরণ | Payment Verification |
+| Admin payments | Resident label | বাসিন্দা | Resident |
+| Admin payments | Verify button | যাচাই করুন | Verify |
+| Admin payments | Verifying state | যাচাই করা হচ্ছে… | Verifying… |
+| Admin payments | Pending count | {{count}}টি পেমেন্ট যাচাইয়ের অপেক্ষায় | {{count}} payments awaiting verification |
+| Admin payments | Empty title | সব শেষ! | All caught up! |
+| Admin payments | Empty desc | যাচাই করার মতো কোনো পেমেন্ট নেই | No pending payments to verify |
 | Profile | Completion title | আপনার প্রোফাইল {{percentage}}% সম্পন্ন | Your profile is {{percentage}}% complete |
 
 ---
@@ -311,6 +387,6 @@ This verifies the complete happy path across all 3 roles.
 | 4 | Resident | Bookings → "Awaiting Payment" tab | Job appears |
 | 5 | Resident | Tap job → "Pay Now" | Payment screen opens |
 | 6 | Resident | Select bKash, enter TxID, enter amount, Submit | Receipt screen shown |
-| 7 | Admin | Backend `PATCH /v2/admin/payments/:id/verify` (API) | Job moves to PAID; Provider wallet credited |
+| 7 | Admin | Revenue tab → "Verify Pending Payments" → tap Verify on the row | Job moves to PAID; Provider wallet credited; row disappears from list |
 | 8 | Provider | Wallet tab | Balance increased by 80% of payment amount |
 | 9 | Admin | Revenue tab | Total revenue increased by 20% of payment amount |

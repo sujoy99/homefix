@@ -61,6 +61,22 @@ export type RevenueJobsResponse = {
   nextCursor: string | null;
 };
 
+// ─── Payment verification types ───────────────────────────────────────────────
+
+export type PendingPayment = {
+  id: string;
+  job_id: string;
+  job_title: string | null;
+  category_name: string;
+  resident_name: string;
+  resident_mobile: string;
+  amount_paisa: number;
+  method: string;
+  transaction_id: string | null;
+  status: string;
+  created_at: string;
+};
+
 export const adminService = {
   listPending: async (): Promise<PendingProvider[]> => {
     const res = await apiClient.get<ApiResponse<PendingProvider[]>>(
@@ -87,5 +103,14 @@ export const adminService = {
       params: cursor ? { cursor } : undefined,
     });
     return res.data.body;
+  },
+
+  listPendingPayments: async (): Promise<PendingPayment[]> => {
+    const res = await apiClient.get<ApiResponse<PendingPayment[]>>('/v2/admin/payments');
+    return res.data.body;
+  },
+
+  verifyPayment: async (paymentId: string): Promise<void> => {
+    await apiClient.patch(`/v2/admin/payments/${paymentId}/verify`);
   },
 };

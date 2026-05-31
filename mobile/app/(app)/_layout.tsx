@@ -22,6 +22,7 @@ export default function AppLayout() {
       <Stack.Screen name="providers" />
       <Stack.Screen name="payment/[jobId]" />
       <Stack.Screen name="payment/receipt" />
+      <Stack.Screen name="admin/payments" />
     </Stack>
   );
 }

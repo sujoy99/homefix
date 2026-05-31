@@ -26,10 +26,19 @@
 | Ticket | Title | Status | Commit |
 |--------|-------|--------|--------|
 | HF-058B | Admin revenue dashboard mobile screen | ✅ Done | — |
-| HF-059 | Payment screen — method selection, TxID input, order summary | ✅ Done | — |
+| HF-058C | Admin payment verification screen — list SUBMITTED payments, one-tap verify | ✅ Done | — |
+| HF-059 | Payment screen — method selection, merchant number card, TxID input (uppercase), order summary | ✅ Done | — |
 | HF-059B | Profile completion card (Profile screen, both roles) + Provider home banner | ✅ Done | — |
 | HF-060 | Provider wallet screen — balance, earnings, commission breakdown | ✅ Done | — |
 | HF-061 | Payment receipt + completion flow | ✅ Done | — |
+
+### Bug Fixes
+
+| Bug | Description | Status |
+|-----|-------------|--------|
+| Double-payment UX | `payment_status` embedded in job responses; job detail replaces Pay Now with "submitted" banner; JobCard shows green "Payment Submitted" badge | ✅ Done |
+| Merchant number missing | `config.service.ts` was not unwrapping API response body; DB not seeded; both fixed | ✅ Done |
+| TxID case | TxID input now calls `.toUpperCase()` on each keystroke | ✅ Done |
 
 ---
 

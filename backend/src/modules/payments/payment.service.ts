@@ -95,4 +95,8 @@ async function verifyPayment(paymentId: string, adminId: string): Promise<Paymen
   });
 }
 
-export const paymentService = { resolveGateway, submitPayment, verifyPayment };
+async function listPendingPayments(): Promise<Record<string, unknown>[]> {
+  return PaymentRepository.listPendingWithDetails();
+}
+
+export const paymentService = { resolveGateway, submitPayment, verifyPayment, listPendingPayments };

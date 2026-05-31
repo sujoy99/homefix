@@ -1,4 +1,5 @@
 import { JobStatus } from '@homefix/shared';
+import type { PaymentStatus } from '@homefix/shared';
 
 export { JobStatus };
 
@@ -24,6 +25,7 @@ export type Job = {
   service_lon: number | null;
   estimated_budget: number | string | null;
   square_footage: number | string | null;
+  payment_status: PaymentStatus | null;
   created_at: string;
   updated_at: string;
 };
