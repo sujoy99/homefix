@@ -12,6 +12,7 @@ import { adminPaymentRouter } from '@modules/payments/admin-payment.route';
 import { adminCommissionRouter } from '@modules/payments/commission/commission.route';
 import { walletRouter } from '@modules/payments/wallet/wallet.route';
 import { adminWithdrawalRouter } from '@modules/payments/wallet/admin-withdrawal.route';
+import { adminRevenueRouter } from '@modules/payments/revenue/revenue.route';
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.use('/admin/providers', adminProviderRouter);
 router.use('/admin/payments', adminPaymentRouter);
 router.use('/admin/commission', adminCommissionRouter);
 router.use('/admin/withdrawals', adminWithdrawalRouter);
+router.use('/admin/revenue', adminRevenueRouter);
 router.use('/providers', walletRouter);
 router.use('/providers', providerRouter);
 router.use('/storage', storageRouter);

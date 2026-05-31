@@ -72,40 +72,48 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 ### Current Sprint
 
 **Sprint:** Sprint 5 — Payments + Wallet  
-**Status:** 🔄 In Progress  
-**Backend branch:** `feature/sprint-5-backend`  
-**Mobile branch:** `feature/sprint-5-mobile` (not started yet)
+**Status:** 🔄 Backend complete — starting mobile  
+**Backend branch:** `feature/sprint-5-backend` → merged to `master`  
+**Mobile branch:** `feature/sprint-5-mobile` (start here)
 
 > **Full sprint plan + step checklists:** `docs/SPRINT5_PROGRESS.md` — read this first when resuming.  
+> **Backend testing guide:** `docs/TESTING_SPRINT5_BACKEND.md` — all 233 tests, manual test cases, error code reference.  
 > **Payment system design (escrow flow, commission versioning, withdrawal audit trail):** `docs/brd/PAYMENT_SYSTEM.md`  
 > **Profile completion system (weights, thresholds, guards):** `docs/brd/PROFILE_COMPLETION.md`
 
-**Backend ticket status:**
+**Backend ticket status (all done — branch merged):**
 - HF-054 ✅ Payment interface — pluggable gateway + 7 DB migrations + platform settings keys + `PROFILE_INCOMPLETE` error code
-- HF-055 ⏳ Manual gateway — bKash/Nagad TxID entry (REQ-019, REQ-020)
-- HF-056 ⏳ Commission engine — rate from `commission_rules` table (REQ-021)
-- HF-056B ⏳ Admin commission rules API — CRUD + `/preview`
-- HF-057 ⏳ Provider wallet/ledger + withdrawal flow with full admin audit trail (REQ-022)
-- HF-057B ⏳ Profile completion API — computed score + `PROFILE_INCOMPLETE` guard on job accept + withdraw
-- HF-058 ⏳ Admin revenue dashboard API (REQ-023)
+- HF-055 ✅ Manual gateway — bKash/Nagad TxID entry (REQ-019, REQ-020)
+- HF-056 ✅ Commission engine — rate from `commission_rules` table (REQ-021)
+- HF-056B ✅ Admin commission rules API — CRUD + `/preview`
+- HF-057 ✅ Provider wallet/ledger + withdrawal flow with full admin audit trail (REQ-022)
+- HF-057B ✅ Profile completion API — computed score + `PROFILE_INCOMPLETE` guard on job accept + withdraw
+- HF-058 ✅ Admin revenue dashboard API (REQ-023)
 
-**Mobile ticket status (not started — start after HF-055 backend is merged):**
+**Mobile ticket status (active — work on `feature/sprint-5-mobile`):**
 - HF-059 ⏳ Payment screen (bKash/Nagad/Cash, TxID input, HomeFix merchant number display, order summary)
 - HF-059B ⏳ Profile completion card on Profile screen + persistent banner on Provider home
 - HF-060 ⏳ Provider wallet screen (balance, transactions, withdrawal request)
 - HF-061 ⏳ Payment receipt + completion flow
 
-**Key constraints for Sprint 5:**
-- **Escrow model:** Resident pays HomeFix merchant bKash number (from `platform_settings.bkash_merchant_number`); HomeFix splits and credits provider wallet; provider withdraws separately
-- **Job status:** stays `AWAITING_PAYMENT` until Admin verifies TxID; advances to `PAID` only on Admin verify (atomically with commission split + wallet credit)
-- **Gateway selected from DB:** `platform_settings.active_payment_gateway` → `'manual'` (Phase 1) | `'sslcommerz'` (Phase 2); no redeploy needed to switch
-- **Commission rate from DB:** always resolved from `commission_rules` table at payment time; rate locked onto `payments` row permanently; never hardcode 20%
-- **Wallet credit + commission debit + job→PAID in ONE DB transaction** — partial writes are not acceptable
-- **All money as paisa (integer):** 1 taka = 100 paisa; `Math.floor()` for platform fee — never `Math.round()`
-- **Profile completion threshold:** Provider must be ≥ 70% to accept jobs and request withdrawal; computed live (no stored column); returns `PROFILE_INCOMPLETE` error with missing items list
-- **Withdrawal audit trail:** Admin records `amount_sent_paisa`, `sent_at`, `admin_txid` (Admin's own bKash TxID) when marking withdrawal completed
-- **Provider MFS account:** stored in `provider_payment_accounts` table; required before first withdrawal (`NO_MFS_ACCOUNT` error if missing)
-- Read `docs/brd/PAYMENT_SYSTEM.md` and `docs/brd/PROFILE_COMPLETION.md` before implementing any payment or profile logic
+**Key backend API reference for mobile:**
+- `POST /api/v2/payments` — Resident submits payment TxID (job must be AWAITING_PAYMENT)
+- `GET /api/v2/providers/wallet` — Provider wallet summary + first page of transactions
+- `GET /api/v2/providers/wallet/transactions?cursor=` — cursor-paginated ledger
+- `POST /api/v2/providers/wallet/withdraw` — Request withdrawal (needs ≥ 70% profile + MFS account)
+- `POST /api/v2/providers/payment-accounts` — Register MFS (bKash/Nagad) account
+- `GET /api/v2/users/me` — now includes `profile_completion: { percentage, meets_threshold }`
+- `GET /api/v2/users/me/profile-completion` — full breakdown with `missing_items[]`
+- `GET /api/v2/config/public` — includes `bkash_merchant_number`, `nagad_merchant_number` for display
+
+**Key constraints for Sprint 5 mobile:**
+- **Escrow model:** Show HomeFix merchant bKash number (from `/config/public`) — resident sends money there, then enters TxID
+- **`PROFILE_INCOMPLETE` (403):** When Provider tries to accept a job or withdraw, show banner pointing to Profile screen with list of `missing_items[]`
+- **All amounts in paisa:** Convert to ৳ for display: `amount_paisa / 100`
+- **Withdrawal minimum:** ৳100 (10000 paisa) — validate on client before API call
+- **Profile completion card:** Show on Profile screen for both roles; show persistent yellow banner on Provider home if `meets_threshold: false`
+- Read `docs/brd/PAYMENT_SYSTEM.md` and `docs/brd/PROFILE_COMPLETION.md` before implementing any payment or profile UI
+- Read `mobile/CLAUDE.md` before starting — Expo Router patterns, Zustand store rules, design tokens, forbidden patterns
 
 ---
 
