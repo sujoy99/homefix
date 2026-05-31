@@ -2,8 +2,8 @@ import { transaction } from 'objection';
 import { ProviderRepository } from './provider.repository';
 import { CategoryRepository } from '@modules/categories/category.repository';
 import { ProviderProfileModel } from './provider_profile.model';
-import { CreateProviderProfileInput, UpdateProviderProfileInput, AddSkillInput, ProviderProfileWithSkills } from './provider.types';
-import { NotFoundError, DuplicateError, ForbiddenError, UnauthorizedError } from '@errors/http-errors';
+import { UpdateProviderProfileInput, AddSkillInput, ProviderProfileWithSkills } from './provider.types';
+import { NotFoundError, DuplicateError, ForbiddenError } from '@errors/http-errors';
 import { ErrorCode } from '@errors/error-code';
 import { UserRole } from '@modules/users/user.types';
 import { User } from '@modules/users/user.model';
@@ -49,15 +49,18 @@ export class ProviderService {
         await User.query(trx).patchAndFetchById(userId, userPatch as never);
       }
 
-      // Update provider_profiles
+      // Update provider_profiles (skip if no profile fields — e.g. location-only update)
+      const hasProfileFields = Object.keys(profileData).length > 0;
       if (!existing) {
         if (role !== UserRole.PROVIDER) {
           throw new ForbiddenError(ErrorCode.FORBIDDEN, 'Only providers can have a profile');
         }
         const created = await ProviderRepository.create({ user_id: userId }, trx);
-        const patched = await ProviderRepository.update(created.id, profileData, trx);
-        if (!patched) throw new NotFoundError(ErrorCode.RESOURCE_NOT_FOUND, 'Provider profile not found');
-      } else {
+        if (hasProfileFields) {
+          const patched = await ProviderRepository.update(created.id, profileData, trx);
+          if (!patched) throw new NotFoundError(ErrorCode.RESOURCE_NOT_FOUND, 'Provider profile not found');
+        }
+      } else if (hasProfileFields) {
         const updated = await ProviderRepository.update(existing.id, profileData, trx);
         if (!updated) throw new NotFoundError(ErrorCode.RESOURCE_NOT_FOUND, 'Provider profile not found');
       }

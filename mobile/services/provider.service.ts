@@ -20,6 +20,8 @@ export type AvailableProvider = {
     id: string;
     full_name: string;
     photo_url?: string | null;
+    home_lat?: number | null;
+    home_lon?: number | null;
   };
 };
 

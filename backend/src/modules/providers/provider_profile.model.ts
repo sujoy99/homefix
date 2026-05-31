@@ -17,6 +17,14 @@ export class ProviderProfileModel extends Model {
 
   skills?: ProviderSkillModel[];
 
+  user?: {
+    id: string;
+    full_name: string;
+    photo_url?: string | null;
+    home_lat?: number | null;
+    home_lon?: number | null;
+  };
+
   static relationMappings = {
     user: {
       relation: Model.BelongsToOneRelation,

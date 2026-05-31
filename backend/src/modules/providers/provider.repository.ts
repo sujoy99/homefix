@@ -7,7 +7,18 @@ export class ProviderRepository {
   static async findByUserId(userId: string): Promise<ProviderProfileModel | undefined> {
     return ProviderProfileModel.query()
       .findOne({ user_id: userId })
-      .withGraphFetched('skills');
+      .withGraphFetched('[skills, user(publicFields)]')
+      .modifiers({
+        publicFields(query) {
+          query.select(
+            'id',
+            'full_name',
+            'photo_url',
+            ProviderProfileModel.raw('ST_Y(area::geometry) as home_lat'),
+            ProviderProfileModel.raw('ST_X(area::geometry) as home_lon'),
+          );
+        },
+      });
   }
 
   static async findByUserIdWithCategories(userId: string): Promise<ProviderProfileModel | undefined> {

@@ -15,7 +15,7 @@ export const updateProviderProfileSchema = z.object({
     experience_years: z.number().int().min(0).max(50).optional(),
     hourly_rate: z.number().positive().nullish(),
     is_available: z.boolean().optional(),
-    photo_url: z.string().url().nullish(),
+    photo_url: z.string().nullish(),
     latitude: z.number().min(-90).max(90).optional(),
     longitude: z.number().min(-180).max(180).optional(),
   }),

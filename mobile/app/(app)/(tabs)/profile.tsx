@@ -15,6 +15,7 @@ import {
   Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import MapView, { Marker } from 'react-native-maps';
 import {
   User,
   Phone,
@@ -27,6 +28,7 @@ import {
   Check,
   Pencil,
   Navigation,
+  Map,
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -142,6 +144,10 @@ export default function ProfileScreen() {
   const [editLat, setEditLat] = useState<number | null>(null);
   const [editLon, setEditLon] = useState<number | null>(null);
   const [locLoading, setLocLoading] = useState(false);
+  const [showMapPicker, setShowMapPicker] = useState(false);
+  const [pendingMapLat, setPendingMapLat] = useState<number>(23.7630);
+  const [pendingMapLon, setPendingMapLon] = useState<number>(90.4208);
+  const [mapMode, setMapMode] = useState<'location-only' | 'edit-sheet'>('edit-sheet');
 
   const openEditSheet = useCallback(() => {
     setEditBio(myProfile?.bio ?? '');
@@ -208,6 +214,18 @@ export default function ProfileScreen() {
     onError: () => toast.error(t('profile.edit_error')),
   });
 
+  const { mutate: saveLocation, isPending: savingLocation } = useMutation({
+    mutationFn: (coords: { latitude: number; longitude: number }) =>
+      providerService.updateMyProfile(coords),
+    onSuccess: () => {
+      toast.success(t('profile.edit_success'));
+      setShowMapPicker(false);
+      queryClient.invalidateQueries({ queryKey: ['provider', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ['profileCompletion'] });
+    },
+    onError: () => toast.error(t('profile.edit_error')),
+  });
+
   // Multi-select modal state
   const [showServicePicker, setShowServicePicker] = useState(false);
   const [tempSelected, setTempSelected] = useState<string[]>([]);
@@ -265,8 +283,14 @@ export default function ProfileScreen() {
   };
 
   const handleLocationUpdate = () => {
-    if (isProvider) openEditSheet();
-    else Alert.alert(t('profile.location_update'), t('profile.location_coming'));
+    if (isProvider) {
+      setPendingMapLat(myProfile?.user?.home_lat != null ? Number(myProfile.user.home_lat) : 23.7630);
+      setPendingMapLon(myProfile?.user?.home_lon != null ? Number(myProfile.user.home_lon) : 90.4208);
+      setMapMode('location-only');
+      setShowMapPicker(true);
+    } else {
+      Alert.alert(t('profile.location_update'), t('profile.location_coming'));
+    }
   };
 
   return (
@@ -301,7 +325,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
           <Text variant="h4" weight="bold" style={styles.userName}>
-            {user?.fullName || '—'}
+            {(isProvider ? myProfile?.user?.full_name : undefined) ?? (user?.fullName || '—')}
           </Text>
           <Text variant="caption" color="muted">{t(`auth.${user?.role}`)}</Text>
           {isProvider && (
@@ -330,8 +354,7 @@ export default function ProfileScreen() {
           <InfoRow
             icon={<User color={theme.colors.primary} size={18} />}
             label={t('auth.full_name')}
-            value={user?.fullName ?? ''}
-            onPress={() => Alert.alert(t('profile.edit'), t('profile.edit_coming'))}
+            value={((isProvider ? myProfile?.user?.full_name : undefined) ?? user?.fullName) ?? ''}
           />
           <View style={styles.divider} />
           <InfoRow
@@ -353,7 +376,11 @@ export default function ProfileScreen() {
           <InfoRow
             icon={<MapPin color={theme.colors.primary} size={18} />}
             label={t('auth.location')}
-            value={t('profile.tap_to_update')}
+            value={
+              myProfile?.user?.home_lat != null && myProfile?.user?.home_lon != null
+                ? `${Number(myProfile.user.home_lat).toFixed(4)}, ${Number(myProfile.user.home_lon).toFixed(4)}`
+                : t('profile.tap_to_update')
+            }
             onPress={handleLocationUpdate}
           />
         </Card>
@@ -580,25 +607,43 @@ export default function ProfileScreen() {
 
                     {/* Location */}
                     <Text variant="caption" color="muted" style={styles.fieldLabel}>{t('profile.location_section')}</Text>
-                    <TouchableOpacity
-                      style={styles.locationBtn}
-                      onPress={detectLocation}
-                      disabled={locLoading}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('auth.get_location')}
-                    >
-                      {locLoading ? (
-                        <ActivityIndicator size="small" color={theme.colors.primary} />
-                      ) : (
-                        <Navigation size={16} color={theme.colors.primary} />
-                      )}
-                      <Text variant="body" color="primary" weight="medium" style={{ marginLeft: theme.spacing.sm }}>
-                        {editLat !== null ? t('profile.location_saved') : t('auth.get_location')}
-                      </Text>
-                    </TouchableOpacity>
+                    <View style={styles.locationBtnRow}>
+                      <TouchableOpacity
+                        style={[styles.locationBtn, { flex: 1 }]}
+                        onPress={detectLocation}
+                        disabled={locLoading}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('profile.use_gps')}
+                      >
+                        {locLoading ? (
+                          <ActivityIndicator size="small" color={theme.colors.primary} />
+                        ) : (
+                          <Navigation size={15} color={theme.colors.primary} />
+                        )}
+                        <Text variant="caption" color="primary" weight="medium" style={{ marginLeft: 4 }}>
+                          {t('profile.use_gps')}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.locationBtn, { flex: 1 }]}
+                        onPress={() => {
+                          setPendingMapLat(editLat ?? 23.7630);
+                          setPendingMapLon(editLon ?? 90.4208);
+                          setMapMode('edit-sheet');
+                          setShowMapPicker(true);
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('profile.pick_on_map')}
+                      >
+                        <Map size={15} color={theme.colors.primary} />
+                        <Text variant="caption" color="primary" weight="medium" style={{ marginLeft: 4 }}>
+                          {t('profile.pick_on_map')}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                     {editLat !== null && (
                       <Text variant="caption" color="muted" style={{ textAlign: 'center', marginBottom: theme.spacing.sm }}>
-                        {editLat.toFixed(5)}, {editLon?.toFixed(5)}
+                        {t('profile.location_saved')} — {editLat.toFixed(5)}, {editLon?.toFixed(5)}
                       </Text>
                     )}
                   </ScrollView>
@@ -630,6 +675,75 @@ export default function ProfileScreen() {
                 </View>
               </View>
             </KeyboardAvoidingView>
+          </Modal>
+        )}
+
+        {/* Map picker */}
+        {isProvider && (
+          <Modal
+            visible={showMapPicker}
+            animationType="slide"
+            onRequestClose={() => setShowMapPicker(false)}
+          >
+            <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top', 'bottom']}>
+              <View style={styles.mapHeader}>
+                <Text variant="h4" weight="bold">{t('profile.map_pick_title')}</Text>
+                <Text variant="caption" color="muted">{t('profile.map_pick_hint')}</Text>
+              </View>
+              <MapView
+                style={{ flex: 1 }}
+                initialRegion={{
+                  latitude: pendingMapLat,
+                  longitude: pendingMapLon,
+                  latitudeDelta: 0.02,
+                  longitudeDelta: 0.02,
+                }}
+                onPress={(e) => {
+                  setPendingMapLat(e.nativeEvent.coordinate.latitude);
+                  setPendingMapLon(e.nativeEvent.coordinate.longitude);
+                }}
+              >
+                <Marker
+                  coordinate={{ latitude: pendingMapLat, longitude: pendingMapLon }}
+                  draggable
+                  onDragEnd={(e) => {
+                    setPendingMapLat(e.nativeEvent.coordinate.latitude);
+                    setPendingMapLon(e.nativeEvent.coordinate.longitude);
+                  }}
+                />
+              </MapView>
+              <View style={styles.mapFooter}>
+                <TouchableOpacity
+                  style={[styles.modalBtn, styles.cancelBtn]}
+                  onPress={() => setShowMapPicker(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.cancel')}
+                >
+                  <Text variant="body" weight="semibold" color="primary">{t('common.cancel')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalBtn, styles.doneBtn]}
+                  onPress={() => {
+                    if (mapMode === 'location-only') {
+                      saveLocation({ latitude: pendingMapLat, longitude: pendingMapLon });
+                    } else {
+                      setEditLat(pendingMapLat);
+                      setEditLon(pendingMapLon);
+                      setShowMapPicker(false);
+                    }
+                  }}
+                  disabled={savingLocation}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.confirm')}
+                >
+                  {savingLocation ? (
+                    <ActivityIndicator size="small" color={theme.colors.textInverse} />
+                  ) : (
+                    <Text variant="body" weight="semibold" color="inverse">{t('common.confirm')}</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView>
           </Modal>
         )}
 
@@ -890,6 +1004,11 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: 'top',
   },
+  locationBtnRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
+  },
   locationBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -897,8 +1016,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.primary + '40',
     borderRadius: theme.layout.radius.md,
-    padding: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.sm,
     backgroundColor: theme.colors.primary + '08',
-    marginBottom: theme.spacing.xs,
+  },
+  mapHeader: {
+    padding: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    gap: 4,
+    backgroundColor: theme.colors.surface,
+  },
+  mapFooter: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    padding: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
   },
 });

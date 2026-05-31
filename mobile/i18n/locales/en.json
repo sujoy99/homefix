@@ -12,7 +12,8 @@
     "submit": "Submit",
     "complete": "Complete",
     "edit": "Edit",
-    "all": "All"
+    "all": "All",
+    "confirm": "Confirm"
   },
   "auth": {
     "login": "Login",
@@ -131,6 +132,10 @@
     "experience_years_placeholder": "e.g. 3",
     "location_section": "Home Location",
     "location_saved": "Location set",
+    "use_gps": "Use GPS",
+    "pick_on_map": "Pick on Map",
+    "map_pick_title": "Select Location",
+    "map_pick_hint": "Tap anywhere or drag the pin to set your location",
     "edit_success": "Profile updated successfully",
     "edit_error": "Could not update profile. Please try again.",
     "photo_uploading": "Uploading photo…",
