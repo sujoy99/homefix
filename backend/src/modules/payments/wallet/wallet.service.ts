@@ -48,7 +48,8 @@ async function getTransactions(
 
 async function requestWithdrawal(
   userId: string,
-  amountPaisa: number
+  amountPaisa: number,
+  mfsAccountId?: string
 ): Promise<WithdrawalRequest> {
   const completion = await ProfileCompletionService.compute(userId, UserRole.PROVIDER);
   if (!completion.meets_threshold) {
@@ -73,14 +74,32 @@ async function requestWithdrawal(
     );
   }
 
-  const mfsAccount = await MfsAccountRepository.findPrimaryByUserId(userId);
-  if (!mfsAccount) {
-    throw new BadRequestError(ErrorCode.NO_MFS_ACCOUNT, 'No registered MFS account found');
+  let mfsAccount;
+  if (mfsAccountId) {
+    mfsAccount = await MfsAccountRepository.findById(mfsAccountId);
+    if (!mfsAccount || mfsAccount.user_id !== userId) {
+      throw new BadRequestError(ErrorCode.NO_MFS_ACCOUNT, 'MFS account not found or not owned by you');
+    }
+  } else {
+    mfsAccount = await MfsAccountRepository.findPrimaryByUserId(userId);
+    if (!mfsAccount) {
+      throw new BadRequestError(ErrorCode.NO_MFS_ACCOUNT, 'No registered MFS account found');
+    }
   }
 
   const wallet = await WalletRepository.findByUserId(userId);
-  if (!wallet || wallet.balance_paisa < amountPaisa) {
+  if (!wallet) {
     throw new BadRequestError(ErrorCode.INSUFFICIENT_WALLET_BALANCE, 'Insufficient wallet balance');
+  }
+
+  // Deduct already-pending withdrawal amounts so providers can't over-request
+  const pendingTotal = await WithdrawalRepository.sumPendingByWalletId(wallet.id);
+  const availableBalance = wallet.balance_paisa - pendingTotal;
+  if (availableBalance < amountPaisa) {
+    throw new BadRequestError(
+      ErrorCode.INSUFFICIENT_WALLET_BALANCE,
+      `Insufficient available balance. Available: ৳${availableBalance / 100} (balance ৳${wallet.balance_paisa / 100} minus ৳${pendingTotal / 100} in pending requests)`
+    );
   }
 
   return WithdrawalRepository.create({
@@ -147,11 +166,22 @@ async function rejectWithdrawal(
   return updated;
 }
 
+async function getProviderWithdrawals(
+  userId: string
+): Promise<{ withdrawals: WithdrawalRequest[]; pendingTotal: number }> {
+  const wallet = await WalletRepository.findByUserId(userId);
+  if (!wallet) return { withdrawals: [], pendingTotal: 0 };
+  const withdrawals = await WithdrawalRepository.listByWalletId(wallet.id);
+  const pendingTotal = await WithdrawalRepository.sumPendingByWalletId(wallet.id);
+  return { withdrawals, pendingTotal };
+}
+
 export const WalletService = {
   creditWallet,
   getWalletWithHistory,
   getTransactions,
   requestWithdrawal,
+  getProviderWithdrawals,
   completeWithdrawal,
   rejectWithdrawal,
 };

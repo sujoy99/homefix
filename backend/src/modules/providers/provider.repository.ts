@@ -7,7 +7,24 @@ export class ProviderRepository {
   static async findByUserId(userId: string): Promise<ProviderProfileModel | undefined> {
     return ProviderProfileModel.query()
       .findOne({ user_id: userId })
-      .withGraphFetched('skills');
+      .withGraphFetched('[skills, user(publicFields)]')
+      .modifiers({
+        publicFields(query) {
+          query.select(
+            'id',
+            'full_name',
+            'photo_url',
+            ProviderProfileModel.raw('ST_Y(area::geometry) as home_lat'),
+            ProviderProfileModel.raw('ST_X(area::geometry) as home_lon'),
+          );
+        },
+      });
+  }
+
+  static async findByUserIdWithCategories(userId: string): Promise<ProviderProfileModel | undefined> {
+    return ProviderProfileModel.query()
+      .findOne({ user_id: userId })
+      .withGraphFetched('[skills.[category]]');
   }
 
   static async findById(id: string): Promise<ProviderProfileModel | undefined> {
@@ -57,7 +74,10 @@ export class ProviderRepository {
 
   static async listAvailable(): Promise<ProviderProfileModel[]> {
     return ProviderProfileModel.query()
-      .where('is_available', true)
+      .join('users', 'provider_profiles.user_id', 'users.id')
+      .where('provider_profiles.is_available', true)
+      .where('users.status', 'active')
+      .select('provider_profiles.*')
       .withGraphFetched('skills');
   }
 
@@ -72,6 +92,7 @@ export class ProviderRepository {
     const q = ProviderProfileModel.query()
       .join('users', 'provider_profiles.user_id', 'users.id')
       .where('provider_profiles.is_available', true)
+      .where('users.status', 'active')
       .whereNotNull('users.area')
       .whereRaw(
         'ST_DWithin(users.area, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)',

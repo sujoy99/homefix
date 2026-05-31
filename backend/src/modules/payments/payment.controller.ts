@@ -16,4 +16,9 @@ export class PaymentController {
     const payment = await paymentService.verifyPayment(param(req, 'id'), req.user.sub);
     return HttpResponse.success(res, payment, 'Payment verified');
   }
+
+  static async listPendingForAdmin(_req: AuthenticatedRequest, res: Response): Promise<Response> {
+    const payments = await paymentService.listPendingPayments();
+    return HttpResponse.success(res, payments, 'Pending payments');
+  }
 }

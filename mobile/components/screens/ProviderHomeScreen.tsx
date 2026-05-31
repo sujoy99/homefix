@@ -17,10 +17,11 @@ import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
 import { useAuthStore } from '@/store/authStore';
 import { providerService } from '@/services/provider.service';
-import { jobService, Job } from '@/services/job.service';
+import { jobService } from '@/services/job.service';
 import { categoryService } from '@/services/category.service';
 import { toast } from '@/utils/toast';
 import { theme } from '@/theme';
+import { ProfileCompletionBanner } from '@/components/shared/ProfileCompletionCard';
 
 function StatCard({
   icon,
@@ -104,6 +105,9 @@ export default function ProviderHomeScreen() {
             {t('provider_home.subtitle')}
           </Text>
         </View>
+
+        {/* Profile completion banner — shown until provider meets 70% threshold */}
+        <ProfileCompletionBanner onPress={() => router.push('/(app)/(tabs)/profile')} />
 
         {/* Availability toggle */}
         <Card style={styles.availabilityCard}>

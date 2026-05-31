@@ -37,6 +37,9 @@ export type UpdateProviderProfileInput = {
   experience_years?: number;
   hourly_rate?: number | null;
   is_available?: boolean;
+  photo_url?: string | null;
+  latitude?: number;
+  longitude?: number;
 };
 
 export type AddSkillInput = {

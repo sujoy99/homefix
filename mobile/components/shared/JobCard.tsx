@@ -59,7 +59,11 @@ function formatDate(isoString: string): string {
 
 export function JobCard({ job, categoryName, onPress }: Props) {
   const { t } = useTranslation();
-  const badge = useStatusBadge(job.status);
+  const statusBadge = useStatusBadge(job.status);
+  const badge =
+    job.status === JobStatus.AWAITING_PAYMENT && job.payment_status
+      ? { label: t('bookings.payment_submitted_badge'), bg: theme.colors.successBackground, text: theme.colors.success }
+      : statusBadge;
 
   const addressLine = [
     job.service_address?.house,

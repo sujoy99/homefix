@@ -1,5 +1,6 @@
 import { transaction } from 'objection';
 import { JobRepository } from './job.repository';
+import { PaymentRepository } from '@modules/payments/payment.repository';
 import { CategoryRepository } from '@modules/categories/category.repository';
 import { ProviderRepository } from '@modules/providers/provider.repository';
 import { Job, CreateJobInput, JobFeedQuery } from './job.types';
@@ -43,12 +44,22 @@ export class JobService {
     if (!job) {
       throw new NotFoundError(ErrorCode.RESOURCE_NOT_FOUND, 'Job not found');
     }
-    return job as unknown as Job;
+    const payment = job.status === JobStatus.AWAITING_PAYMENT
+      ? await PaymentRepository.findByJobId(id)
+      : undefined;
+    return { ...job, payment_status: payment?.status ?? null } as unknown as Job;
   }
 
   static async getResidentJobs(residentId: string): Promise<Job[]> {
     const jobs = await JobRepository.findByResident(residentId);
-    return jobs as unknown as Job[];
+    const awaitingIds = jobs
+      .filter((j) => j.status === JobStatus.AWAITING_PAYMENT)
+      .map((j) => j.id);
+    const paymentMap = await PaymentRepository.findByJobIds(awaitingIds);
+    return jobs.map((j) => ({
+      ...j,
+      payment_status: paymentMap[j.id]?.status ?? null,
+    })) as unknown as Job[];
   }
 
   static async getProviderAssignedJobs(providerId: string): Promise<Job[]> {

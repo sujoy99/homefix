@@ -91,8 +91,13 @@ async function verifyPayment(paymentId: string, adminId: string): Promise<Paymen
       throw new NotFoundError(ErrorCode.PAYMENT_NOT_FOUND, 'Payment not found after verify');
     }
     await CommissionService.applyCommission(paymentId, trx);
+    await JobRepository.updateStatus(payment.job_id, JobStatus.PAID, undefined, trx);
     return verified as unknown as PaymentRow;
   });
 }
 
-export const paymentService = { resolveGateway, submitPayment, verifyPayment };
+async function listPendingPayments(): Promise<Record<string, unknown>[]> {
+  return PaymentRepository.listPendingWithDetails();
+}
+
+export const paymentService = { resolveGateway, submitPayment, verifyPayment, listPendingPayments };

@@ -19,6 +19,25 @@ const router = Router();
 
 /**
  * @openapi
+ * /admin/payments:
+ *   get:
+ *     summary: List all submitted payments awaiting admin verification
+ *     tags: [Admin - Payments]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of pending payments with job and resident details
+ */
+router.get(
+  '/',
+  authGuard,
+  roleGuard(UserRole.ADMIN),
+  asyncHandler(asAuthenticated(PaymentController.listPendingForAdmin))
+);
+
+/**
+ * @openapi
  * /admin/payments/{id}/verify:
  *   patch:
  *     summary: Admin verifies a submitted payment TxID (REQ-019, REQ-020)

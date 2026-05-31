@@ -1,9 +1,9 @@
 # Sprint 5 — Payments & Wallet — Progress Tracker
 
-> **Backend Branch:** `feature/sprint-5-backend`
+> **Backend Branch:** `feature/sprint-5-backend` (merged to master)
 > **Mobile Branch:** `feature/sprint-5-mobile`
-> **Last updated:** 2026-05-30
-> **Tests:** 233/233 passing
+> **Last updated:** 2026-05-31
+> **Tests:** 121/121 mobile passing (+31 post-ship) · 248/248 backend passing (+15 post-ship) · All TypeScript checks passing (both platforms)
 
 ---
 
@@ -25,10 +25,28 @@
 
 | Ticket | Title | Status | Commit |
 |--------|-------|--------|--------|
-| HF-059 | Payment screen — method selection, TxID input, order summary | ⏳ Pending | — |
-| HF-059B | Profile completion card (Profile screen, both roles) + Provider home banner | ⏳ Pending | — |
-| HF-060 | Provider wallet screen — balance, earnings, commission breakdown | ⏳ Pending | — |
-| HF-061 | Payment receipt + completion flow | ⏳ Pending | — |
+| HF-058B | Admin revenue dashboard mobile screen | ✅ Done | — |
+| HF-058C | Admin payment verification screen — list SUBMITTED payments, one-tap verify | ✅ Done | — |
+| HF-058D | Admin revenue financial summary card — 6 at-a-glance stats (total payments, verify pending, platform revenue, provider wallet balances, provider withdrawn, pending withdrawals) | ✅ Done | — |
+| HF-068B | Admin provider detail screen — NID front/back fullscreen, skills, approve/reject (pulled forward from Sprint 7) | ✅ Done | — |
+| HF-059 | Payment screen — method selection, merchant number card, TxID input (uppercase), order summary | ✅ Done | — |
+| HF-059B | Profile completion card (Profile screen, both roles) + Provider home banner | ✅ Done | — |
+| HF-060 | Provider wallet screen — balance, earnings, commission breakdown | ✅ Done | — |
+| HF-060B | Withdrawal end-to-end mobile — admin `admin/withdrawals.tsx` screen (list all requests, complete/reject bottom-sheet modals, wallet balance + total-pending breakdown per row, pending count badge on revenue CTAs); provider wallet withdrawal history section with status badges; available-balance shown in withdraw modal when pending requests exist | ✅ Done | — |
+| HF-060C | Provider withdrawal MFS account selector — multi-account providers see account picker dropdown in withdraw modal; backend validates `mfs_account_id` ownership; falls back to primary account when not supplied | ✅ Done | — |
+| HF-061 | Payment receipt + completion flow | ✅ Done | — |
+| HF-061B | Provider profile edit screen — bio, hourly rate, experience years, profile photo, home location (GPS) | ✅ Done | — |
+
+### Bug Fixes & UX Polish
+
+| Bug / Enhancement | Description | Status |
+|-------------------|-------------|--------|
+| Double-payment UX | `payment_status` embedded in job responses; job detail replaces Pay Now with "submitted" banner; JobCard shows green "Payment Submitted" badge | ✅ Done |
+| Merchant number missing | `config.service.ts` was not unwrapping API response body; DB not seeded; both fixed | ✅ Done |
+| TxID auto-uppercase (payment screen) | Resident payment TxID input calls `.toUpperCase()` on each keystroke | ✅ Done |
+| TxID auto-uppercase (admin complete modal) | Admin "Complete Withdrawal" txid input: `autoCapitalize="characters"` + `onChangeText` forces uppercase | ✅ Done |
+| Date + time display | Transaction history, withdrawal request list, and admin withdrawal dashboard now show date **and** time in 12-hour format (`3 Jun 2026, 10:45 AM`) instead of date-only | ✅ Done |
+| Backend `mfs_account_id` optional field | `requestWithdrawalSchema` accepts optional `mfs_account_id: uuid`; service validates ownership against requesting user | ✅ Done |
 
 ---
 

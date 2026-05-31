@@ -18,6 +18,21 @@ export interface CompleteWithdrawalInput {
 }
 
 export class WithdrawalRepository {
+  static async sumPendingByWalletId(walletId: string): Promise<number> {
+    const result = await WithdrawalRequest.query()
+      .where('wallet_id', walletId)
+      .where('status', WithdrawalStatus.PENDING)
+      .sum('amount_requested_paisa as total')
+      .first();
+    return Number((result as unknown as { total: string | null })?.total ?? 0);
+  }
+
+  static async listByWalletId(walletId: string): Promise<WithdrawalRequest[]> {
+    return WithdrawalRequest.query()
+      .where('wallet_id', walletId)
+      .orderBy('requested_at', 'desc');
+  }
+
   static async create(data: CreateWithdrawalInput): Promise<WithdrawalRequest> {
     return WithdrawalRequest.query().insertAndFetch({
       ...data,
@@ -33,11 +48,34 @@ export class WithdrawalRepository {
   static async listPending(): Promise<WithdrawalRequest[]> {
     return WithdrawalRequest.query()
       .where('status', WithdrawalStatus.PENDING)
+      .withGraphFetched('[provider(nameOnly), mfsAccount(accountFields), wallet(balanceOnly)]')
+      .modifiers({
+        nameOnly: (q) => q.select('id', 'full_name', 'mobile'),
+        accountFields: (q) => q.select('id', 'mfs_type', 'account_number', 'account_name'),
+        balanceOnly: (q) => q.select('id', 'balance_paisa'),
+      })
       .orderBy('requested_at', 'asc');
   }
 
-  static async listAll(): Promise<WithdrawalRequest[]> {
-    return WithdrawalRequest.query().orderBy('requested_at', 'desc');
+  static async listAll(): Promise<(WithdrawalRequest & { total_pending_paisa: number })[]> {
+    const rows = await WithdrawalRequest.query()
+      .select(
+        'withdrawal_requests.*',
+        WithdrawalRequest.knex().raw(
+          `COALESCE((SELECT SUM(wr2.amount_requested_paisa) FROM withdrawal_requests wr2 WHERE wr2.wallet_id = withdrawal_requests.wallet_id AND wr2.status = 'pending'), 0) AS total_pending_paisa`
+        )
+      )
+      .withGraphFetched('[provider(nameOnly), mfsAccount(accountFields), wallet(balanceOnly)]')
+      .modifiers({
+        nameOnly: (q) => q.select('id', 'full_name', 'mobile'),
+        accountFields: (q) => q.select('id', 'mfs_type', 'account_number', 'account_name'),
+        balanceOnly: (q) => q.select('id', 'balance_paisa'),
+      })
+      .orderBy('requested_at', 'desc');
+    return rows.map((r) => ({
+      ...r,
+      total_pending_paisa: Number((r as unknown as { total_pending_paisa: string }).total_pending_paisa ?? 0),
+    })) as (WithdrawalRequest & { total_pending_paisa: number })[];
   }
 
   static async complete(

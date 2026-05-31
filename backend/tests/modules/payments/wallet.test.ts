@@ -426,6 +426,188 @@ describe('Admin withdrawal complete / reject', () => {
   });
 });
 
+// ─── POST /providers/wallet/withdraw — explicit mfs_account_id ────────────────
+
+describe('POST /api/v2/providers/wallet/withdraw — explicit mfs_account_id', () => {
+  it('uses specified secondary account when mfs_account_id is provided', async () => {
+    const provider = await createProvider({ status: UserStatus.ACTIVE });
+    const token = await loginAs(provider.mobile, provider.password);
+
+    await seedWallet(provider.userId, 50_000);
+    await addMfsAccount(token); // primary bKash
+    const secondRes = await addMfsAccount(token, {
+      mfs_type: MfsType.NAGAD,
+      account_number: '01811223344',
+      is_primary: false,
+    });
+    const secondAccountId = secondRes.body.body.id as string;
+
+    const res = await request
+      .post('/api/v2/providers/wallet/withdraw')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ amount_paisa: 30_000, mfs_account_id: secondAccountId });
+
+    expect(res.status).toBe(201);
+    expect(res.body.body.mfs_account_id).toBe(secondAccountId);
+    expect(res.body.body.status).toBe(WithdrawalStatus.PENDING);
+  });
+
+  it('returns 400 when mfs_account_id belongs to another provider', async () => {
+    const provider1 = await createProvider({ status: UserStatus.ACTIVE });
+    const provider2 = await createProvider({ status: UserStatus.ACTIVE });
+    const token1 = await loginAs(provider1.mobile, provider1.password);
+    const token2 = await loginAs(provider2.mobile, provider2.password);
+
+    await seedWallet(provider1.userId, 50_000);
+    await addMfsAccount(token1);
+
+    // provider2 adds their own account
+    const p2Res = await addMfsAccount(token2);
+    const p2AccountId = p2Res.body.body.id as string;
+
+    // provider1 tries to withdraw to provider2's account
+    const res = await request
+      .post('/api/v2/providers/wallet/withdraw')
+      .set('Authorization', `Bearer ${token1}`)
+      .send({ amount_paisa: 20_000, mfs_account_id: p2AccountId });
+
+    expect(res.status).toBe(400);
+  });
+});
+
+// ─── POST /providers/wallet/withdraw — available balance guard ─────────────────
+
+describe('POST /api/v2/providers/wallet/withdraw — available balance guard', () => {
+  it('blocks withdrawal when pending requests consume most of the balance', async () => {
+    const provider = await createProvider({ status: UserStatus.ACTIVE });
+    const token = await loginAs(provider.mobile, provider.password);
+
+    await seedWallet(provider.userId, 50_000); // ৳500 total
+    await addMfsAccount(token);
+
+    // First request: ৳300 (available drops to ৳200)
+    const first = await request
+      .post('/api/v2/providers/wallet/withdraw')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ amount_paisa: 30_000 });
+    expect(first.status).toBe(201);
+
+    // Second request: ৳250 exceeds the ৳200 available
+    const second = await request
+      .post('/api/v2/providers/wallet/withdraw')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ amount_paisa: 25_000 });
+
+    expect(second.status).toBe(400);
+  });
+
+  it('allows withdrawal up to the available balance (total minus pending)', async () => {
+    const provider = await createProvider({ status: UserStatus.ACTIVE });
+    const token = await loginAs(provider.mobile, provider.password);
+
+    await seedWallet(provider.userId, 50_000); // ৳500 total
+    await addMfsAccount(token);
+
+    // First request: ৳300 (available drops to ৳200)
+    await request
+      .post('/api/v2/providers/wallet/withdraw')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ amount_paisa: 30_000 });
+
+    // Second request: exactly ৳200 = available balance (should succeed)
+    const res = await request
+      .post('/api/v2/providers/wallet/withdraw')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ amount_paisa: 20_000 });
+
+    expect(res.status).toBe(201);
+    expect(res.body.body.status).toBe(WithdrawalStatus.PENDING);
+  });
+});
+
+// ─── GET /providers/wallet/withdrawals ───────────────────────────────────────
+
+describe('GET /api/v2/providers/wallet/withdrawals', () => {
+  it('returns 401 without token', async () => {
+    const res = await request.get('/api/v2/providers/wallet/withdrawals');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 403 for a resident', async () => {
+    const resident = await createUser();
+    const token = await loginAs(resident.mobile, resident.password);
+
+    const res = await request
+      .get('/api/v2/providers/wallet/withdrawals')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('returns empty list when no withdrawals exist', async () => {
+    const provider = await createProvider({ status: UserStatus.ACTIVE });
+    const token = await loginAs(provider.mobile, provider.password);
+
+    const res = await request
+      .get('/api/v2/providers/wallet/withdrawals')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.body.withdrawals).toHaveLength(0);
+    expect(res.body.body.pending_total_paisa).toBe(0);
+  });
+
+  it('lists own withdrawal requests and sums pending total correctly', async () => {
+    const provider = await createProvider({ status: UserStatus.ACTIVE });
+    const token = await loginAs(provider.mobile, provider.password);
+
+    await seedWallet(provider.userId, 100_000);
+    await addMfsAccount(token);
+
+    await request
+      .post('/api/v2/providers/wallet/withdraw')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ amount_paisa: 30_000 });
+
+    await request
+      .post('/api/v2/providers/wallet/withdraw')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ amount_paisa: 20_000 });
+
+    const res = await request
+      .get('/api/v2/providers/wallet/withdrawals')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.body.withdrawals).toHaveLength(2);
+    expect(res.body.body.pending_total_paisa).toBe(50_000);
+  });
+
+  it('does not return another provider withdrawal requests', async () => {
+    const provider1 = await createProvider({ status: UserStatus.ACTIVE });
+    const provider2 = await createProvider({ status: UserStatus.ACTIVE });
+    const token1 = await loginAs(provider1.mobile, provider1.password);
+    const token2 = await loginAs(provider2.mobile, provider2.password);
+
+    await seedWallet(provider1.userId, 50_000);
+    await addMfsAccount(token1);
+
+    await request
+      .post('/api/v2/providers/wallet/withdraw')
+      .set('Authorization', `Bearer ${token1}`)
+      .send({ amount_paisa: 30_000 });
+
+    // provider2 queries — should see nothing
+    const res = await request
+      .get('/api/v2/providers/wallet/withdrawals')
+      .set('Authorization', `Bearer ${token2}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.body.withdrawals).toHaveLength(0);
+    expect(res.body.body.pending_total_paisa).toBe(0);
+  });
+});
+
 // ─── Atomic transaction guarantee ─────────────────────────────────────────────
 
 describe('Wallet atomic transaction — creditWallet', () => {

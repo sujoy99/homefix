@@ -12,6 +12,9 @@ export const PlatformSettingKey = {
   /** Source allowed for NID photo uploads during provider registration. */
   NID_PHOTO_SOURCE: 'nid_photo_source',
 
+  /** Source allowed for profile photo uploads (provider edit profile). */
+  PROFILE_PHOTO_SOURCE: 'profile_photo_source',
+
   /** Default platform commission % deducted from provider earnings. */
   PLATFORM_COMMISSION_PCT: 'platform_commission_pct',
 
@@ -40,3 +43,15 @@ export const NidPhotoSource = {
 } as const;
 
 export type NidPhotoSource = (typeof NidPhotoSource)[keyof typeof NidPhotoSource];
+
+/**
+ * profile_photo_source valid values:
+ *   camera_only        → provider MUST use camera (default — ensures live photo)
+ *   camera_and_gallery → provider may also pick from their photo library
+ */
+export const ProfilePhotoSource = {
+  CAMERA_ONLY: 'camera_only',
+  CAMERA_AND_GALLERY: 'camera_and_gallery',
+} as const;
+
+export type ProfilePhotoSource = (typeof ProfilePhotoSource)[keyof typeof ProfilePhotoSource];

@@ -11,13 +11,18 @@
 
 ```bash
 cp backend/.env.sample backend/.env.development   # first time only
+ln -sf backend/.env.development .env              # first time only — repo-root symlink for docker compose
 
 make up       # Start Postgres + backend — migrations run automatically before server boots
+make seed     # First time only — populates roles, permissions, categories, admin user
+make restart  # After seeding — reloads the RBAC permission cache (otherwise all protected routes return 403)
 make logs     # Tail backend logs
 make db       # Open psql shell
 make shell    # Shell into backend container
 make clean    # Wipe containers + volumes (fresh start)
 ```
+
+> **Always use `make` commands — never `docker compose up` directly.** The Makefile passes the correct `--env-file` so the postgres container gets `DB_NAME=homefix`. Running `docker compose` raw without the env file creates a `postgres` database instead of `homefix` and your data becomes unreachable. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the full explanation.
 
 ### Mobile (Expo)
 

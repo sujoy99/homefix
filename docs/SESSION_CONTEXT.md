@@ -59,6 +59,12 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 - Accessibility audit (HF-046): `accessibilityRole` + `accessibilityLabel` on 30+ touchables app-wide; `accessibilityHint` on mic, GPS, photo picker, thumbnails; touch targets ≥ 48 px; WCAG AA contrast verified; font scale 1.5× clean.
 - 50/50 tests passing (8 suites). Test docs: `docs/TESTING_SPRINT4_MOBILE.md`, `docs/SPRINT4_USER_MANUAL.md`.
 
+**Sprint 5 — Payments & Wallet:**
+- Backend: Payment interface (pluggable gateway pattern), Manual bKash/Nagad gateway (TxID entry, REQ-019/020), Commission engine (rate priority: promotion > category > global; locked at verify time, REQ-021), Provider wallet/ledger (80% credit on payment verify, REQ-022), Provider MFS account management (bKash/Nagad/Bank), Admin payment verification (atomic: wallet credit + ledger + payment status + job PAID in one transaction), Admin withdrawal flow (complete/reject with audit trail), Admin revenue dashboard API (totals, period breakdown, rule breakdown, top categories, per-job cursor-paginated, REQ-023), Profile completion API (`compute()` + `PROFILE_INCOMPLETE` guard on job accept + withdraw), Financial summary endpoint (6 platform-wide aggregates: verified payments, pending payments, platform revenue, provider wallets, withdrawn, pending withdrawal).
+- Mobile: Payment screen (merchant number from `/config/public`, TxID input auto-uppercase, order summary), Payment receipt, Provider wallet screen (balance/earnings/withdrawal history with status badges, MFS account management, withdrawal modal with multi-account picker, available-balance guard displayed), Admin revenue dashboard (period bar chart, rule breakdown, top categories, per-job list, financial summary card with 6 stat tiles), Admin payment verification screen, Admin withdrawal dashboard (complete/reject bottom-sheet modals, TxID auto-uppercase, wallet balance breakdown per row), Provider profile edit screen (bio, rate, GPS, photo), Profile completion card (both roles) + provider home banner.
+- HF-068B (Sprint 7 pulled forward): Mobile admin provider detail screen with NID front/back fullscreen viewer, skills, approve/reject.
+- Tests: **248 backend** (18 suites, +15 new); **121 mobile** (14 suites, +31 new). Test docs: `docs/TESTING_SPRINT5_BACKEND.md`, `docs/TESTING_SPRINT5_MOBILE.md`, `docs/SPRINT5_USER_MANUAL.md`.
+
 **Seed accounts (always available after `make seed`):**
 
 | Role | Mobile | Password |
@@ -71,49 +77,47 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 
 ### Current Sprint
 
-**Sprint:** Sprint 5 — Payments + Wallet  
-**Status:** 🔄 Backend complete — starting mobile  
-**Backend branch:** `feature/sprint-5-backend` → merged to `master`  
-**Mobile branch:** `feature/sprint-5-mobile` (start here)
+**Sprint:** Sprint 6 — Reviews, Notifications, Real-time & In-App Communication  
+**Status:** ⏳ Not Started — Sprint 5 fully complete ✅  
+**Backend branch:** `feature/sprint-6-backend` (create this first)  
+**Mobile branch:** `feature/sprint-6-mobile` (after backend is complete)
 
-> **Full sprint plan + step checklists:** `docs/SPRINT5_PROGRESS.md` — read this first when resuming.  
-> **Backend testing guide:** `docs/TESTING_SPRINT5_BACKEND.md` — all 233 tests, manual test cases, error code reference.  
-> **Payment system design (escrow flow, commission versioning, withdrawal audit trail):** `docs/brd/PAYMENT_SYSTEM.md`  
-> **Profile completion system (weights, thresholds, guards):** `docs/brd/PROFILE_COMPLETION.md`
+> **Sprint 5 complete:** All tickets shipped and tested. See `docs/TESTING_SPRINT5_BACKEND.md` (248 tests) and `docs/TESTING_SPRINT5_MOBILE.md` (121 tests) for test counts and manual test cases.  
+> **Sprint 6 plan:** See `docs/implementation_plan.md` § Sprint 6 for all tickets, ordering notes, and the communication channel architecture.  
+> **Review system BRD:** `docs/brd/REVIEW_SYSTEM.md` — REQ-024 to 026 (review gated on PAID status).
 
-**Backend ticket status (all done — branch merged):**
-- HF-054 ✅ Payment interface — pluggable gateway + 7 DB migrations + platform settings keys + `PROFILE_INCOMPLETE` error code
-- HF-055 ✅ Manual gateway — bKash/Nagad TxID entry (REQ-019, REQ-020)
-- HF-056 ✅ Commission engine — rate from `commission_rules` table (REQ-021)
-- HF-056B ✅ Admin commission rules API — CRUD + `/preview`
-- HF-057 ✅ Provider wallet/ledger + withdrawal flow with full admin audit trail (REQ-022)
-- HF-057B ✅ Profile completion API — computed score + `PROFILE_INCOMPLETE` guard on job accept + withdraw
-- HF-058 ✅ Admin revenue dashboard API (REQ-023)
+**Sprint 6 backend tickets (do these first, in order):**
+- HF-047 ⏳ Review & rating module — `reviews` table, `POST /v2/jobs/:id/reviews` (PAID only), `GET /v2/providers/:id/reviews`, aggregate rating update (REQ-024, 025, 026)
+- HF-048 ⏳ Push notification service — FCM integration, device token registration, `POST /v2/notifications/register`
+- HF-049 ⏳ Provider background GPS tracking API — `PATCH /v2/providers/location`, location history
+- HF-100 ⏳ In-app messaging — `job_messages` table; `POST /v2/jobs/:id/messages`; `GET /v2/jobs/:id/messages?cursor=`; Socket.IO room per job; push notification to recipient when backgrounded
+- HF-101 ⏳ Pluggable VoIP call service — `call.interface.ts`; Phase 1: Jitsi Meet (`CALL_PROVIDER=jitsi`); `POST /v2/jobs/:id/call/room` → `{ provider, roomName, serverUrl?, token? }`
 
-**Mobile ticket status (active — work on `feature/sprint-5-mobile`):**
-- HF-059 ⏳ Payment screen (bKash/Nagad/Cash, TxID input, HomeFix merchant number display, order summary)
-- HF-059B ⏳ Profile completion card on Profile screen + persistent banner on Provider home
-- HF-060 ⏳ Provider wallet screen (balance, transactions, withdrawal request)
-- HF-061 ⏳ Payment receipt + completion flow
+**Sprint 6 mobile tickets (after backend, in order):**
+- HF-050 ⏳ Review & rating screen — star input + text, shown only after job is PAID (REQ-024)
+- HF-051 ⏳ Push notification setup — `expo-notifications`, FCM token registration on login, deep linking
+- HF-052 ⏳ Notification center — bell icon in tab bar, badge, read/unread list
+- HF-053 ⏳ Provider location tracking — background GPS, `expo-location` task manager
+- HF-102 ⏳ In-app chat screen — per-job (ACTIVE status only), bubble UI, WebSocket with 5 s poll fallback, chat icon on job detail
+- HF-103 ⏳ In-app voice call — `@jitsi/react-native-sdk` Phase 1, graceful "call unavailable" state
 
-**Key backend API reference for mobile:**
-- `POST /api/v2/payments` — Resident submits payment TxID (job must be AWAITING_PAYMENT)
-- `GET /api/v2/providers/wallet` — Provider wallet summary + first page of transactions
-- `GET /api/v2/providers/wallet/transactions?cursor=` — cursor-paginated ledger
-- `POST /api/v2/providers/wallet/withdraw` — Request withdrawal (needs ≥ 70% profile + MFS account)
-- `POST /api/v2/providers/payment-accounts` — Register MFS (bKash/Nagad) account
-- `GET /api/v2/users/me` — now includes `profile_completion: { percentage, meets_threshold }`
-- `GET /api/v2/users/me/profile-completion` — full breakdown with `missing_items[]`
-- `GET /api/v2/config/public` — includes `bkash_merchant_number`, `nagad_merchant_number` for display
+**Key backend API to build this sprint:**
+- `POST /v2/jobs/:id/reviews` — Resident submits star + text; job must be `PAID`; one review per job
+- `GET /v2/providers/:id/reviews` — Public; used by provider detail screen (Sprint 2 screen reads this)
+- `GET /v2/jobs/:id/messages?cursor=` — Chat history, cursor-paginated, participants only
+- `POST /v2/jobs/:id/messages` — Send message (resident or provider), job must be `ACTIVE`
+- `POST /v2/jobs/:id/call/room` — Create Jitsi room; returns `{ provider, roomName, serverUrl, token }`
+- `POST /v2/notifications/register` — Register FCM device token for authenticated user
+- `PATCH /v2/providers/location` — Update provider lat/lng (called by background task on mobile)
 
-**Key constraints for Sprint 5 mobile:**
-- **Escrow model:** Show HomeFix merchant bKash number (from `/config/public`) — resident sends money there, then enters TxID
-- **`PROFILE_INCOMPLETE` (403):** When Provider tries to accept a job or withdraw, show banner pointing to Profile screen with list of `missing_items[]`
-- **All amounts in paisa:** Convert to ৳ for display: `amount_paisa / 100`
-- **Withdrawal minimum:** ৳100 (10000 paisa) — validate on client before API call
-- **Profile completion card:** Show on Profile screen for both roles; show persistent yellow banner on Provider home if `meets_threshold: false`
-- Read `docs/brd/PAYMENT_SYSTEM.md` and `docs/brd/PROFILE_COMPLETION.md` before implementing any payment or profile UI
-- Read `mobile/CLAUDE.md` before starting — Expo Router patterns, Zustand store rules, design tokens, forbidden patterns
+**Key constraints for Sprint 6:**
+- **Reviews gated on PAID:** `job.status === PAID` enforced at DB level (FK or CHECK) AND service layer. `403` for any other status. One review per resident per job.
+- **Messages only on ACTIVE:** Chat icon/API available only while job is ACTIVE. After completion, messages are read-only or hidden — no personal contact info ever exposed.
+- **No phone numbers in chat:** In-app messaging replaces direct phone contact. `job_messages` stores only `content` + `sender_id` — never phone numbers.
+- **Call provider is pluggable:** Read `CALL_PROVIDER` env var. Mobile reads `provider` field from API response to pick the right SDK — no hardcoded SDK in mobile.
+- **FCM token registration:** Must happen on every login (token can change). Store `device_tokens` table with `user_id + device_id + fcm_token`.
+- **WebSocket auth:** Socket.IO uses same JWT access token. `io.use()` middleware validates token. Room name = `job:{jobId}`. Only job participants can join.
+- **Background GPS (provider only):** Use `expo-location` `startLocationUpdatesAsync` (Expo task manager). Battery-aware: low accuracy mode, 30-second interval minimum.
 
 ---
 
@@ -164,15 +168,15 @@ Follow these rules for every session:
 
 ### Domain Reference
 
-| Domain | BRD file | SRS REQs |
-|--------|----------|---------|
-| Auth & Identity | `docs/brd/AUTH_IDENTITY.md` | REQ-001 to 004 |
-| Job Lifecycle | `docs/brd/JOB_LIFECYCLE.md` | REQ-015 to 018 |
-| Payment & Commission | `docs/brd/PAYMENT_SYSTEM.md` | REQ-019 to 023 |
-| Booking & Discovery | `docs/brd/BOOKING_DISCOVERY.md` | REQ-007 to 014 |
-| Accessibility | `docs/brd/ACCESSIBILITY.md` | REQ-011 to 013 |
-| Review System | `docs/brd/REVIEW_SYSTEM.md` | REQ-024 to 026 |
-| Profile Completion | `docs/brd/PROFILE_COMPLETION.md` | (cross-cutting) |
+| Domain | BRD file | SRS REQs | Sprint |
+|--------|----------|---------|--------|
+| Auth & Identity | `docs/brd/AUTH_IDENTITY.md` | REQ-001 to 004 | S1 |
+| Job Lifecycle | `docs/brd/JOB_LIFECYCLE.md` | REQ-015 to 018 | S3 |
+| Payment & Commission | `docs/brd/PAYMENT_SYSTEM.md` | REQ-019 to 023 | S5 ✅ |
+| Booking & Discovery | `docs/brd/BOOKING_DISCOVERY.md` | REQ-007 to 014 | S2–S3 |
+| Accessibility | `docs/brd/ACCESSIBILITY.md` | REQ-011 to 013 | S4 |
+| Review System | `docs/brd/REVIEW_SYSTEM.md` | REQ-024 to 026 | **S6 ← active** |
+| Profile Completion | `docs/brd/PROFILE_COMPLETION.md` | (cross-cutting) | S5 ✅ |
 
 ---
 

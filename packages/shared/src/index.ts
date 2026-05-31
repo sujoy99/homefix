@@ -32,7 +32,7 @@ export {
 // ── Constants ──────────────────────────────────
 export { PLATFORM_COMMISSION_RATE, PROVIDER_PAYOUT_RATE, calculateCommission } from './constants/commission';
 export { JOB_STATUS_LABELS, PAYMENT_STATUS_LABELS, WITHDRAWAL_STATUS_LABELS, USER_STATUS_LABELS } from './constants/status';
-export { PlatformSettingKey, NidPhotoSource } from './constants/platform-settings';
+export { PlatformSettingKey, NidPhotoSource, ProfilePhotoSource } from './constants/platform-settings';
 
 // ── Validation ───────────────────────────────────
 export { userRegistrationPayloadSchema, userLoginPayloadSchema, PASSWORD_REGEX } from './validation/auth.schema';

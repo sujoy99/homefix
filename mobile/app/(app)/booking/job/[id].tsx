@@ -115,6 +115,8 @@ export default function JobDetailScreen() {
         toast.error(t('job_detail.accept_concurrent'));
         queryClient.invalidateQueries({ queryKey: ['providerFeed'] });
         router.back();
+      } else if (errorCode === 'PROFILE_INCOMPLETE') {
+        toast.error(t('errors.PROFILE_INCOMPLETE'));
       } else {
         toast.error(t('job_detail.accept_error'));
       }
@@ -166,10 +168,11 @@ export default function JobDetailScreen() {
     );
   }
 
-  const isPending  = job.status === JobStatus.PENDING;
-  const isActive   = job.status === JobStatus.ACTIVE;
-  const isCancelled = job.status === JobStatus.CANCELLED;
-  const isMyJob    = isProvider && job.provider_id === userId;
+  const isPending        = job.status === JobStatus.PENDING;
+  const isActive         = job.status === JobStatus.ACTIVE;
+  const isAwaitingPayment = job.status === JobStatus.AWAITING_PAYMENT;
+  const isCancelled      = job.status === JobStatus.CANCELLED;
+  const isMyJob          = isProvider && job.provider_id === userId;
   const jobTakenByOther = isProvider && !isPending && !isMyJob;
 
   const title = job.title ?? categoryName ?? t('home.unknown_provider');
@@ -361,6 +364,25 @@ export default function JobDetailScreen() {
       )}
 
       {/* ── Footer CTAs ── */}
+
+      {/* Resident + AWAITING_PAYMENT → Pay Now or Submitted notice */}
+      {isResident && isAwaitingPayment && (
+        job.payment_status ? (
+          <View style={styles.submittedBanner}>
+            <Text variant="caption" weight="semibold" style={styles.submittedBannerText}>
+              {t('payment.already_submitted_notice')}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.footer}>
+            <Button
+              label={t('payment.pay_now')}
+              variant="primary"
+              onPress={() => router.push(`/(app)/payment/${job.id}`)}
+            />
+          </View>
+        )
+      )}
 
       {/* Provider + PENDING → Accept / Not Interested */}
       {isProvider && isPending && (
@@ -574,6 +596,22 @@ const styles = StyleSheet.create({
   },
   dismissLink: {
     paddingVertical: theme.spacing.xs,
+  },
+  submittedBanner: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: theme.spacing.md,
+    paddingBottom: theme.spacing.lg,
+    backgroundColor: theme.colors.warningBackground,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.warning,
+    alignItems: 'center',
+  },
+  submittedBannerText: {
+    color: theme.colors.warning,
+    textAlign: 'center',
   },
 });
 

@@ -20,6 +20,11 @@ export default function AppLayout() {
       <Stack.Screen name="booking/create" />
       <Stack.Screen name="booking/job/[id]" />
       <Stack.Screen name="providers" />
+      <Stack.Screen name="payment/[jobId]" />
+      <Stack.Screen name="payment/receipt" />
+      <Stack.Screen name="admin/payments" />
+      <Stack.Screen name="admin/withdrawals" />
+      <Stack.Screen name="admin/provider/[id]" />
     </Stack>
   );
 }

@@ -158,4 +158,23 @@ router.get(
   asyncHandler(asAuthenticated(RevenueController.getJobsDetail))
 );
 
+/**
+ * @openapi
+ * /admin/revenue/financial-summary:
+ *   get:
+ *     summary: System-wide financial snapshot — total payments, platform revenue, provider wallet state
+ *     tags: [Admin - Revenue]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Financial summary aggregates
+ */
+router.get(
+  '/financial-summary',
+  authGuard,
+  roleGuard(UserRole.ADMIN),
+  asyncHandler(asAuthenticated(RevenueController.getFinancialSummary))
+);
+
 export { router as adminRevenueRouter };

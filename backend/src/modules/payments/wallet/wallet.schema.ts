@@ -4,6 +4,7 @@ import { MfsType } from '@homefix/shared';
 export const requestWithdrawalSchema = z.object({
   body: z.object({
     amount_paisa: z.number().int().positive(),
+    mfs_account_id: z.string().uuid().optional(),
   }),
 });
 
