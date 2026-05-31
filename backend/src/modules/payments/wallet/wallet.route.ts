@@ -69,6 +69,25 @@ router.get(
 
 /**
  * @openapi
+ * /providers/wallet/withdrawals:
+ *   get:
+ *     summary: List provider's own withdrawal requests + pending total
+ *     tags: [Provider Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Withdrawal history with pending_total_paisa
+ */
+router.get(
+  '/wallet/withdrawals',
+  authGuard,
+  roleGuard(UserRole.PROVIDER),
+  asyncHandler(asAuthenticated(WalletController.getWithdrawals))
+);
+
+/**
+ * @openapi
  * /providers/wallet/withdraw:
  *   post:
  *     summary: Request a wallet withdrawal (min ৳100)

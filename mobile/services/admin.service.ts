@@ -27,6 +27,17 @@ export type ProviderDetail = PendingProvider & {
 
 type ApiResponse<T> = { status: string; body: T };
 
+// ─── Financial summary ────────────────────────────────────────────────────────
+
+export type FinancialSummary = {
+  total_payments_paisa: number;
+  pending_payments_paisa: number;
+  platform_revenue_paisa: number;
+  provider_wallet_balance_paisa: number;
+  provider_withdrawn_paisa: number;
+  provider_withdrawal_pending_paisa: number;
+};
+
 // ─── Revenue types ────────────────────────────────────────────────────────────
 
 export type RevenuePeriodRow = {
@@ -74,6 +85,34 @@ export type RevenueJobRow = {
 export type RevenueJobsResponse = {
   items: RevenueJobRow[];
   nextCursor: string | null;
+};
+
+// ─── Withdrawal types ─────────────────────────────────────────────────────────
+
+export type WithdrawalItem = {
+  id: string;
+  wallet_id: string;
+  provider_id: string;
+  mfs_account_id: string;
+  amount_requested_paisa: number;
+  status: 'pending' | 'completed' | 'rejected';
+  requested_at: string;
+  amount_sent_paisa: number | null;
+  sent_at: string | null;
+  admin_txid: string | null;
+  admin_note: string | null;
+  processed_at: string | null;
+  provider?: { id: string; full_name: string; mobile: string };
+  mfsAccount?: { id: string; mfs_type: string; account_number: string; account_name: string };
+  wallet?: { id: string; balance_paisa: number };
+  total_pending_paisa?: number;
+};
+
+export type CompleteWithdrawalPayload = {
+  amount_sent_paisa: number;
+  sent_at: string;
+  admin_txid: string;
+  admin_note?: string;
 };
 
 // ─── Payment verification types ───────────────────────────────────────────────
@@ -132,5 +171,25 @@ export const adminService = {
 
   verifyPayment: async (paymentId: string): Promise<void> => {
     await apiClient.patch(`/v2/admin/payments/${paymentId}/verify`);
+  },
+
+  listWithdrawals: async (): Promise<WithdrawalItem[]> => {
+    const res = await apiClient.get<ApiResponse<WithdrawalItem[]>>('/v2/admin/withdrawals');
+    return res.data.body;
+  },
+
+  completeWithdrawal: async (id: string, data: CompleteWithdrawalPayload): Promise<WithdrawalItem> => {
+    const res = await apiClient.patch<ApiResponse<WithdrawalItem>>(`/v2/admin/withdrawals/${id}/complete`, data);
+    return res.data.body;
+  },
+
+  rejectWithdrawal: async (id: string, adminNote: string): Promise<WithdrawalItem> => {
+    const res = await apiClient.patch<ApiResponse<WithdrawalItem>>(`/v2/admin/withdrawals/${id}/reject`, { admin_note: adminNote });
+    return res.data.body;
+  },
+
+  getFinancialSummary: async (): Promise<FinancialSummary> => {
+    const res = await apiClient.get<ApiResponse<FinancialSummary>>('/v2/admin/revenue/financial-summary');
+    return res.data.body;
   },
 };

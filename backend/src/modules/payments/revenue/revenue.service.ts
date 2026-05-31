@@ -178,4 +178,35 @@ async function getJobsDetail(query: RevenueJobsQuery): Promise<{
   };
 }
 
-export const RevenueService = { getDashboard, getJobsDetail };
+export interface FinancialSummary {
+  total_payments_paisa: number;
+  pending_payments_paisa: number;
+  platform_revenue_paisa: number;
+  provider_wallet_balance_paisa: number;
+  provider_withdrawn_paisa: number;
+  provider_withdrawal_pending_paisa: number;
+}
+
+async function getFinancialSummary(): Promise<FinancialSummary> {
+  const knex = PlatformRevenueLedger.knex();
+
+  const [paymentsRow, pendingPaymentsRow, revenueRow, walletRow, withdrawnRow, pendingRow] = await Promise.all([
+    knex('payments').where('status', 'verified').sum('amount_paisa as total').first(),
+    knex('payments').where('status', 'submitted').sum('amount_paisa as total').first(),
+    knex('platform_revenue_ledger').sum('amount_paisa as total').first(),
+    knex('wallets').sum('balance_paisa as total').first(),
+    knex('withdrawal_requests').where('status', 'completed').sum('amount_sent_paisa as total').first(),
+    knex('withdrawal_requests').where('status', 'pending').sum('amount_requested_paisa as total').first(),
+  ]);
+
+  return {
+    total_payments_paisa: Number(paymentsRow?.total ?? 0),
+    pending_payments_paisa: Number(pendingPaymentsRow?.total ?? 0),
+    platform_revenue_paisa: Number(revenueRow?.total ?? 0),
+    provider_wallet_balance_paisa: Number(walletRow?.total ?? 0),
+    provider_withdrawn_paisa: Number(withdrawnRow?.total ?? 0),
+    provider_withdrawal_pending_paisa: Number(pendingRow?.total ?? 0),
+  };
+}
+
+export const RevenueService = { getDashboard, getJobsDetail, getFinancialSummary };

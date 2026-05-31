@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   ScrollView,
@@ -26,7 +26,7 @@ import { MfsType } from '@homefix/shared';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { paymentService, WalletTransaction, MfsAccount } from '@/services/payment.service';
+import { paymentService, WalletTransaction, MfsAccount, WithdrawalRequest } from '@/services/payment.service';
 import { toast } from '@/utils/toast';
 import { theme } from '@/theme';
 
@@ -37,7 +37,7 @@ function paisaToTaka(paisa: number): string {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
 }
 
 const MFS_LABELS: Record<MfsType, string> = {
@@ -150,6 +150,51 @@ const txStyles = StyleSheet.create({
   info: { flex: 1, gap: 2 },
   creditAmt: { color: theme.colors.success },
   withdrawalAmt: { color: theme.colors.error },
+});
+
+// ─── Withdrawal request item ──────────────────────────────────────────────────
+
+const WITHDRAWAL_STATUS_COLOR: Record<WithdrawalRequest['status'], string> = {
+  pending: theme.colors.warning,
+  completed: theme.colors.success,
+  rejected: theme.colors.error,
+};
+
+function WithdrawalRequestItem({ item }: { item: WithdrawalRequest }) {
+  const { t } = useTranslation();
+  const color = WITHDRAWAL_STATUS_COLOR[item.status];
+  return (
+    <View style={wrStyles.row}>
+      <View style={[wrStyles.dot, { backgroundColor: color }]} />
+      <View style={wrStyles.info}>
+        <Text variant="body" weight="medium">
+          {t(`wallet.wr_status_${item.status}` as Parameters<typeof t>[0])}
+        </Text>
+        <Text variant="caption" color="muted">{formatDate(item.requested_at)}</Text>
+        {item.admin_note ? (
+          <Text variant="caption" color="muted" style={wrStyles.note}>{item.admin_note}</Text>
+        ) : null}
+      </View>
+      <View style={wrStyles.right}>
+        <Text variant="body" weight="semibold" style={{ color }}>
+          -৳{paisaToTaka(item.amount_requested_paisa)}
+        </Text>
+        {item.amount_sent_paisa != null && item.amount_sent_paisa !== item.amount_requested_paisa ? (
+          <Text variant="caption" color="muted">
+            {t('wallet.wr_sent')}: ৳{paisaToTaka(item.amount_sent_paisa)}
+          </Text>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+const wrStyles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: theme.spacing.sm, gap: theme.spacing.sm },
+  dot: { width: 10, height: 10, borderRadius: 5, marginTop: 5 },
+  info: { flex: 1, gap: 2 },
+  right: { alignItems: 'flex-end', gap: 2 },
+  note: { fontStyle: 'italic' },
 });
 
 // ─── MFS Account item ─────────────────────────────────────────────────────────
@@ -374,6 +419,14 @@ const modalStyles = StyleSheet.create({
   cancelBtn: { borderWidth: 1.5, borderColor: theme.colors.primary },
   addBtn: { backgroundColor: theme.colors.primary },
   disabled: { opacity: 0.5 },
+  pendingBanner: {
+    backgroundColor: `${theme.colors.warning}20`,
+    borderRadius: theme.layout.radius.sm,
+    padding: theme.spacing.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: theme.colors.warning,
+  },
+  pendingText: { color: theme.colors.warning },
 });
 
 // ─── Withdraw modal ───────────────────────────────────────────────────────────
@@ -381,27 +434,41 @@ const modalStyles = StyleSheet.create({
 function WithdrawModal({
   visible,
   balancePaisa,
-  hasMfsAccount,
+  availableBalancePaisa,
+  accounts,
   onClose,
   onSubmit,
 }: {
   visible: boolean;
   balancePaisa: number;
-  hasMfsAccount: boolean;
+  availableBalancePaisa: number;
+  accounts: MfsAccount[];
   onClose: () => void;
-  onSubmit: (amountPaisa: number) => void;
+  onSubmit: (amountPaisa: number, mfsAccountId: string) => void;
 }) {
   const { t } = useTranslation();
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
+  const [selectedAccountId, setSelectedAccountId] = useState('');
+  const [showAccountPicker, setShowAccountPicker] = useState(false);
+  const pendingPaisa = balancePaisa - availableBalancePaisa;
+
+  useEffect(() => {
+    if (visible) {
+      setSelectedAccountId(accounts.find((a) => a.is_primary)?.id ?? accounts[0]?.id ?? '');
+      setShowAccountPicker(false);
+    }
+  }, [visible, accounts]);
+
+  const selectedAccount = accounts.find((a) => a.id === selectedAccountId) ?? accounts[0];
 
   const handleSubmit = () => {
-    if (!hasMfsAccount) { setError(t('wallet.withdraw_no_account')); return; }
+    if (accounts.length === 0) { setError(t('wallet.withdraw_no_account')); return; }
     const taka = parseFloat(input);
     if (isNaN(taka) || taka < 100) { setError(t('wallet.withdraw_min')); return; }
-    if (taka * 100 > balancePaisa) { setError(t('wallet.withdraw_insufficient')); return; }
+    if (taka * 100 > availableBalancePaisa) { setError(t('wallet.withdraw_insufficient')); return; }
     setError('');
-    onSubmit(Math.round(taka * 100));
+    onSubmit(Math.round(taka * 100), selectedAccount?.id ?? '');
     setInput('');
     onClose();
   };
@@ -411,6 +478,47 @@ function WithdrawModal({
       <View style={modalStyles.overlay}>
         <View style={modalStyles.sheet}>
           <Text variant="h4" weight="bold" style={modalStyles.title}>{t('wallet.withdraw_title')}</Text>
+          {pendingPaisa > 0 && (
+            <View style={modalStyles.pendingBanner}>
+              <Text variant="caption" style={modalStyles.pendingText}>
+                {t('wallet.withdraw_pending_note', { pending: paisaToTaka(pendingPaisa), available: paisaToTaka(availableBalancePaisa) })}
+              </Text>
+            </View>
+          )}
+
+          {accounts.length > 1 && (
+            <>
+              <Text variant="caption" color="muted" style={modalStyles.label}>{t('wallet.withdraw_account_label')}</Text>
+              <TouchableOpacity
+                style={modalStyles.typePicker}
+                onPress={() => setShowAccountPicker((v) => !v)}
+                accessibilityRole="button"
+              >
+                <Text variant="body">
+                  {selectedAccount
+                    ? `${t(MFS_LABELS[selectedAccount.mfs_type] as Parameters<typeof t>[0])} · ${selectedAccount.account_number}`
+                    : '—'}
+                </Text>
+                <ChevronDown color={theme.colors.textMuted} size={18} />
+              </TouchableOpacity>
+              {showAccountPicker && (
+                <View style={modalStyles.typeList}>
+                  {accounts.map((acct) => (
+                    <TouchableOpacity
+                      key={acct.id}
+                      style={modalStyles.typeOption}
+                      onPress={() => { setSelectedAccountId(acct.id); setShowAccountPicker(false); }}
+                    >
+                      <Text variant="body" weight={selectedAccountId === acct.id ? 'semibold' : 'regular'}>
+                        {t(MFS_LABELS[acct.mfs_type] as Parameters<typeof t>[0])} · {acct.account_number}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </>
+          )}
+
           <Text variant="caption" color="muted" style={modalStyles.label}>{t('wallet.withdraw_amount_label')}</Text>
           <TextInput
             style={[modalStyles.input, error ? { borderColor: theme.colors.error } : null]}
@@ -455,11 +563,20 @@ export default function WalletScreen() {
     queryFn: paymentService.listMfsAccounts,
   });
 
+  const { data: withdrawalsData, refetch: refetchWithdrawals } = useQuery({
+    queryKey: ['myWithdrawals'],
+    queryFn: paymentService.getMyWithdrawals,
+  });
+
+  const myWithdrawals = withdrawalsData?.withdrawals ?? [];
+  const pendingTotalPaisa = withdrawalsData?.pending_total_paisa ?? 0;
+
   const { mutate: requestWithdrawal, isPending: withdrawing } = useMutation({
     mutationFn: paymentService.requestWithdrawal,
     onSuccess: () => {
       toast.success(t('wallet.withdraw_success'));
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['myWithdrawals'] });
     },
     onError: () => toast.error(t('wallet.withdraw_error')),
   });
@@ -531,7 +648,7 @@ export default function WalletScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
-            onRefresh={() => { refetch(); refetchAccounts(); }}
+            onRefresh={() => { refetch(); refetchAccounts(); refetchWithdrawals(); }}
             tintColor={theme.colors.primary}
           />
         }
@@ -583,6 +700,27 @@ export default function WalletScreen() {
           )}
         </Card>
 
+        {/* Withdrawal requests */}
+        {myWithdrawals.length > 0 && (
+          <Card style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <ArrowDownCircle color={theme.colors.warning} size={16} />
+              <Text variant="body" weight="semibold">{t('wallet.withdrawal_requests')}</Text>
+              {pendingTotalPaisa > 0 && (
+                <Text variant="caption" color="muted" style={styles.flex}>
+                  ({t('wallet.wr_pending_total')}: ৳{paisaToTaka(pendingTotalPaisa)})
+                </Text>
+              )}
+            </View>
+            {myWithdrawals.map((wr, idx) => (
+              <View key={wr.id}>
+                {idx > 0 && <View style={styles.divider} />}
+                <WithdrawalRequestItem item={wr} />
+              </View>
+            ))}
+          </Card>
+        )}
+
         {/* Transactions */}
         <Card style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -605,9 +743,12 @@ export default function WalletScreen() {
       <WithdrawModal
         visible={showWithdraw}
         balancePaisa={wallet.balance_paisa}
-        hasMfsAccount={accounts.length > 0}
+        availableBalancePaisa={wallet.balance_paisa - pendingTotalPaisa}
+        accounts={accounts}
         onClose={() => setShowWithdraw(false)}
-        onSubmit={requestWithdrawal}
+        onSubmit={(amountPaisa, mfsAccountId) =>
+          requestWithdrawal({ amount_paisa: amountPaisa, mfs_account_id: mfsAccountId })
+        }
       />
 
       <AddAccountModal

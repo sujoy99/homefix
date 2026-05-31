@@ -122,19 +122,80 @@ describe('paymentService.getWallet', () => {
 describe('paymentService.requestWithdrawal', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('posts to /v2/providers/wallet/withdraw with amount_paisa', async () => {
-    const withdrawal = { id: 'wr-1', amount_requested_paisa: 50000, status: 'pending', requested_at: new Date().toISOString() };
+  it('posts to /v2/providers/wallet/withdraw with full payload', async () => {
+    const withdrawal = {
+      id: 'wr-1', amount_requested_paisa: 50000, status: 'pending' as const,
+      requested_at: new Date().toISOString(), mfs_account_id: 'a-1',
+      amount_sent_paisa: null, processed_at: null, admin_note: null,
+    };
     apiClient.post.mockReturnValue(mockResponse(withdrawal));
 
-    const result = await paymentService.requestWithdrawal(50000);
+    const result = await paymentService.requestWithdrawal({ amount_paisa: 50000, mfs_account_id: 'a-1' });
 
-    expect(apiClient.post).toHaveBeenCalledWith('/v2/providers/wallet/withdraw', { amount_paisa: 50000 });
+    expect(apiClient.post).toHaveBeenCalledWith('/v2/providers/wallet/withdraw', {
+      amount_paisa: 50000,
+      mfs_account_id: 'a-1',
+    });
     expect(result.amount_requested_paisa).toBe(50000);
+    expect(result.mfs_account_id).toBe('a-1');
+  });
+
+  it('sends the secondary account id when a non-primary account is chosen', async () => {
+    const withdrawal = {
+      id: 'wr-2', amount_requested_paisa: 20000, status: 'pending' as const,
+      requested_at: new Date().toISOString(), mfs_account_id: 'a-secondary',
+      amount_sent_paisa: null, processed_at: null, admin_note: null,
+    };
+    apiClient.post.mockReturnValue(mockResponse(withdrawal));
+
+    await paymentService.requestWithdrawal({ amount_paisa: 20000, mfs_account_id: 'a-secondary' });
+
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/v2/providers/wallet/withdraw',
+      expect.objectContaining({ mfs_account_id: 'a-secondary' })
+    );
   });
 
   it('rejects when balance is insufficient', async () => {
     apiClient.post.mockReturnValue(mockApiError(400, 'INSUFFICIENT_BALANCE'));
-    await expect(paymentService.requestWithdrawal(999999)).rejects.toThrow();
+    await expect(
+      paymentService.requestWithdrawal({ amount_paisa: 999999, mfs_account_id: 'a-1' })
+    ).rejects.toThrow();
+  });
+});
+
+// ─── getMyWithdrawals ─────────────────────────────────────────────────────────
+
+describe('paymentService.getMyWithdrawals', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('fetches from /v2/providers/wallet/withdrawals', async () => {
+    const myWithdrawals = {
+      withdrawals: [
+        {
+          id: 'wr-1', amount_requested_paisa: 50000, status: 'pending' as const,
+          requested_at: new Date().toISOString(), mfs_account_id: 'a-1',
+          amount_sent_paisa: null, processed_at: null, admin_note: null,
+        },
+      ],
+      pending_total_paisa: 50000,
+    };
+    apiClient.get.mockReturnValue(mockResponse(myWithdrawals));
+
+    const result = await paymentService.getMyWithdrawals();
+
+    expect(apiClient.get).toHaveBeenCalledWith('/v2/providers/wallet/withdrawals');
+    expect(result.withdrawals).toHaveLength(1);
+    expect(result.pending_total_paisa).toBe(50000);
+  });
+
+  it('returns empty list and zero pending total when no withdrawals', async () => {
+    apiClient.get.mockReturnValue(mockResponse({ withdrawals: [], pending_total_paisa: 0 }));
+
+    const result = await paymentService.getMyWithdrawals();
+
+    expect(result.withdrawals).toHaveLength(0);
+    expect(result.pending_total_paisa).toBe(0);
   });
 });
 

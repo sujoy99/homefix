@@ -17,8 +17,13 @@ export class WalletController {
   }
 
   static async requestWithdrawal(req: AuthenticatedRequest, res: Response): Promise<Response> {
-    const { amount_paisa } = req.body as RequestWithdrawalBody;
-    const withdrawal = await WalletService.requestWithdrawal(req.user.sub, amount_paisa);
+    const { amount_paisa, mfs_account_id } = req.body as RequestWithdrawalBody;
+    const withdrawal = await WalletService.requestWithdrawal(req.user.sub, amount_paisa, mfs_account_id);
     return HttpResponse.success(res, withdrawal, 'Withdrawal request submitted', 201);
+  }
+
+  static async getWithdrawals(req: AuthenticatedRequest, res: Response): Promise<Response> {
+    const { withdrawals, pendingTotal } = await WalletService.getProviderWithdrawals(req.user.sub);
+    return HttpResponse.success(res, { withdrawals, pending_total_paisa: pendingTotal }, 'Withdrawal requests retrieved');
   }
 }

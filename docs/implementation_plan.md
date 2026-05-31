@@ -487,6 +487,7 @@ modules/payments/
 | HF-056B | Admin commission rules API — CRUD + `/preview` endpoint | ✅ | 4h |
 | HF-057 | Provider wallet/ledger — 80% credit on payment + withdrawal flow with full audit trail (REQ-022) | ✅ | 8h |
 | HF-057B | Profile completion API — computed endpoint + `PROFILE_INCOMPLETE` guard on job accept + withdraw | ✅ | 4h |
+| HF-057C | Withdrawal flow hardening — available-balance validation (balance minus pending sum prevents over-request), `GET /providers/wallet/withdrawals` endpoint for provider's own history, admin `listAll()` enriched with provider name, MFS account, wallet balance, and `total_pending_paisa` subquery per wallet | ✅ | 4h |
 | HF-058 | Admin revenue dashboard API (REQ-023) | ✅ | 4h |
 
 #### Mobile:
@@ -495,13 +496,23 @@ modules/payments/
 |---|---|---|---|
 | HF-058B | Admin revenue dashboard mobile screen (totals, period chart, rule breakdown, per-job list) | ✅ | 4h |
 | HF-058C | Admin payment verification screen (list SUBMITTED payments, verify action) | ✅ | 4h |
+| HF-058D | Admin revenue financial summary card — 6 at-a-glance stats: total payments entered, verify-pending payments, platform revenue, provider wallet balances, provider withdrawn total, provider withdrawal pending total | ✅ | 3h |
 | HF-059 | Payment screen (method selection, TxID input, order summary, merchant number) | ✅ | 8h |
 | HF-059B | Profile completion card on Profile screen (both roles) + persistent banner on Provider home | ✅ | 4h |
 | HF-060 | Provider wallet screen (balance, earnings, commission breakdown, withdrawal request) | ✅ | 6h |
+| HF-060B | Withdrawal end-to-end mobile — admin `admin/withdrawals.tsx` screen (list all requests, complete/reject modals with proper bottom sheets, wallet balance + total-pending breakdown per row, pending count badge on revenue CTAs), provider wallet screen withdrawal history section with status badges, available-balance shown in withdraw modal when pending requests exist | ✅ | 6h |
 | HF-061 | Payment receipt + completion flow | ✅ | 3h |
 | HF-061B | Provider profile edit screen — bio, hourly rate, experience years, profile photo, home location (GPS). Profile completion card updates in real time after save. Name and mobile are read-only. | ✅ | 4h |
 
 **Deliverable:** Full payment flow with wallet + commission system. Profile completion enforcement. Admin revenue dashboard. First sprint to produce PAID jobs end-to-end.
+
+#### Sprint 5 Enhancements & Polish
+
+| Ticket | Title | Status | Est. |
+|--------|-------|--------|------|
+| HF-060C | Provider withdrawal MFS account selector — multi-account providers see account picker in withdraw modal; backend validates `mfs_account_id` ownership; falls back to primary when not supplied; `requestWithdrawalSchema` updated with optional `mfs_account_id: uuid` | ✅ | 2h |
+| HF-060D | Date + time display — transaction history (provider), withdrawal history (provider), admin withdrawal dashboard: date format upgraded from date-only to 12-hour datetime (`3 Jun 2026, 10:45 AM`) for clarity | ✅ | 0.5h |
+| HF-060E | Admin "Complete Withdrawal" TxID input auto-uppercases on keystroke (`autoCapitalize="characters"` + `toUpperCase()` transform) | ✅ | 0.25h |
 
 ---
 
@@ -696,6 +707,8 @@ Every SRS requirement mapped to its implementing ticket(s):
 | 2026-05-30 | 3.5 | Sprint 3 enhancements + bug fixes: HF-026A (AllProvidersScreen with search + category filter, capped home section); HF-036A (address step reverse/forward geocoding + home shortcut); HF-033A (resolveMediaUrl crash fix for non-string media_urls); HF-039A (Not Interested redesigned as text link); HF-040A (photo fullscreen viewer with pinch-to-zoom); HF-040B (ImageViewing crash on jobs without photos). Total sprint 3 tickets: 14. |
 | 2026-05-30 | 3.6 | Sprint 3 closed. Additional polish tickets: HF-038A (nested TouchableOpacity Android content-clip fix); HF-038B (Yoga min-content-width Bengali truncation fix via alignItems:stretch); HF-038C (Button fixed height → minHeight+paddingVertical for complex scripts); HF-038D (DollarSign → Banknote icon). Sprint 3 total: 18 tickets. Sprint 4 opened — next ticket HF-042. |
 | 2026-05-30 | 3.8 | Sprint order rebalanced: Sprint 5 ↔ Sprint 6 swapped. Payments + Wallet moved to Sprint 5 (was 6) so PAID job status is available before Sprint 6 (was 5) reviews are built. REQ-018–023 now S5; REQ-024–026 now S6; REQ-007 (GPS) now S6. SRS traceability matrix and Sprint Flow updated accordingly. |
+| 2026-05-31 | 3.9 | Sprint 5 post-ship hardening. HF-057C: available-balance validation (blocks over-requesting when pending withdrawals exist), `GET /providers/wallet/withdrawals` endpoint, admin list enriched with provider name + MFS account + wallet balance + total_pending_paisa subquery. HF-060B: full withdrawal admin screen (list, complete/reject bottom-sheet modals, balance breakdown per row), provider wallet withdrawal history section, available-balance shown in withdraw modal, pending count badges on revenue CTAs. |
+| 2026-05-31 | 4.0 | Sprint 5 UX polish. HF-058D: admin revenue financial summary card (6 at-a-glance metrics: total payments, verify-pending, platform revenue, provider wallets, provider withdrawn, pending withdrawals) rendered above the revenue hero card. HF-060C: provider withdrawal MFS account selector — multi-account providers choose which MFS account to receive funds; backend validates ownership; backend schema updated. HF-060D: date+time format upgrade to 12-hour clock across transaction history, withdrawal history, and admin withdrawal dashboard. HF-060E: admin "Complete Withdrawal" TxID auto-uppercase. |
 | 2026-05-30 | 3.7 | Sprint 4 closed. HF-042 (VoiceRecorder, expo-av); HF-045 (VoiceNotePlayer, expo-av); HF-044 (ReadAloudButton, expo-speech, REQ-013); HF-046 (accessibility audit — 30+ touchables labelled, 48px targets, WCAG AA verified, font-scale clean). HF-043 (Voice-to-Text) deferred — requires Whisper backend. 50/50 tests. Docs: TESTING_SPRINT4_MOBILE.md + SPRINT4_USER_MANUAL.md. Current Focus updated to Sprint 5. |
 
 ---

@@ -14,30 +14,30 @@
 cd backend && npm test -- --forceExit
 ```
 
-**Result: 233/233 PASSED ✅** (18 suites)
+**Result: 248/248 PASSED ✅** (18 suites) — updated 2026-06-01 with post-ship test additions (+15 new tests)
 
-| Test Suite | Tests | Status |
-|---|---|---|
-| `payment.schema.test.ts` | 6 | ✅ All pass |
-| `manual.gateway.test.ts` | 8 | ✅ All pass |
-| `sslcommerz.gateway.test.ts` | 2 | ✅ All pass |
-| `payment.service.test.ts` | 5 | ✅ All pass |
-| `commission.service.test.ts` | 7 | ✅ All pass |
-| `commission.rules.test.ts` | 17 | ✅ All pass |
-| `payment.submit.test.ts` | 12 | ✅ All pass |
-| `payment.verify.test.ts` | 12 | ✅ All pass |
-| `wallet.test.ts` | 28 | ✅ All pass |
-| `profile-completion.test.ts` | 14 | ✅ All pass |
-| `revenue.test.ts` | 11 | ✅ All pass |
-| `jobs.test.ts` | 27 | ✅ All pass |
-| `providers.test.ts` | 13 | ✅ All pass |
-| `admin/provider-approval.test.ts` | 10 | ✅ All pass |
-| `categories.test.ts` | 8 | ✅ All pass |
-| `storage.test.ts` | 8 | ✅ All pass (intermittent flake in full suite — passes in isolation) |
-| `auth.test.ts` | 18 | ✅ All pass |
-| `rbac.test.ts` | 7 | ✅ All pass |
+| Test Suite | Tests | Status | Change |
+|---|---|---|---|
+| `payment.schema.test.ts` | 6 | ✅ All pass | — |
+| `manual.gateway.test.ts` | 8 | ✅ All pass | — |
+| `sslcommerz.gateway.test.ts` | 2 | ✅ All pass | — |
+| `payment.service.test.ts` | 5 | ✅ All pass | — |
+| `commission.service.test.ts` | 7 | ✅ All pass | — |
+| `commission.rules.test.ts` | 17 | ✅ All pass | — |
+| `payment.submit.test.ts` | 12 | ✅ All pass | — |
+| `payment.verify.test.ts` | 12 | ✅ All pass | — |
+| `wallet.test.ts` | **31** | ✅ All pass | +9 new (explicit mfs_account_id, available-balance guard, GET /withdrawals) |
+| `profile-completion.test.ts` | 14 | ✅ All pass | — |
+| `revenue.test.ts` | **17** | ✅ All pass | +6 new (financial-summary auth, empty state, aggregation) |
+| `jobs.test.ts` | 27 | ✅ All pass | — |
+| `providers.test.ts` | 13 | ✅ All pass | — |
+| `admin/provider-approval.test.ts` | 10 | ✅ All pass | — |
+| `categories.test.ts` | 8 | ✅ All pass | — |
+| `storage.test.ts` | 8 | ✅ All pass (intermittent flake in full suite — passes in isolation) | — |
+| `auth.test.ts` | 18 | ✅ All pass | — |
+| `rbac.test.ts` | 7 | ✅ All pass | — |
 
-> **Note on storage flakiness:** `storage.test.ts` occasionally fails the "authenticated provider uploads a file" test when run as part of the full 233-test suite on slow hardware. This is a pre-existing intermittent issue (not introduced in Sprint 5) — the test always passes in isolation and on re-run. Not blocking.
+> **Note on storage flakiness:** `storage.test.ts` occasionally fails the "authenticated provider uploads a file" test when run as part of the full suite on slow hardware. Pre-existing intermittent issue — always passes in isolation and on re-run. Not blocking.
 
 ---
 
@@ -506,6 +506,125 @@ Authorization: Bearer <resident_token>
 | `INSUFFICIENT_BALANCE` | 400 | Wallet balance < requested withdrawal amount |
 | `WITHDRAWAL_NOT_PENDING` | 400 | Admin tries to complete/reject a non-pending withdrawal |
 | `RESOURCE_NOT_FOUND` | 404 | Generic: commission rule, withdrawal request not found |
+
+---
+
+## HF-057C — Withdrawal Flow Hardening
+
+### New API Endpoints
+
+| Method | Path | Role | Description |
+|--------|------|------|-------------|
+| GET | `/api/v2/providers/wallet/withdrawals` | Provider | Provider's own withdrawal request history + pending total |
+
+### Manual Test Cases
+
+#### TC-057C-01: Provider requests withdrawal to a specific MFS account
+
+When a provider has two MFS accounts (e.g. bKash primary + Nagad secondary), they can target the secondary:
+
+```http
+POST /api/v2/providers/wallet/withdraw
+Authorization: Bearer <provider_token>
+
+{
+  "amount_paisa": 20000,
+  "mfs_account_id": "<nagad_account_id>"
+}
+```
+
+**Expected:** `201`, withdrawal row has `mfs_account_id = <nagad_account_id>`.
+
+---
+
+#### TC-057C-02: Wrong provider tries to use another provider's account ID
+
+```http
+POST /api/v2/providers/wallet/withdraw
+Authorization: Bearer <provider1_token>
+
+{ "amount_paisa": 10000, "mfs_account_id": "<provider2_account_id>" }
+```
+
+**Expected:** `400`, `error_code: "NO_MFS_ACCOUNT"`.
+
+---
+
+#### TC-057C-03: Available-balance guard blocks over-requesting
+
+Provider has ৳500 balance and an existing pending request for ৳300 (available = ৳200):
+
+```json
+{ "amount_paisa": 25000 }
+```
+
+**Expected:** `400`, `error_code: "INSUFFICIENT_BALANCE"` — available balance is ৳200, not ৳250.
+
+---
+
+#### TC-057C-04: Provider retrieves own withdrawal history
+
+```http
+GET /api/v2/providers/wallet/withdrawals
+Authorization: Bearer <provider_token>
+```
+
+**Expected:** `200`, `{ withdrawals: [...], pending_total_paisa: N }`.  
+Each item has `id`, `amount_requested_paisa`, `status`, `requested_at`, `amount_sent_paisa`, `processed_at`, `admin_note`, `mfs_account_id`.
+
+---
+
+## HF-058D — Admin Revenue Financial Summary
+
+### New API Endpoint
+
+| Method | Path | Role | Description |
+|--------|------|------|-------------|
+| GET | `/api/v2/admin/revenue/financial-summary` | Admin | 6 platform-wide aggregate fields |
+
+### Manual Test Cases
+
+#### TC-058D-01: Financial summary returns all 6 fields
+
+```http
+GET /api/v2/admin/revenue/financial-summary
+Authorization: Bearer <admin_token>
+```
+
+**Expected:** `200`:
+```json
+{
+  "total_payments_paisa": 120000,
+  "pending_payments_paisa": 50000,
+  "platform_revenue_paisa": 24000,
+  "provider_wallet_balance_paisa": 66000,
+  "provider_withdrawn_paisa": 30000,
+  "provider_withdrawal_pending_paisa": 20000
+}
+```
+
+**Accounting identity:** `total_payments_paisa` ≈ `platform_revenue_paisa` + `provider_wallet_balance_paisa` + `provider_withdrawn_paisa`.
+
+---
+
+#### TC-058D-02: Auth guard
+
+```http
+GET /api/v2/admin/revenue/financial-summary
+```
+**Expected:** `401`.
+
+```http
+GET /api/v2/admin/revenue/financial-summary
+Authorization: Bearer <provider_token>
+```
+**Expected:** `403`.
+
+---
+
+#### TC-058D-03: Empty state
+
+Before any payments are verified, all 6 fields return `0`.
 
 ---
 

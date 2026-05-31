@@ -41,6 +41,7 @@ jest.mock('../../services/payment.service', () => ({
     addMfsAccount: jest.fn(),
     deleteMfsAccount: jest.fn(),
     setPrimaryMfsAccount: jest.fn(),
+    getMyWithdrawals: jest.fn(),
   },
 }));
 
@@ -78,6 +79,24 @@ const accounts = [
   { id: 'a-1', mfs_type: MfsType.BKASH, account_number: '01711223344', account_name: 'Test User', is_primary: true, created_at: new Date().toISOString() },
 ];
 
+const twoAccounts = [
+  { id: 'a-1', mfs_type: MfsType.BKASH, account_number: '01711223344', account_name: 'Test User', is_primary: true, created_at: new Date().toISOString() },
+  { id: 'a-2', mfs_type: MfsType.NAGAD, account_number: '01811223344', account_name: 'Test User', is_primary: false, created_at: new Date().toISOString() },
+];
+
+const emptyWithdrawals = { withdrawals: [], pending_total_paisa: 0 };
+
+const pendingWithdrawal = {
+  id: 'wr-1',
+  amount_requested_paisa: 30000,
+  status: 'pending' as const,
+  requested_at: new Date().toISOString(),
+  mfs_account_id: 'a-1',
+  amount_sent_paisa: null,
+  processed_at: null,
+  admin_note: null,
+};
+
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
 describe('WalletScreen', () => {
@@ -85,6 +104,7 @@ describe('WalletScreen', () => {
     jest.clearAllMocks();
     paymentService.getWallet.mockResolvedValue(walletData);
     paymentService.listMfsAccounts.mockResolvedValue(accounts);
+    paymentService.getMyWithdrawals.mockResolvedValue(emptyWithdrawals);
   });
 
   it('shows wallet balance after loading', async () => {
@@ -156,6 +176,83 @@ describe('WalletScreen', () => {
     renderWallet();
     await waitFor(() => {
       expect(screen.getByText('wallet.commission_info')).toBeTruthy();
+    });
+  });
+
+  // ── Withdrawal history ───────────────────────────────────────────────────────
+
+  it('shows pending withdrawal request in history section', async () => {
+    paymentService.getMyWithdrawals.mockResolvedValue({
+      withdrawals: [pendingWithdrawal],
+      pending_total_paisa: 30000,
+    });
+    renderWallet();
+    await waitFor(() => {
+      expect(screen.getByText('wallet.wr_status_pending')).toBeTruthy();
+    });
+  });
+
+  it('shows empty withdrawal history section when no requests', async () => {
+    paymentService.getMyWithdrawals.mockResolvedValue(emptyWithdrawals);
+    renderWallet();
+    await waitFor(() => {
+      // Wallet loaded correctly
+      expect(screen.getByText('wallet.balance')).toBeTruthy();
+    });
+    // No pending status badge should appear
+    expect(screen.queryByText('wallet.wr_status_pending')).toBeNull();
+  });
+
+  // ── WithdrawModal — account picker ───────────────────────────────────────────
+
+  it('does not show account picker when provider has only one MFS account', async () => {
+    // Default: accounts = [single bKash account]
+    renderWallet();
+    await waitFor(() => screen.getByText('wallet.withdraw'));
+
+    fireEvent.press(screen.getByText('wallet.withdraw'));
+
+    await waitFor(() => {
+      expect(screen.getByText('wallet.withdraw_title')).toBeTruthy();
+    });
+
+    // Account picker label should NOT appear for single account
+    expect(screen.queryByText('wallet.withdraw_account_label')).toBeNull();
+  });
+
+  it('shows account picker when provider has multiple MFS accounts', async () => {
+    paymentService.listMfsAccounts.mockResolvedValue(twoAccounts);
+    renderWallet();
+    await waitFor(() => screen.getByText('wallet.withdraw'));
+
+    fireEvent.press(screen.getByText('wallet.withdraw'));
+
+    await waitFor(() => {
+      expect(screen.getByText('wallet.withdraw_account_label')).toBeTruthy();
+    });
+  });
+
+  it('calls requestWithdrawal with amount_paisa and mfs_account_id', async () => {
+    paymentService.requestWithdrawal.mockResolvedValue({
+      id: 'wr-new', amount_requested_paisa: 10000, status: 'pending',
+      requested_at: new Date().toISOString(), mfs_account_id: 'a-1',
+      amount_sent_paisa: null, processed_at: null, admin_note: null,
+    });
+    renderWallet();
+    await waitFor(() => screen.getByText('wallet.withdraw'));
+
+    fireEvent.press(screen.getByText('wallet.withdraw'));
+    await waitFor(() => screen.getByText('wallet.withdraw_title'));
+
+    const amountInput = screen.getByDisplayValue('');
+    fireEvent.changeText(amountInput, '100');
+    fireEvent.press(screen.getByText('wallet.withdraw_submit'));
+
+    await waitFor(() => {
+      expect(paymentService.requestWithdrawal).toHaveBeenCalled();
+      // TanStack Query calls mutationFn(variables, context) — check first arg only
+      const firstCallFirstArg = paymentService.requestWithdrawal.mock.calls[0][0];
+      expect(firstCallFirstArg).toMatchObject({ amount_paisa: 10000, mfs_account_id: 'a-1' });
     });
   });
 });

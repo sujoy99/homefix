@@ -18,6 +18,7 @@ import {
   Briefcase,
   ChevronRight,
   ShieldCheck,
+  Banknote,
 } from 'lucide-react-native';
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
@@ -27,6 +28,7 @@ import {
   type RevenueRuleRow,
   type RevenueCategoryRow,
   type RevenueJobRow,
+  type FinancialSummary,
 } from '@/services/admin.service';
 import { theme } from '@/theme';
 
@@ -229,6 +231,104 @@ const jobStyles = StyleSheet.create({
   commission: { color: theme.colors.success, marginTop: 2 },
 });
 
+// ─── Financial summary card ───────────────────────────────────────────────────
+
+function StatTile({
+  label,
+  value,
+  color,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  color?: string;
+  highlight?: boolean;
+}) {
+  return (
+    <View style={[statStyles.tile, highlight && statStyles.tileHighlight]}>
+      <Text variant="caption" color="muted" numberOfLines={1}>{label}</Text>
+      <Text variant="body" weight="bold" style={[statStyles.value, color ? { color } : null]}>
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+const statStyles = StyleSheet.create({
+  tile: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.layout.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: theme.spacing.sm,
+    gap: 3,
+  },
+  tileHighlight: {
+    borderColor: theme.colors.primary,
+    backgroundColor: `${theme.colors.primary}0d`,
+  },
+  value: { color: theme.colors.text },
+});
+
+function FinancialSummaryCard({ data }: { data: FinancialSummary }) {
+  const { t } = useTranslation();
+  const taka = (paisa: number) => `৳${paisaToTaka(paisa)}`;
+
+  return (
+    <Card style={summaryStyles.card}>
+      <Text variant="body" weight="semibold">{t('revenue.financial_summary_title')}</Text>
+
+      {/* Row 1: Total Payments + Verify Pending */}
+      <View style={summaryStyles.row}>
+        <StatTile
+          label={t('revenue.stat_total_payments')}
+          value={taka(data.total_payments_paisa)}
+          color={theme.colors.primary}
+          highlight
+        />
+        <StatTile
+          label={t('revenue.stat_pending_payments')}
+          value={taka(data.pending_payments_paisa)}
+          color={data.pending_payments_paisa > 0 ? theme.colors.warning : undefined}
+        />
+      </View>
+
+      {/* Row 2: Platform Revenue + Provider Wallets */}
+      <View style={summaryStyles.row}>
+        <StatTile
+          label={t('revenue.stat_platform_revenue')}
+          value={taka(data.platform_revenue_paisa)}
+          color={theme.colors.success}
+        />
+        <StatTile
+          label={t('revenue.stat_provider_wallets')}
+          value={taka(data.provider_wallet_balance_paisa)}
+        />
+      </View>
+
+      {/* Row 3: Withdrawn + Pending Withdrawal */}
+      <View style={summaryStyles.row}>
+        <StatTile
+          label={t('revenue.stat_provider_withdrawn')}
+          value={taka(data.provider_withdrawn_paisa)}
+          color={theme.colors.textMuted}
+        />
+        <StatTile
+          label={t('revenue.stat_provider_pending')}
+          value={taka(data.provider_withdrawal_pending_paisa)}
+          color={data.provider_withdrawal_pending_paisa > 0 ? theme.colors.warning : undefined}
+        />
+      </View>
+    </Card>
+  );
+}
+
+const summaryStyles = StyleSheet.create({
+  card: { padding: theme.spacing.md, gap: theme.spacing.sm },
+  row: { flexDirection: 'row', gap: theme.spacing.sm },
+});
+
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function RevenueScreen() {
@@ -253,6 +353,24 @@ export default function RevenueScreen() {
     queryFn: () => adminService.getRevenueJobs(),
     enabled: showAllJobs,
   });
+
+  const { data: pendingPayments = [] } = useQuery({
+    queryKey: ['adminPendingPayments'],
+    queryFn: adminService.listPendingPayments,
+  });
+
+  const { data: financialSummary } = useQuery({
+    queryKey: ['adminFinancialSummary'],
+    queryFn: adminService.getFinancialSummary,
+  });
+
+  const { data: allWithdrawals = [] } = useQuery({
+    queryKey: ['adminWithdrawals'],
+    queryFn: adminService.listWithdrawals,
+  });
+
+  const pendingPaymentsCount = pendingPayments.length;
+  const pendingWithdrawalsCount = allWithdrawals.filter((w) => w.status === 'pending').length;
 
   if (isLoading) {
     return (
@@ -309,8 +427,35 @@ export default function RevenueScreen() {
           <Text variant="body" weight="semibold" style={styles.verifyCardText}>
             {t('revenue.verify_payments_cta')}
           </Text>
+          {pendingPaymentsCount > 0 && (
+            <View style={styles.countBadge}>
+              <Text variant="caption" weight="bold" color="inverse">{pendingPaymentsCount}</Text>
+            </View>
+          )}
           <ChevronRight color={theme.colors.warning} size={18} />
         </TouchableOpacity>
+
+        {/* Manage withdrawals CTA */}
+        <TouchableOpacity
+          style={styles.withdrawalCard}
+          onPress={() => router.push('/(app)/admin/withdrawals' as never)}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+        >
+          <Banknote color={theme.colors.primary} size={20} />
+          <Text variant="body" weight="semibold" style={styles.withdrawalCardText}>
+            {t('revenue.manage_withdrawals_cta')}
+          </Text>
+          {pendingWithdrawalsCount > 0 && (
+            <View style={[styles.countBadge, styles.countBadgePrimary]}>
+              <Text variant="caption" weight="bold" color="inverse">{pendingWithdrawalsCount}</Text>
+            </View>
+          )}
+          <ChevronRight color={theme.colors.primary} size={18} />
+        </TouchableOpacity>
+
+        {/* Financial overview */}
+        {financialSummary && <FinancialSummaryCard data={financialSummary} />}
 
         {/* Total revenue hero */}
         <Card style={styles.heroCard}>
@@ -450,6 +595,32 @@ const styles = StyleSheet.create({
   verifyCardText: {
     flex: 1,
     color: theme.colors.warning,
+  },
+  withdrawalCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.layout.radius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+  },
+  withdrawalCardText: {
+    flex: 1,
+    color: theme.colors.primary,
+  },
+  countBadge: {
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: theme.colors.warning,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 5,
+  },
+  countBadgePrimary: {
+    backgroundColor: theme.colors.primary,
   },
   heroCard: {
     padding: theme.spacing.md,

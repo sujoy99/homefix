@@ -1,7 +1,7 @@
 # HomeFix — Sprint 5 Mobile: User Manual
 
 > **Sprint:** Sprint 5 — Payments & Wallet (Mobile)
-> **Covers:** HF-058B · HF-058C · HF-059 · HF-059B · HF-060 · HF-061 · HF-068B (pulled forward from Sprint 7)
+> **Covers:** HF-058B · HF-058C · HF-058D · HF-059 · HF-059B · HF-060 · HF-060B · HF-060C · HF-061 · HF-061B · HF-068B (pulled forward from Sprint 7)
 > **Audience:** QA, Product Owner, Business Stakeholder
 > **Last updated:** 2026-05-31
 
@@ -16,8 +16,12 @@ Sprint 5 closes the payment loop end-to-end and gives each role their own financ
 | Payment screen — bKash/Nagad TxID entry | Residents | REQ-019, REQ-020 |
 | Payment receipt | Residents | REQ-019 |
 | Provider wallet — balance, earnings, withdrawal | Providers | REQ-022 |
+| Provider withdrawal MFS account selector — choose payout account when multiple exist | Providers | REQ-022 |
+| Provider wallet withdrawal history — past requests with status badges | Providers | REQ-022 |
 | Profile completion card + provider banner | Both (providers gated) | REQ-017B |
 | Admin revenue dashboard | Admin | REQ-023 |
+| Admin revenue financial summary — 6 at-a-glance platform metrics | Admin | REQ-023 |
+| Admin withdrawal dashboard — complete or reject provider payouts | Admin | REQ-022 |
 | Admin payment verification screen — list + one-tap verify | Admin | REQ-020 |
 | Double-payment protection — submitted banner + badge | Residents | REQ-019 |
 
@@ -237,11 +241,35 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 | 19 | Enter amount exceeding balance | Error "Insufficient balance" |
 | 20 | Enter valid amount (≥ ৳100, ≤ balance) + active MFS account | Success toast "Withdrawal request submitted. You will be paid within 1-2 business days." |
 
+#### Withdrawal modal — MFS account selector (HF-060C)
+
+| # | Action | Expected |
+|---|--------|----------|
+| 21 | Provider has only 1 MFS account | Modal shows amount input only; primary account is used automatically |
+| 22 | Provider has 2+ MFS accounts | "Send to Account" section appears above the amount input |
+| 23 | Account picker shows | Dropdown list with account type + last-4 digits; primary account pre-selected |
+| 24 | Tap a different account | Selection updates; that account will receive the payout |
+| 25 | Dismiss modal and reopen | Picker resets to the primary account |
+
+> **Note on available balance:** When a pending withdrawal request already exists, the available balance shown in the modal is the wallet balance **minus** the sum of pending requests — preventing over-requesting.
+
+#### Withdrawal history (HF-060B)
+
+> **Appears below the transaction history section.**
+
+| # | Action | Expected |
+|---|--------|----------|
+| 26 | At least one withdrawal request exists | "Withdrawal Requests" section visible |
+| 27 | Pending request | Orange "Pending" badge; shows requested date+time, amount, MFS account |
+| 28 | Completed request | Green "Completed" badge; shows sent date+time, amount sent |
+| 29 | Rejected request | Red "Rejected" badge; shows processed date+time, admin note if provided |
+| 30 | No withdrawal requests | Section hidden |
+
 #### Pull-to-refresh
 
 | # | Action | Expected |
 |---|--------|----------|
-| 21 | Pull down on wallet screen | Balance and transactions reload |
+| 31 | Pull down on wallet screen | Balance, transactions, and withdrawal history reload |
 
 ---
 
@@ -401,6 +429,80 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 
 ---
 
+### Screen 9 — Admin Withdrawal Dashboard (HF-060B)
+
+> **Who:** Admin
+> **Navigate:** Revenue tab → "Withdrawal Requests" button (or via pending count badge)
+
+#### Entry point
+
+| # | Action | Expected |
+|---|--------|----------|
+| 1 | Revenue tab loads as Admin | "Withdrawal Requests" card/button visible; shows pending count badge if any pending |
+| 2 | Tap the card | Navigates to Admin Withdrawals screen |
+
+#### Withdrawal list
+
+| # | Action | Expected |
+|---|--------|----------|
+| 3 | Screen loads with pending withdrawals | Header: pending count badge; list of withdrawal rows |
+| 4 | Each row — provider info | Provider full name + mobile number |
+| 5 | Each row — MFS account | MFS type (bKash/Nagad/Bank) + account number + account name |
+| 6 | Each row — amount | Requested amount in ৳ |
+| 7 | Each row — requested time | Requested date and time in 12-hour format (e.g. `3 Jun 2026, 10:45 AM`) |
+| 8 | Each row — wallet info | Wallet balance and total pending amount shown so admin knows available funds |
+| 9 | Pull-to-refresh | List reloads |
+
+#### Complete withdrawal
+
+| # | Action | Expected |
+|---|--------|----------|
+| 10 | Tap "Complete" on a row | Bottom-sheet modal opens |
+| 11 | Modal fields | Amount Sent (pre-filled with requested amount), Sent At (date/time picker), Transaction ID, Admin Note (optional) |
+| 12 | Type in Transaction ID | Characters are automatically forced to UPPERCASE on each keystroke |
+| 13 | Tap Submit with empty TxID | Validation error shown |
+| 14 | Tap Submit with valid data | Row disappears from pending list; success toast |
+| 15 | Provider wallet | Balance deducted by `amount_sent_paisa`; withdrawal history shows "Completed" |
+
+#### Reject withdrawal
+
+| # | Action | Expected |
+|---|--------|----------|
+| 16 | Tap "Reject" on a row | Confirmation bottom-sheet opens |
+| 17 | Submit rejection (with or without note) | Row disappears; success toast; provider balance unchanged |
+| 18 | Provider wallet | Withdrawal history shows "Rejected" badge; balance unchanged |
+
+#### Empty state
+
+| # | Action | Expected |
+|---|--------|----------|
+| 19 | No pending withdrawals | Empty state shown; Revenue tab badge disappears |
+
+---
+
+### Screen 10 — Admin Revenue Financial Summary (HF-058D)
+
+> **Who:** Admin
+> **Navigate:** Revenue tab — Financial Overview card appears **above** the revenue hero card
+
+#### Overview card
+
+| # | Action | Expected |
+|---|--------|----------|
+| 1 | Revenue tab loads | "Financial Overview" card visible at the very top of the screen |
+| 2 | Card layout | 3 rows × 2 stat tiles; all values in ৳ format |
+| 3 | Row 1: Total Payments | Highlighted with primary-color border — sum of all **verified** payment amounts entered into the platform |
+| 4 | Row 1: Verify Pending | Sum of **submitted** (not yet verified) payments; tile turns orange/warning when value > 0 |
+| 5 | Row 2: Platform Revenue | Sum of all platform commission credits (from `platform_revenue_ledger`); shown in green |
+| 6 | Row 2: Provider Wallets | Sum of all current provider wallet balances (money held in the system) |
+| 7 | Row 3: Provider Withdrawn | Total money successfully paid out to providers (completed withdrawals) |
+| 8 | Row 3: Pending Withdrawal | Total money providers have requested but not yet been paid; tile turns orange when value > 0 |
+| 9 | Data refresh | Pull-to-refresh on Revenue tab reloads financial summary along with all other data |
+
+> **Financial accounting check:** Total Payments = Platform Revenue + Provider Wallets + Provider Withdrawn (all money that entered the platform is accounted for).
+
+---
+
 ## Part 3 — Bilingual Check
 
 | Screen | Key | Bengali (bn) | English (en) |
@@ -437,6 +539,14 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 | Provider verification | No photo | আপলোড করা হয়নি | Not uploaded |
 | Provider verification | Skills section | নিবন্ধিত দক্ষতা | Registered Skills |
 | Profile | Completion title | আপনার প্রোফাইল {{percentage}}% সম্পন্ন | Your profile is {{percentage}}% complete |
+| Wallet | Withdraw account label | অ্যাকাউন্টে পাঠান | Send to Account |
+| Revenue (financial) | Card title | আর্থিক সারসংক্ষেপ | Financial Overview |
+| Revenue (financial) | Total payments | মোট প্রবেশকৃত অর্থ | Total Payments Entered |
+| Revenue (financial) | Verify pending | যাচাই বাকি পেমেন্ট | Verify Pending |
+| Revenue (financial) | Platform revenue | প্ল্যাটফর্ম রাজস্ব | Platform Revenue |
+| Revenue (financial) | Provider wallets | প্রোভাইডার ব্যালেন্স | Provider Wallets |
+| Revenue (financial) | Provider withdrawn | প্রোভাইডার উত্তোলন | Provider Withdrawn |
+| Revenue (financial) | Pending withdrawal | উত্তোলন অপেক্ষায় | Pending Withdrawal |
 
 ---
 
@@ -454,4 +564,23 @@ This verifies the complete happy path across all 3 roles.
 | 6 | Resident | Select bKash, enter TxID, enter amount, Submit | Receipt screen shown |
 | 7 | Admin | Revenue tab → "Verify Pending Payments" → tap Verify on the row | Job moves to PAID; Provider wallet credited; row disappears from list |
 | 8 | Provider | Wallet tab | Balance increased by 80% of payment amount |
-| 9 | Admin | Revenue tab | Total revenue increased by 20% of payment amount |
+| 9 | Admin | Revenue tab | Financial Overview card: Total Payments and Platform Revenue updated |
+| 10 | Admin | Revenue tab | Total Revenue hero card updated |
+
+---
+
+## Part 5 — End-to-End Withdrawal Flow Walkthrough
+
+| Step | Role | Action | Expected |
+|------|------|--------|----------|
+| 1 | Provider | Wallet tab → "+ Add Account" | Add a bKash MFS account |
+| 2 | Provider | (Optional) Add a second MFS account | Second account appears with "Set as Primary" link |
+| 3 | Provider | Tap "Request Withdrawal" | Modal opens; if 2+ accounts, account picker shown |
+| 4 | Provider | (Multi-account) Select desired payout account | Account picker highlights chosen account |
+| 5 | Provider | Enter amount ≥ ৳100 and ≤ available balance → Submit | Success toast; withdrawal history shows "Pending" row |
+| 6 | Admin | Revenue tab | Pending count badge on "Withdrawal Requests" button |
+| 7 | Admin | Tap "Withdrawal Requests" | Admin Withdrawals screen opens; provider row visible |
+| 8 | Admin | Tap "Complete" on the row | Modal opens pre-filled with requested amount |
+| 9 | Admin | Enter Transaction ID (auto-uppercased), confirm sent date → Submit | Row removed from pending list; success toast |
+| 10 | Provider | Wallet tab | Balance deducted; withdrawal history row shows "Completed" badge |
+| 11 | Admin | Revenue tab → Financial Overview | Provider Withdrawn amount increased; Provider Wallets decreased |

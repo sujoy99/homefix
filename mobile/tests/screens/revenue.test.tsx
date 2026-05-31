@@ -36,6 +36,8 @@ jest.mock('../../services/admin.service', () => ({
   adminService: {
     getRevenueDashboard: jest.fn(),
     getRevenueJobs: jest.fn(),
+    getFinancialSummary: jest.fn(),
+    listWithdrawals: jest.fn(),
   },
 }));
 
@@ -71,6 +73,15 @@ const dashboardData = {
   ],
 };
 
+const financialSummaryData = {
+  total_payments_paisa: 120000,
+  pending_payments_paisa: 50000,
+  platform_revenue_paisa: 24000,
+  provider_wallet_balance_paisa: 66000,
+  provider_withdrawn_paisa: 30000,
+  provider_withdrawal_pending_paisa: 20000,
+};
+
 const jobsData = {
   items: [
     {
@@ -92,6 +103,8 @@ describe('RevenueScreen', () => {
     jest.clearAllMocks();
     adminService.getRevenueDashboard.mockResolvedValue(dashboardData);
     adminService.getRevenueJobs.mockResolvedValue(jobsData);
+    adminService.getFinancialSummary.mockResolvedValue(financialSummaryData);
+    adminService.listWithdrawals.mockResolvedValue([]);
   });
 
   it('shows total revenue after loading', async () => {
@@ -177,6 +190,44 @@ describe('RevenueScreen', () => {
     renderRevenue();
     await waitFor(() => {
       expect(screen.getByText('revenue.load_error')).toBeTruthy();
+    });
+  });
+
+  // ── Financial summary card ────────────────────────────────────────────────────
+
+  it('renders financial summary card with title when data is available', async () => {
+    renderRevenue();
+    await waitFor(() => {
+      expect(screen.getByText('revenue.financial_summary_title')).toBeTruthy();
+    });
+  });
+
+  it('renders all 6 financial stat tile labels', async () => {
+    renderRevenue();
+    await waitFor(() => {
+      expect(screen.getByText('revenue.stat_total_payments')).toBeTruthy();
+      expect(screen.getByText('revenue.stat_pending_payments')).toBeTruthy();
+      expect(screen.getByText('revenue.stat_platform_revenue')).toBeTruthy();
+      expect(screen.getByText('revenue.stat_provider_wallets')).toBeTruthy();
+      expect(screen.getByText('revenue.stat_provider_withdrawn')).toBeTruthy();
+      expect(screen.getByText('revenue.stat_provider_pending')).toBeTruthy();
+    });
+  });
+
+  it('does not render financial summary card when the query fails', async () => {
+    adminService.getFinancialSummary.mockRejectedValue(new Error('Network error'));
+    renderRevenue();
+    // Wait for the revenue dashboard to load (so we know the screen rendered)
+    await waitFor(() => {
+      expect(screen.getByText('revenue.total_revenue')).toBeTruthy();
+    });
+    expect(screen.queryByText('revenue.financial_summary_title')).toBeNull();
+  });
+
+  it('calls getFinancialSummary on load', async () => {
+    renderRevenue();
+    await waitFor(() => {
+      expect(adminService.getFinancialSummary).toHaveBeenCalledTimes(1);
     });
   });
 });

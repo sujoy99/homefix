@@ -52,4 +52,26 @@ export class WithdrawalRequest extends Model {
   processed_by_admin_id!: string | null;
   admin_note!: string | null;
   processed_at!: string | null;
+
+  provider?: { id: string; full_name: string; mobile: string };
+  mfsAccount?: { id: string; mfs_type: MfsType; account_number: string; account_name: string };
+  wallet?: { id: string; balance_paisa: number };
+
+  static relationMappings = {
+    provider: {
+      relation: Model.BelongsToOneRelation,
+      modelClass: require('../../users/user.model').User,
+      join: { from: 'withdrawal_requests.provider_id', to: 'users.id' },
+    },
+    mfsAccount: {
+      relation: Model.BelongsToOneRelation,
+      modelClass: require('./wallet.model').ProviderPaymentAccount,
+      join: { from: 'withdrawal_requests.mfs_account_id', to: 'provider_payment_accounts.id' },
+    },
+    wallet: {
+      relation: Model.BelongsToOneRelation,
+      modelClass: require('./wallet.model').Wallet,
+      join: { from: 'withdrawal_requests.wallet_id', to: 'wallets.id' },
+    },
+  };
 }

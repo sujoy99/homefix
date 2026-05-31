@@ -16,4 +16,9 @@ export class RevenueController {
     const result = await RevenueService.getJobsDetail(query);
     return HttpResponse.success(res, result, 'Revenue jobs detail retrieved');
   }
+
+  static async getFinancialSummary(_req: AuthenticatedRequest, res: Response): Promise<Response> {
+    const summary = await RevenueService.getFinancialSummary();
+    return HttpResponse.success(res, summary, 'Financial summary retrieved');
+  }
 }

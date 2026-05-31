@@ -53,8 +53,17 @@ export type WalletResponse = {
 export type WithdrawalRequest = {
   id: string;
   amount_requested_paisa: number;
-  status: string;
+  status: 'pending' | 'completed' | 'rejected';
   requested_at: string;
+  amount_sent_paisa: number | null;
+  processed_at: string | null;
+  admin_note: string | null;
+  mfs_account_id: string;
+};
+
+export type MyWithdrawalsResponse = {
+  withdrawals: WithdrawalRequest[];
+  pending_total_paisa: number;
 };
 
 // ─── MFS Accounts ─────────────────────────────────────────────────────────────
@@ -112,8 +121,13 @@ export const paymentService = {
     return res.data.body;
   },
 
-  requestWithdrawal: async (amount_paisa: number): Promise<WithdrawalRequest> => {
-    const res = await apiClient.post<ApiResponse<WithdrawalRequest>>('/v2/providers/wallet/withdraw', { amount_paisa });
+  requestWithdrawal: async (payload: { amount_paisa: number; mfs_account_id: string }): Promise<WithdrawalRequest> => {
+    const res = await apiClient.post<ApiResponse<WithdrawalRequest>>('/v2/providers/wallet/withdraw', payload);
+    return res.data.body;
+  },
+
+  getMyWithdrawals: async (): Promise<MyWithdrawalsResponse> => {
+    const res = await apiClient.get<ApiResponse<MyWithdrawalsResponse>>('/v2/providers/wallet/withdrawals');
     return res.data.body;
   },
 
