@@ -29,7 +29,8 @@ export const errorHandler = (
       err.message,
       err.statusCode,
       err.errorCode,
-      err.errors
+      err.errors,
+      err.meta
     );
   }
 

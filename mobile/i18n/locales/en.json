@@ -134,7 +134,26 @@
     "select_services": "Select Services",
     "select_services_hint": "Pick at least one service you offer",
     "no_services_tap": "No services yet. Tap Edit to add.",
-    "skills_min": "Please select at least one service"
+    "skills_min": "Please select at least one service",
+    "completion": {
+      "title": "Your profile is {{percentage}}% complete",
+      "missing_header": "Missing:",
+      "cta": "Complete your profile",
+      "banner_message": "Complete your profile to accept jobs",
+      "banner_sub": "You're {{percentage}}% complete — {{count}} items remaining",
+      "banner_cta": "Complete now",
+      "name_mobile": "Name & mobile number",
+      "profile_photo": "Profile photo",
+      "nid_front": "NID front photo",
+      "nid_back": "NID back photo",
+      "home_location": "Home location (GPS)",
+      "skills": "At least one skill",
+      "hourly_rate": "Hourly rate",
+      "mfs_account": "MFS payment account",
+      "bio": "Bio / about (min 20 chars)",
+      "email": "Email address",
+      "address_text": "Home area / address"
+    }
   },
   "admin": {
     "title": "Admin Dashboard",

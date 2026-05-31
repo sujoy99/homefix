@@ -5,6 +5,7 @@ export class AppError extends Error {
   public readonly statusCode: number;
   public readonly errorCode?: ErrorCode | undefined;
   public readonly errors?: ReadonlyArray<FieldError> | undefined;
+  public readonly meta?: Record<string, unknown> | undefined;
   public readonly isOperational: boolean;
 
   constructor(
@@ -12,6 +13,7 @@ export class AppError extends Error {
     statusCode = 500,
     errorCode?: ErrorCode,
     errors?: ReadonlyArray<FieldError> | undefined,
+    meta?: Record<string, unknown> | undefined,
     isOperational = true
   ) {
     super(message);
@@ -19,6 +21,7 @@ export class AppError extends Error {
     this.errorCode = errorCode;
     this.isOperational = isOperational;
     this.errors = errors;
+    this.meta = meta;
 
     Object.setPrototypeOf(this, new.target.prototype);
 

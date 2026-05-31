@@ -25,8 +25,10 @@ export class User extends Model {
     longitude: number;
   };
 
+  address?: string | null;
   photo_url?: string | null;
   nid_photo_url?: string | null;
+  nid_photo_back_url?: string | null;
   
   created_at!: string;
   updated_at!: string;

@@ -18,7 +18,7 @@
 | HF-056 | Commission engine — configurable rate from `commission_rules` | ✅ Done | — |
 | HF-056B | Admin commission rules API — CRUD + `/preview` | ✅ Done | — |
 | HF-057 | Provider wallet/ledger — 80% credit on payment + withdrawal flow | ✅ Done | — |
-| HF-057B | Profile completion API — computed endpoint + `PROFILE_INCOMPLETE` guard | ⏳ Pending | — |
+| HF-057B | Profile completion API — computed endpoint + `PROFILE_INCOMPLETE` guard | ✅ Done | — |
 | HF-058 | Admin revenue dashboard API | ⏳ Pending | — |
 
 ### Mobile

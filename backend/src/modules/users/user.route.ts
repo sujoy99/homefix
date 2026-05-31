@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { UserController } from './user.controller';
 import { authGuard } from '@modules/auth/auth.guard';
 import { asAuthenticated } from '@modules/auth/auth.adapter';
+import { asyncHandler } from '@utils/async-handler';
 
 export const userRouter = Router();
 
@@ -15,8 +16,7 @@ export const userRouter = Router();
  * @swagger
  * /users/me:
  *   get:
- *     summary: Get current authenticated user
- *     description: Returns profile information of the logged-in user
+ *     summary: Get current authenticated user (with embedded profile_completion summary)
  *     tags:
  *       - Users
  *     security:
@@ -27,14 +27,26 @@ export const userRouter = Router();
  *       401:
  *         description: Unauthorized
  */
+userRouter.get('/me', authGuard, asyncHandler(asAuthenticated(UserController.me)));
 
 /**
- * @route   GET /users/me
- * @desc    Get current logged-in user & permissions
- * @access  Protected
+ * @swagger
+ * /users/me/profile-completion:
+ *   get:
+ *     summary: Get full profile completion breakdown with item list
+ *     description: Returns percentage, threshold, and per-field completed/missing lists. Role-aware (Provider 9 fields / Resident 5 fields).
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile completion data
+ *       401:
+ *         description: Unauthorized
  */
 userRouter.get(
-  '/me',
-  authGuard, // JWT required
-  asAuthenticated(UserController.me)
+  '/me/profile-completion',
+  authGuard,
+  asyncHandler(asAuthenticated(UserController.getProfileCompletion))
 );

@@ -5,7 +5,11 @@ import { WithdrawalRepository } from './withdrawal.repository';
 import { MfsAccountRepository } from './mfs-account.repository';
 import { Wallet, WalletTransaction, WithdrawalRequest } from './wallet.model';
 import { BadRequestError, NotFoundError } from '@errors/http-errors';
+import { AppError } from '@errors/app-error';
 import { ErrorCode } from '@errors/error-code';
+import { ProfileCompletionService } from '@modules/users/profile-completion.service';
+import { UserRole } from '@modules/users/user.types';
+import { logger } from '@logger/logger';
 
 const WITHDRAWAL_MIN_PAISA = 10_000; // ৳100
 
@@ -46,6 +50,22 @@ async function requestWithdrawal(
   userId: string,
   amountPaisa: number
 ): Promise<WithdrawalRequest> {
+  const completion = await ProfileCompletionService.compute(userId, UserRole.PROVIDER);
+  if (!completion.meets_threshold) {
+    logger.warn(`Provider ${userId} blocked: profile ${completion.percentage}% < threshold`);
+    throw new AppError(
+      'Complete your profile to request a withdrawal',
+      403,
+      ErrorCode.PROFILE_INCOMPLETE,
+      undefined,
+      {
+        percentage: completion.percentage,
+        threshold: completion.threshold,
+        missing_items: completion.missing_items.map((i) => i.key),
+      }
+    );
+  }
+
   if (amountPaisa < WITHDRAWAL_MIN_PAISA) {
     throw new BadRequestError(
       ErrorCode.WITHDRAWAL_MIN_AMOUNT,

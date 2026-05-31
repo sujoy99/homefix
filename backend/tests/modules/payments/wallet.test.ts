@@ -2,6 +2,7 @@ import { MfsType, WithdrawalStatus } from '@homefix/shared';
 import { request } from '../../helpers/app';
 import { truncateAll, closeTestDb, getTestDb } from '../../helpers/db';
 import { createAdmin, createUser } from '../../factories/user.factory';
+import { createProvider } from '../../factories/provider.factory';
 import { createCategory } from '../../factories/category.factory';
 import { createJob } from '../../factories/job.factory';
 import { AuthMethod } from '../../../src/modules/auth/auth.types';
@@ -234,7 +235,7 @@ describe('Provider MFS account endpoints', () => {
 
 describe('POST /api/v2/providers/wallet/withdraw', () => {
   it('creates a withdrawal request', async () => {
-    const provider = await createUser({ role: UserRole.PROVIDER, status: UserStatus.ACTIVE });
+    const provider = await createProvider({ status: UserStatus.ACTIVE });
     const token = await loginAs(provider.mobile, provider.password);
 
     await seedWallet(provider.userId, 50_000);
@@ -251,7 +252,7 @@ describe('POST /api/v2/providers/wallet/withdraw', () => {
   });
 
   it('returns 400 when amount is below minimum (৳100)', async () => {
-    const provider = await createUser({ role: UserRole.PROVIDER, status: UserStatus.ACTIVE });
+    const provider = await createProvider({ status: UserStatus.ACTIVE });
     const token = await loginAs(provider.mobile, provider.password);
 
     await seedWallet(provider.userId, 50_000);
@@ -266,7 +267,7 @@ describe('POST /api/v2/providers/wallet/withdraw', () => {
   });
 
   it('returns 400 when balance is insufficient', async () => {
-    const provider = await createUser({ role: UserRole.PROVIDER, status: UserStatus.ACTIVE });
+    const provider = await createProvider({ status: UserStatus.ACTIVE });
     const token = await loginAs(provider.mobile, provider.password);
 
     await seedWallet(provider.userId, 5_000);
@@ -281,7 +282,7 @@ describe('POST /api/v2/providers/wallet/withdraw', () => {
   });
 
   it('returns 400 when no MFS account is registered', async () => {
-    const provider = await createUser({ role: UserRole.PROVIDER, status: UserStatus.ACTIVE });
+    const provider = await createProvider({ status: UserStatus.ACTIVE });
     const token = await loginAs(provider.mobile, provider.password);
 
     await seedWallet(provider.userId, 50_000);
@@ -310,7 +311,7 @@ describe('Admin withdrawal complete / reject', () => {
     const admin = await createAdmin();
     const adminToken = await loginAs(admin.mobile, admin.password);
 
-    const provider = await createUser({ role: UserRole.PROVIDER, status: UserStatus.ACTIVE });
+    const provider = await createProvider({ status: UserStatus.ACTIVE });
     const providerToken = await loginAs(provider.mobile, provider.password);
 
     await seedWallet(provider.userId, 80_000);
@@ -347,7 +348,7 @@ describe('Admin withdrawal complete / reject', () => {
     const admin = await createAdmin();
     const adminToken = await loginAs(admin.mobile, admin.password);
 
-    const provider = await createUser({ role: UserRole.PROVIDER, status: UserStatus.ACTIVE });
+    const provider = await createProvider({ status: UserStatus.ACTIVE });
     const providerToken = await loginAs(provider.mobile, provider.password);
 
     await seedWallet(provider.userId, 80_000);
@@ -372,7 +373,7 @@ describe('Admin withdrawal complete / reject', () => {
     const admin = await createAdmin();
     const adminToken = await loginAs(admin.mobile, admin.password);
 
-    const provider = await createUser({ role: UserRole.PROVIDER, status: UserStatus.ACTIVE });
+    const provider = await createProvider({ status: UserStatus.ACTIVE });
     const providerToken = await loginAs(provider.mobile, provider.password);
 
     await seedWallet(provider.userId, 80_000);
@@ -409,7 +410,7 @@ describe('Admin withdrawal complete / reject', () => {
     const admin = await createAdmin();
     const adminToken = await loginAs(admin.mobile, admin.password);
 
-    const provider = await createUser({ role: UserRole.PROVIDER, status: UserStatus.ACTIVE });
+    const provider = await createProvider({ status: UserStatus.ACTIVE });
     const providerToken = await loginAs(provider.mobile, provider.password);
 
     await seedWallet(provider.userId, 80_000);

@@ -48,7 +48,8 @@ export class HttpResponse {
     message: string,
     statusCode: number,
     errorCode?: ErrorCode,
-    errors?: ReadonlyArray<FieldError>
+    errors?: ReadonlyArray<FieldError>,
+    meta?: Record<string, unknown>
   ) {
     const response: ApiResponse<null> = {
       http_code: statusCode,
@@ -56,6 +57,7 @@ export class HttpResponse {
       body: null,
       ...(errorCode !== undefined ? { error_code: errorCode } : {}),
       ...(errors ? { errors } : {}),
+      ...(meta ? { meta } : {}),
     };
 
     return res.status(statusCode).json(response);
