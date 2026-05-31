@@ -88,6 +88,7 @@ export class AuthRepository {
       email: data.email ?? null,
       photo_url: data.photo_url ?? null,
       nid_photo_url: data.nid_photo_url ?? null,
+      nid_photo_back_url: data.nid_photo_back_url ?? null,
       area: db.raw(`ST_SetSRID(ST_MakePoint(?, ?), 4326)`, [data.longitude, data.latitude]),
     } as unknown as PartialModelObject<User>;
 

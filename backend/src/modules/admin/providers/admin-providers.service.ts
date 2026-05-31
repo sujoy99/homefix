@@ -5,7 +5,7 @@ import { NotFoundError, BadRequestError } from '@errors/http-errors';
 import { ErrorCode } from '@errors/error-code';
 
 const SAFE_USER_COLUMNS = [
-  'id', 'full_name', 'mobile', 'email', 'nid', 'status', 'created_at',
+  'id', 'full_name', 'mobile', 'email', 'nid', 'role', 'status', 'created_at',
   'photo_url', 'nid_photo_url', 'nid_photo_back_url',
 ] as const;
 
