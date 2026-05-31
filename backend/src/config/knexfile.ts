@@ -22,7 +22,9 @@ const knexConfig: Record<Environment, Knex.Config> = {
       user: required('DB_USER'),
       password: required('DB_PASSWORD'),
     },
-    pool: { min: 2, max: 20, acquireTimeoutMillis: 8000 },
+    // min: 0 — don't eagerly open connections at import time; avoids KnexTimeoutError
+    // when the DB is still warming up (make start, host sleep, ts-node-dev hot reload).
+    pool: { min: 0, max: 10, acquireTimeoutMillis: 30_000, createTimeoutMillis: 30_000, idleTimeoutMillis: 30_000 },
     migrations: {
       directory: __dirname + '/../db/migrations',
       extension: 'ts',
