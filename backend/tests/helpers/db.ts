@@ -26,6 +26,13 @@ export async function truncateAll(): Promise<void> {
   const db = getTestDb();
   // DELETE instead of TRUNCATE to avoid ACCESS EXCLUSIVE locks that
   // kill the app's connection pool (especially with PostGIS generated columns)
+  await db.raw(`DELETE FROM wallet_transactions`);
+  await db.raw(`DELETE FROM platform_revenue_ledger`);
+  await db.raw(`DELETE FROM withdrawal_requests`);
+  await db.raw(`DELETE FROM wallets`);
+  await db.raw(`DELETE FROM payments`);
+  await db.raw(`DELETE FROM provider_payment_accounts`);
+  await db.raw(`DELETE FROM commission_rules`);
   await db.raw(`DELETE FROM jobs`);
   await db.raw(`DELETE FROM provider_skills`);
   await db.raw(`DELETE FROM provider_profiles`);

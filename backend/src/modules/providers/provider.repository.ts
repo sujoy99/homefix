@@ -1,3 +1,4 @@
+import type { TransactionOrKnex } from 'objection';
 import { ProviderProfileModel } from './provider_profile.model';
 import { ProviderSkillModel } from './provider_skill.model';
 import { CreateProviderProfileInput, UpdateProviderProfileInput, AddSkillInput } from './provider.types';
@@ -15,8 +16,8 @@ export class ProviderRepository {
       .withGraphFetched('skills');
   }
 
-  static async create(data: CreateProviderProfileInput): Promise<ProviderProfileModel> {
-    return ProviderProfileModel.query().insertAndFetch({
+  static async create(data: CreateProviderProfileInput, trx?: TransactionOrKnex): Promise<ProviderProfileModel> {
+    return ProviderProfileModel.query(trx).insertAndFetch({
       user_id: data.user_id,
       bio: data.bio ?? null,
       experience_years: data.experience_years ?? 0,
@@ -25,8 +26,8 @@ export class ProviderRepository {
     });
   }
 
-  static async update(id: string, data: UpdateProviderProfileInput): Promise<ProviderProfileModel | undefined> {
-    return ProviderProfileModel.query().patchAndFetchById(id, data);
+  static async update(id: string, data: UpdateProviderProfileInput, trx?: TransactionOrKnex): Promise<ProviderProfileModel | undefined> {
+    return ProviderProfileModel.query(trx).patchAndFetchById(id, data);
   }
 
   static async findSkillById(skillId: string): Promise<ProviderSkillModel | undefined> {
@@ -37,13 +38,13 @@ export class ProviderRepository {
     return ProviderSkillModel.query().findOne({ provider_id: providerId, category_id: categoryId });
   }
 
-  static async addSkill(providerId: string, data: AddSkillInput): Promise<ProviderSkillModel> {
+  static async addSkill(providerId: string, data: AddSkillInput, trx?: TransactionOrKnex): Promise<ProviderSkillModel> {
     if (data.is_primary) {
-      await ProviderSkillModel.query()
+      await ProviderSkillModel.query(trx)
         .patch({ is_primary: false })
         .where('provider_id', providerId);
     }
-    return ProviderSkillModel.query().insertAndFetch({
+    return ProviderSkillModel.query(trx).insertAndFetch({
       provider_id: providerId,
       category_id: data.category_id,
       is_primary: data.is_primary ?? false,

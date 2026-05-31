@@ -4,12 +4,15 @@ import { CategoryRepository } from '@modules/categories/category.repository';
 import { ProviderRepository } from '@modules/providers/provider.repository';
 import { Job, CreateJobInput, JobFeedQuery } from './job.types';
 import { JobStatus, isValidJobTransition } from '@homefix/shared';
-import { UserStatus } from '@modules/users/user.types';
+import { UserStatus, UserRole } from '@modules/users/user.types';
 import { NotFoundError, BadRequestError, ForbiddenError } from '@errors/http-errors';
+import { AppError } from '@errors/app-error';
 import { ErrorCode } from '@errors/error-code';
 import { UserRepository } from '@modules/users/user.repository';
 import { Job as JobModel } from './job.model';
 import { storageService } from '@modules/storage/storage.service';
+import { ProfileCompletionService } from '@modules/users/profile-completion.service';
+import { logger } from '@logger/logger';
 
 export class JobService {
   static async createJob(
@@ -87,6 +90,22 @@ export class JobService {
       throw new ForbiddenError(
         ErrorCode.PROVIDER_NOT_ELIGIBLE,
         'You do not have the required skill for this job'
+      );
+    }
+
+    const completion = await ProfileCompletionService.compute(providerId, UserRole.PROVIDER);
+    if (!completion.meets_threshold) {
+      logger.warn(`Provider ${providerId} blocked: profile ${completion.percentage}% < threshold`);
+      throw new AppError(
+        'Complete your profile to accept jobs',
+        403,
+        ErrorCode.PROFILE_INCOMPLETE,
+        undefined,
+        {
+          percentage: completion.percentage,
+          threshold: completion.threshold,
+          missing_items: completion.missing_items.map((i) => i.key),
+        }
       );
     }
 

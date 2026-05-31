@@ -46,6 +46,33 @@ export const REQUIRES_TRANSACTION_ID: ReadonlySet<PaymentMethod> = new Set([
 ]);
 
 /**
+ * Withdrawal request status lifecycle.
+ */
+export enum WithdrawalStatus {
+  PENDING = 'pending',
+  COMPLETED = 'completed',
+  REJECTED = 'rejected',
+}
+
+/**
+ * MFS account types for provider payout.
+ */
+export enum MfsType {
+  BKASH = 'bkash',
+  NAGAD = 'nagad',
+  BANK = 'bank',
+}
+
+/**
+ * Commission rule scope.
+ */
+export enum CommissionRuleScope {
+  GLOBAL = 'global',
+  CATEGORY = 'category',
+  PROMOTION = 'promotion',
+}
+
+/**
  * Currency code for Bangladesh.
  */
 export const CURRENCY_CODE = 'BDT' as const;

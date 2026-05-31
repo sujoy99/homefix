@@ -30,7 +30,7 @@ export default async function globalSetup() {
   }
   await adminDb.destroy();
 
-  // 2. Enable PostGIS and run migrations on test DB
+  // 2. Enable PostGIS, run migrations, then seed reference data
   const testDb = knex({
     client: 'pg',
     connection: conn(dbName),
@@ -38,8 +38,21 @@ export default async function globalSetup() {
       directory: path.resolve(__dirname, '../src/db/migrations'),
       extension: 'ts',
     },
+    seeds: {
+      directory: path.resolve(__dirname, '../src/db/seeds'),
+      extension: 'ts',
+    },
   });
   await testDb.raw(`CREATE EXTENSION IF NOT EXISTS postgis`);
   await testDb.migrate.latest();
+  // Only run infrastructure seeds — content seeds (02_categories, 03_admin, etc.)
+  // are intentionally skipped so test factories start with an empty slate.
+  for (const seedFile of [
+    '01_roles_permissions.ts',
+    '06_platform_settings.ts',
+    '07_commission_rules.ts',
+  ]) {
+    await testDb.seed.run({ specific: seedFile });
+  }
   await testDb.destroy();
 }

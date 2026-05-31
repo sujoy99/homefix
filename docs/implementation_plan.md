@@ -39,7 +39,7 @@
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
 | 🖥 Backend | HF-054 | Payment interface (pluggable strategy pattern) | — |
-| 📱 Mobile | HF-059 | Payment screen (method selection, TxID input, order summary) | HF-054 |
+| 📱 Mobile | HF-059 | Payment screen (method selection, TxID input, order summary) | HF-054, HF-055 |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
 ### How to Pick Up Work
@@ -481,22 +481,24 @@ modules/payments/
 
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
-| HF-054 | Payment interface (pluggable strategy pattern) | ⏳ | 4h |
-| HF-055 | Manual gateway (bKash/Nagad — TxID entry — REQ-019,020) | ⏳ | 6h |
-| HF-056 | Commission engine — configurable rate from `commission_rules` table (REQ-021) | ⏳ | 6h |
-| HF-056B | Admin commission rules API — CRUD + `/preview` endpoint | ⏳ | 4h |
-| HF-057 | Provider wallet/ledger (80% credit — REQ-022) | ⏳ | 6h |
-| HF-058 | Admin revenue dashboard API (REQ-023) | ⏳ | 4h |
+| HF-054 | Payment interface (pluggable strategy pattern) | ✅ | 4h |
+| HF-055 | Manual gateway (bKash/Nagad — TxID entry — REQ-019,020) | ✅ | 6h |
+| HF-056 | Commission engine — configurable rate from `commission_rules` table (REQ-021) | ✅ | 6h |
+| HF-056B | Admin commission rules API — CRUD + `/preview` endpoint | ✅ | 4h |
+| HF-057 | Provider wallet/ledger — 80% credit on payment + withdrawal flow with full audit trail (REQ-022) | ✅ | 8h |
+| HF-057B | Profile completion API — computed endpoint + `PROFILE_INCOMPLETE` guard on job accept + withdraw | ✅ | 4h |
+| HF-058 | Admin revenue dashboard API (REQ-023) | ✅ | 4h |
 
 #### Mobile:
 
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
 | HF-059 | Payment screen (method selection, TxID input, order summary) | ⏳ | 8h |
-| HF-060 | Provider wallet screen (balance, earnings, commission breakdown) | ⏳ | 6h |
+| HF-059B | Profile completion card on Profile screen (both roles) + persistent banner on Provider home | ⏳ | 4h |
+| HF-060 | Provider wallet screen (balance, earnings, commission breakdown, withdrawal request) | ⏳ | 6h |
 | HF-061 | Payment receipt + completion flow | ⏳ | 3h |
 
-**Deliverable:** Full payment flow with wallet + commission system. First sprint to produce PAID jobs end-to-end.
+**Deliverable:** Full payment flow with wallet + commission system. Profile completion enforcement. First sprint to produce PAID jobs end-to-end.
 
 ---
 

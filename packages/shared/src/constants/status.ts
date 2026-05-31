@@ -10,7 +10,7 @@
  */
 
 import { JobStatus } from '../types/job.types';
-import { PaymentStatus } from '../types/payment.types';
+import { PaymentStatus, WithdrawalStatus } from '../types/payment.types';
 import { UserStatus } from '../types/user.types';
 
 /**
@@ -35,6 +35,15 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   [PaymentStatus.COMPLETED]: 'Completed',
   [PaymentStatus.FAILED]: 'Failed',
   [PaymentStatus.REFUNDED]: 'Refunded',
+};
+
+/**
+ * Withdrawal status display labels (English fallback).
+ */
+export const WITHDRAWAL_STATUS_LABELS: Record<WithdrawalStatus, string> = {
+  [WithdrawalStatus.PENDING]: 'Pending',
+  [WithdrawalStatus.COMPLETED]: 'Completed',
+  [WithdrawalStatus.REJECTED]: 'Rejected',
 };
 
 /**

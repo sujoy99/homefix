@@ -11,6 +11,7 @@ export interface ApiResponse<T = unknown> {
   message: string;
   body: T | null;
   errors?: ReadonlyArray<FieldError>;
+  meta?: Record<string, unknown>;
 }
 
 export interface PaginationMeta {

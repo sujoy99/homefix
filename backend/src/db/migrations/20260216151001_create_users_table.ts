@@ -26,6 +26,7 @@ export async function up(knex: Knex): Promise<void> {
       .notNullable()
       .defaultTo(UserRole.RESIDENT);
     table.enum('status', [UserStatus.PENDING, UserStatus.ACTIVE, UserStatus.INACTIVE]).notNullable();
+    table.string('address', 500).nullable();
     table.specificType('area', 'GEOGRAPHY(Point, 4326)').nullable(); // GIS column
     table.string('photo_url').nullable(); // User photo
     table.string('nid_photo_url').nullable(); // Provider NID photo

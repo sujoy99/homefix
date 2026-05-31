@@ -18,7 +18,8 @@ import { UserRepository } from '@modules/users/user.repository';
 import { RefreshTokenService } from './refresh_token.service';
 import { ProviderRepository } from '@modules/providers/provider.repository';
 import { CategoryRepository } from '@modules/categories/category.repository';
-import { transaction } from 'objection';
+import { transaction, UniqueViolationError } from 'objection';
+import { mapUniqueViolation } from '@errors/db-error-map';
 import { RefreshToken } from './refresh_token.model';
 import { AuthAccount } from './auth.model';
 import { logger } from '@logger/logger';
@@ -114,22 +115,30 @@ export class AuthService {
       ...(nid_photo_back_url !== undefined && { nid_photo_back_url }),
     };
 
-    const result = await AuthRepository.createUser(payload);
+    // Single transaction covers users + auth_accounts + provider_profiles + provider_skills.
+    // Partial failure (e.g. skill insert fails) rolls back the whole registration.
+    let result;
+    try {
+      result = await transaction(RefreshToken.knex(), async (trx) => {
+        const created = await AuthRepository.insertUserAndAuth(payload, trx);
 
-    // For providers: auto-create profile and link any chosen service categories
-    if (role === UserRole.PROVIDER && data.category_ids?.length) {
-      const profile = await ProviderRepository.create({ user_id: result.user.id });
-      let isPrimary = true;
-      for (const categoryId of data.category_ids) {
-        const category = await CategoryRepository.findById(categoryId);
-        if (category) {
-          await ProviderRepository.addSkill(profile.id, {
-            category_id: categoryId,
-            is_primary: isPrimary,
-          });
-          isPrimary = false;
+        if (role === UserRole.PROVIDER && data.category_ids?.length) {
+          const profile = await ProviderRepository.create({ user_id: created.user.id }, trx);
+          let isPrimary = true;
+          for (const categoryId of data.category_ids) {
+            const category = await CategoryRepository.findById(categoryId);
+            if (category) {
+              await ProviderRepository.addSkill(profile.id, { category_id: categoryId, is_primary: isPrimary }, trx);
+              isPrimary = false;
+            }
+          }
         }
-      }
+
+        return created;
+      });
+    } catch (err) {
+      if (err instanceof UniqueViolationError) throw mapUniqueViolation(err.constraint);
+      throw err;
     }
 
     return mapToUserRegistrationResponse(result.user, result.auth);
