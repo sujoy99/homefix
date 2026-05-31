@@ -586,7 +586,7 @@ type RoomConfig = {
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
 | HF-068 | Admin panel — provider verification (approve/reject + NID preview) | ⏳ | 8h |
-| HF-068B | **Mobile admin screen upgrade** — expand minimal Approvals tab to show provider detail with NID photo, profile photo, location map, and registration data before approve/reject. Must mirror HF-068 web panel scope. Currently only shows name/mobile/email. | ⏳ | 4h |
+| HF-068B | **Mobile admin screen upgrade** — expand minimal Approvals tab to show provider detail with NID photo, profile photo, location map, and registration data before approve/reject. Must mirror HF-068 web panel scope. Currently only shows name/mobile/email. | ✅ | 4h |
 | HF-069 | Admin panel — service category management (CRUD, requires_area) | ⏳ | 6h |
 | HF-070 | Admin panel — revenue dashboard (total revenue, commission breakdown by rule) | ⏳ | 6h |
 | HF-071 | Admin panel — user management (list, search, status change) | ⏳ | 6h |

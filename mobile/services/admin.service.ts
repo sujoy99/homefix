@@ -8,6 +8,21 @@ export type PendingProvider = {
   nid: string;
   status: string;
   created_at: string;
+  photo_url: string | null;
+  nid_photo_url: string | null;
+  nid_photo_back_url: string | null;
+};
+
+export type ProviderSkill = {
+  id: string;
+  category_id: string;
+  category_name: string | null;
+  category_name_bn: string | null;
+};
+
+export type ProviderDetail = PendingProvider & {
+  bio: string | null;
+  skills: ProviderSkill[];
 };
 
 type ApiResponse<T> = { status: string; body: T };
@@ -82,6 +97,11 @@ export const adminService = {
     const res = await apiClient.get<ApiResponse<PendingProvider[]>>(
       '/v2/admin/providers/pending'
     );
+    return res.data.body;
+  },
+
+  getProviderDetail: async (providerId: string): Promise<ProviderDetail> => {
+    const res = await apiClient.get<ApiResponse<ProviderDetail>>(`/v2/admin/providers/${providerId}`);
     return res.data.body;
   },
 

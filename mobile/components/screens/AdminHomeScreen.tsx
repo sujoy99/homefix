@@ -5,137 +5,64 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
+  Image,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle, XCircle, Clock, User } from 'lucide-react-native';
+import { useQuery } from '@tanstack/react-query';
+import { CheckCircle, Clock, User, ChevronRight } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
 import { adminService, type PendingProvider } from '@/services/admin.service';
 import { theme } from '@/theme';
 
-function PendingProviderCard({
-  item,
-  onApprove,
-  onReject,
-  isLoading,
-}: {
-  item: PendingProvider;
-  onApprove: () => void;
-  onReject: () => void;
-  isLoading: boolean;
-}) {
+function PendingProviderCard({ item, onPress }: { item: PendingProvider; onPress: () => void }) {
   const { t } = useTranslation();
-  const date = new Date(item.created_at).toLocaleDateString();
+  const date = new Date(item.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
-    <Card style={styles.providerCard}>
-      <View style={styles.providerHeader}>
-        <View style={styles.avatar}>
-          <User color={theme.colors.primary} size={22} />
-        </View>
-        <View style={styles.providerInfo}>
-          <Text variant="body" weight="semibold">{item.full_name}</Text>
-          <Text variant="caption" color="muted">{item.mobile}</Text>
-          {item.email ? (
-            <Text variant="caption" color="muted">{item.email}</Text>
-          ) : null}
-          <View style={styles.dateRow}>
-            <Clock color={theme.colors.textMuted} size={11} />
-            <Text variant="caption" color="muted" style={styles.dateText}>
-              {t('admin.registered')} {date}
-            </Text>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} accessibilityRole="button">
+      <Card style={styles.providerCard}>
+        <View style={styles.providerHeader}>
+          {item.photo_url ? (
+            <Image source={{ uri: item.photo_url }} style={styles.avatar} />
+          ) : (
+            <View style={[styles.avatar, styles.avatarPlaceholder]}>
+              <User color={theme.colors.primary} size={22} />
+            </View>
+          )}
+          <View style={styles.providerInfo}>
+            <Text variant="body" weight="semibold">{item.full_name}</Text>
+            <Text variant="caption" color="muted">{item.mobile}</Text>
+            {item.email ? (
+              <Text variant="caption" color="muted">{item.email}</Text>
+            ) : null}
+            <View style={styles.dateRow}>
+              <Clock color={theme.colors.textMuted} size={11} />
+              <Text variant="caption" color="muted" style={styles.dateText}>
+                {t('admin.registered')} {date}
+              </Text>
+            </View>
           </View>
+          <ChevronRight color={theme.colors.textMuted} size={18} />
         </View>
-      </View>
-
-      <View style={styles.actionRow}>
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.approveBtn]}
-          onPress={onApprove}
-          disabled={isLoading}
-          activeOpacity={0.8}
-          accessibilityRole="button"
-          accessibilityLabel={t('admin.approve')}
-          accessibilityState={{ disabled: isLoading }}
-        >
-          <CheckCircle color={theme.colors.surface} size={16} />
-          <Text variant="caption" weight="semibold" color="inverse" style={styles.btnLabel}>
-            {t('admin.approve')}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionBtn, styles.rejectBtn]}
-          onPress={onReject}
-          disabled={isLoading}
-          activeOpacity={0.8}
-          accessibilityRole="button"
-          accessibilityLabel={t('admin.reject')}
-          accessibilityState={{ disabled: isLoading }}
-        >
-          <XCircle color={theme.colors.surface} size={16} />
-          <Text variant="caption" weight="semibold" color="inverse" style={styles.btnLabel}>
-            {t('admin.reject')}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </Card>
+        <Text variant="caption" color="primary" style={styles.tapHint}>
+          {t('admin_detail.tap_to_review')}
+        </Text>
+      </Card>
+    </TouchableOpacity>
   );
 }
 
 export default function AdminHomeScreen() {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
+  const router = useRouter();
 
   const { data: pending = [], isLoading, refetch } = useQuery({
     queryKey: ['admin', 'pending-providers'],
     queryFn: adminService.listPending,
   });
-
-  const { mutate: approve, isPending: approving } = useMutation({
-    mutationFn: (id: string) => adminService.approve(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'pending-providers'] });
-    },
-    onError: () => Alert.alert(t('common.error'), t('admin.approve_error')),
-  });
-
-  const { mutate: reject, isPending: rejecting } = useMutation({
-    mutationFn: (id: string) => adminService.reject(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'pending-providers'] });
-    },
-    onError: () => Alert.alert(t('common.error'), t('admin.reject_error')),
-  });
-
-  const confirmApprove = (item: PendingProvider) => {
-    Alert.alert(
-      t('admin.approve_confirm_title'),
-      t('admin.approve_confirm_desc', { name: item.full_name }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('admin.approve'), onPress: () => approve(item.id) },
-      ]
-    );
-  };
-
-  const confirmReject = (item: PendingProvider) => {
-    Alert.alert(
-      t('admin.reject_confirm_title'),
-      t('admin.reject_confirm_desc', { name: item.full_name }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('admin.reject'),
-          style: 'destructive',
-          onPress: () => reject(item.id),
-        },
-      ]
-    );
-  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -176,9 +103,7 @@ export default function AdminHomeScreen() {
           renderItem={({ item }) => (
             <PendingProviderCard
               item={item}
-              onApprove={() => confirmApprove(item)}
-              onReject={() => confirmReject(item)}
-              isLoading={approving || rejecting}
+              onPress={() => router.push(`/(app)/admin/provider/${item.id}` as never)}
             />
           )}
         />
@@ -223,22 +148,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  avatarPlaceholder: { overflow: 'hidden' },
   providerInfo: { flex: 1, gap: 2 },
   dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
   dateText: { marginTop: 1 },
-  actionRow: { flexDirection: 'row', gap: theme.spacing.sm },
-  actionBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    height: 38,
-    borderRadius: theme.layout.radius.md,
-  },
-  approveBtn: { backgroundColor: theme.colors.success },
-  rejectBtn: { backgroundColor: theme.colors.error },
-  btnLabel: { marginTop: 1 },
+  tapHint: { marginTop: theme.spacing.xs },
   emptyWrap: {
     alignItems: 'center',
     paddingTop: theme.spacing['2xl'],

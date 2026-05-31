@@ -1,7 +1,7 @@
 # HomeFix — Sprint 5 Mobile: User Manual
 
 > **Sprint:** Sprint 5 — Payments & Wallet (Mobile)
-> **Covers:** HF-058B · HF-058C · HF-059 · HF-059B · HF-060 · HF-061
+> **Covers:** HF-058B · HF-058C · HF-059 · HF-059B · HF-060 · HF-061 · HF-068B (pulled forward from Sprint 7)
 > **Audience:** QA, Product Owner, Business Stakeholder
 > **Last updated:** 2026-05-31
 
@@ -343,6 +343,64 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 
 ---
 
+### Screen 8 — Admin Provider Verification Detail (HF-068B)
+
+> **Who:** Admin
+> **Navigate:** Approvals tab (home tab for admin) → tap any pending provider card
+
+> **Note:** This ticket was originally scheduled for Sprint 7 (Web + Admin) but pulled forward and built in Sprint 5 mobile because the admin needed a way to review NID documents before approving.
+
+#### Entry point — Approvals list
+
+| # | Action | Expected |
+|---|--------|----------|
+| 1 | Approvals tab loads | List of pending providers; each card shows profile photo (or placeholder), name, mobile, email, registration date |
+| 2 | Card shows chevron → and "Tap to review documents →" hint | No inline Approve/Reject buttons on the list card |
+| 3 | Tap a provider card | Navigates to Provider Verification detail screen |
+| 4 | Pull-to-refresh | List reloads |
+| 5 | No pending providers | Green ✓ icon, "All caught up!" message |
+
+#### Provider detail screen
+
+| # | Action | Expected |
+|---|--------|----------|
+| 6 | Screen loads | Header "Provider Verification" with back arrow |
+| 7 | Profile section | Circular profile photo (or placeholder icon), full name, registration date |
+| 8 | Contact info rows | Mobile number, email (if set), NID number — each with icon |
+| 9 | Bio row | Bio text shown if provider has filled it in |
+
+#### NID document review
+
+| # | Action | Expected |
+|---|--------|----------|
+| 10 | "NID Documents" section | "NID Front" and "NID Back" side-by-side cards |
+| 11 | Photo uploaded | Thumbnail image displayed with zoom icon badge |
+| 12 | Photo not uploaded | Grey placeholder with "Not uploaded" caption |
+| 13 | Tap a photo thumbnail | Full-screen modal opens with the image in full resolution |
+| 14 | Tap × or back in fullscreen | Modal closes, returns to detail screen |
+
+#### Skills section
+
+| # | Action | Expected |
+|---|--------|----------|
+| 15 | "Registered Skills" section | Chips for each category skill the provider registered |
+| 16 | Bengali language active | Category name shown in Bengali (`category_name_bn`) |
+| 17 | No skills registered | "No skills registered yet." caption |
+
+#### Approve / Reject
+
+| # | Action | Expected |
+|---|--------|----------|
+| 18 | Footer visible | "Reject" (red) and "Approve" (green) buttons side-by-side — only shown when `status = pending` |
+| 19 | Tap "Approve" | Confirmation dialog: "Approve {{name}}? They will be able to log in and receive bookings." |
+| 20 | Confirm Approve | Success toast; navigates back to Approvals list; provider removed from pending list |
+| 21 | Tap "Reject" | Confirmation dialog (destructive style): "Reject {{name}}? Their account will be deactivated." |
+| 22 | Confirm Reject | Success toast; navigates back; provider removed from pending list |
+| 23 | Provider already approved/rejected | No footer buttons (status is no longer pending) |
+| 24 | Network error on approve/reject | Error toast; user stays on detail screen |
+
+---
+
 ## Part 3 — Bilingual Check
 
 | Screen | Key | Bengali (bn) | English (en) |
@@ -371,6 +429,13 @@ Mark each item ✅ Pass or ❌ Fail with a note.
 | Admin payments | Pending count | {{count}}টি পেমেন্ট যাচাইয়ের অপেক্ষায় | {{count}} payments awaiting verification |
 | Admin payments | Empty title | সব শেষ! | All caught up! |
 | Admin payments | Empty desc | যাচাই করার মতো কোনো পেমেন্ট নেই | No pending payments to verify |
+| Provider verification | Screen title | প্রোভাইডার যাচাইকরণ | Provider Verification |
+| Provider verification | Tap hint | নথি যাচাই করতে ট্যাপ করুন → | Tap to review documents → |
+| Provider verification | NID section title | জাতীয় পরিচয়পত্রের ছবি | NID Documents |
+| Provider verification | NID front label | এনআইডি সামনে | NID Front |
+| Provider verification | NID back label | এনআইডি পিছনে | NID Back |
+| Provider verification | No photo | আপলোড করা হয়নি | Not uploaded |
+| Provider verification | Skills section | নিবন্ধিত দক্ষতা | Registered Skills |
 | Profile | Completion title | আপনার প্রোফাইল {{percentage}}% সম্পন্ন | Your profile is {{percentage}}% complete |
 
 ---

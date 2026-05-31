@@ -27,6 +27,7 @@
 |--------|-------|--------|--------|
 | HF-058B | Admin revenue dashboard mobile screen | ✅ Done | — |
 | HF-058C | Admin payment verification screen — list SUBMITTED payments, one-tap verify | ✅ Done | — |
+| HF-068B | Admin provider detail screen — NID front/back fullscreen, skills, approve/reject (pulled forward from Sprint 7) | ✅ Done | — |
 | HF-059 | Payment screen — method selection, merchant number card, TxID input (uppercase), order summary | ✅ Done | — |
 | HF-059B | Profile completion card (Profile screen, both roles) + Provider home banner | ✅ Done | — |
 | HF-060 | Provider wallet screen — balance, earnings, commission breakdown | ✅ Done | — |

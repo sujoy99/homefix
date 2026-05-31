@@ -10,6 +10,12 @@ export class ProviderRepository {
       .withGraphFetched('skills');
   }
 
+  static async findByUserIdWithCategories(userId: string): Promise<ProviderProfileModel | undefined> {
+    return ProviderProfileModel.query()
+      .findOne({ user_id: userId })
+      .withGraphFetched('[skills.[category]]');
+  }
+
   static async findById(id: string): Promise<ProviderProfileModel | undefined> {
     return ProviderProfileModel.query()
       .findById(id)

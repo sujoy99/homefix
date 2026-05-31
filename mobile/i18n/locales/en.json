@@ -202,9 +202,27 @@
     "reject_confirm_title": "Reject Provider",
     "reject_confirm_desc": "Reject {{name}}? Their account will be deactivated.",
     "approve_error": "Could not approve provider. Please try again.",
+    "approve_success": "Provider approved successfully.",
     "reject_error": "Could not reject provider. Please try again.",
+    "reject_success": "Provider rejected.",
     "no_pending": "All caught up!",
     "no_pending_desc": "No providers are waiting for approval right now."
+  },
+  "admin_detail": {
+    "title": "Provider Verification",
+    "tap_to_review": "Tap to review documents →",
+    "registered": "Registered",
+    "mobile": "Mobile",
+    "email": "Email",
+    "nid": "NID Number",
+    "bio": "Bio",
+    "nid_photos": "NID Documents",
+    "nid_photos_hint": "Tap any photo to view full screen.",
+    "nid_front": "NID Front",
+    "nid_back": "NID Back",
+    "no_photo": "Not uploaded",
+    "skills": "Registered Skills",
+    "no_skills": "No skills registered yet."
   },
   "provider_home": {
     "subtitle": "Here's your dashboard",

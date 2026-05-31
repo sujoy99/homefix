@@ -9,6 +9,11 @@ export class AdminProviderController {
     return HttpResponse.success(res, providers, 'Pending providers fetched');
   }
 
+  static async getDetail(req: Request, res: Response) {
+    const detail = await AdminProviderService.getDetail(param(req, 'id'));
+    return HttpResponse.success(res, detail, 'Provider detail fetched');
+  }
+
   static async approve(req: Request, res: Response) {
     const provider = await AdminProviderService.approve(param(req, 'id'));
     return HttpResponse.success(res, provider, 'Provider approved');

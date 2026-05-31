@@ -41,6 +41,35 @@ adminProviderRouter.get(
 
 /**
  * @openapi
+ * /admin/providers/{id}:
+ *   get:
+ *     summary: Get full provider detail for verification (photos, skills, bio)
+ *     tags: [Admin - Providers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Provider detail returned
+ *       404:
+ *         description: Provider not found
+ */
+adminProviderRouter.get(
+  '/:id',
+  authGuard,
+  permissionGuard(Permission.PROVIDER_MANAGE),
+  validate(providerIdSchema),
+  asyncHandler(AdminProviderController.getDetail)
+);
+
+/**
+ * @openapi
  * /admin/providers/{id}/approve:
  *   post:
  *     summary: Approve a pending provider
