@@ -63,7 +63,10 @@ export class ProviderRepository {
 
   static async listAvailable(): Promise<ProviderProfileModel[]> {
     return ProviderProfileModel.query()
-      .where('is_available', true)
+      .join('users', 'provider_profiles.user_id', 'users.id')
+      .where('provider_profiles.is_available', true)
+      .where('users.status', 'active')
+      .select('provider_profiles.*')
       .withGraphFetched('skills');
   }
 
@@ -78,6 +81,7 @@ export class ProviderRepository {
     const q = ProviderProfileModel.query()
       .join('users', 'provider_profiles.user_id', 'users.id')
       .where('provider_profiles.is_available', true)
+      .where('users.status', 'active')
       .whereNotNull('users.area')
       .whereRaw(
         'ST_DWithin(users.area, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)',

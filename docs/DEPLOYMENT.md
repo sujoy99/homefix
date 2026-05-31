@@ -33,9 +33,14 @@ make up
 # 4. Seed reference data (roles, permissions, categories, admin user)
 #    Run this ONCE after the first make up on a fresh database
 make seed
+
+# 5. Restart the backend so the permission cache reloads from the seeded DB
+#    The backend starts before seed runs, so the in-memory RBAC cache would
+#    otherwise hold 0 permissions until the next restart.
+make restart
 ```
 
-> **Why two steps?** Migrations are schema changes (DDL — create/alter tables) and run automatically every time the backend container starts. Seeds are reference data (roles, categories, admin user) and must be run explicitly — they are idempotent so running `make seed` more than once is safe.
+> **Why three steps?** Migrations run automatically at container start (schema only). Seeds are reference data (roles, permissions, categories, admin user) and must be run explicitly — they are idempotent so `make seed` is safe to run more than once. The backend restart is required because the permission cache loads from the DB at startup — without it every protected endpoint returns 403.
 
 #### What `make up` does automatically
 
