@@ -19,7 +19,7 @@
 | Sprint 2 — Home + Categories | ✅ Completed | 2026-05-29 | 2026-05-29 |
 | Sprint 3 — Booking + Jobs | ✅ Completed | 2026-05-29 | 2026-05-30 |
 | Sprint 4 — Voice + Accessibility | ✅ Done | 2026-05-30 | 2026-05-30 |
-| Sprint 5 — Payments + Wallet | ⏳ Not Started | — | — |
+| Sprint 5 — Payments + Wallet | ✅ Complete | `feature/sprint-5-mobile` | 2026-05-31 |
 | Sprint 6 — Reviews + Notifications + In-App Communication | ⏳ Not Started | — | — |
 | Sprint 7 — Web + Admin | ⏳ Not Started | — | — |
 | Sprint 8 — Production Readiness | ⏳ Not Started | — | — |
@@ -30,16 +30,16 @@
 
 > **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
 
-**Active Sprint:** Sprint 5 — Payments + Wallet  
-**Sprint Status:** ⏳ Not Started — Ready to begin  
-**Git Branch Convention:** `feature/sprint-5-mobile`
+**Active Sprint:** Sprint 6 — Reviews, Notifications, Real-time & In-App Communication  
+**Sprint Status:** ⏳ Not Started — Ready to begin (Sprint 5 fully complete ✅)  
+**Git Branch Convention:** `feature/sprint-6-backend` then `feature/sprint-6-mobile`
 
 ### Next Ticket Per Platform
 
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
-| 🖥 Backend | HF-054 | Payment interface (pluggable strategy pattern) | — |
-| 📱 Mobile | HF-059 | Payment screen (method selection, TxID input, order summary) | HF-054, HF-055 |
+| 🖥 Backend | HF-047 | Review & rating module (post-payment only) | — |
+| 📱 Mobile | HF-050 | Review & rating screen (star + text, post-payment only) | HF-047 |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
 ### How to Pick Up Work
@@ -493,12 +493,13 @@ modules/payments/
 
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
-| HF-059 | Payment screen (method selection, TxID input, order summary) | ⏳ | 8h |
-| HF-059B | Profile completion card on Profile screen (both roles) + persistent banner on Provider home | ⏳ | 4h |
-| HF-060 | Provider wallet screen (balance, earnings, commission breakdown, withdrawal request) | ⏳ | 6h |
-| HF-061 | Payment receipt + completion flow | ⏳ | 3h |
+| HF-058B | Admin revenue dashboard mobile screen (totals, period chart, rule breakdown, per-job list) | ✅ | 4h |
+| HF-059 | Payment screen (method selection, TxID input, order summary) | ✅ | 8h |
+| HF-059B | Profile completion card on Profile screen (both roles) + persistent banner on Provider home | ✅ | 4h |
+| HF-060 | Provider wallet screen (balance, earnings, commission breakdown, withdrawal request) | ✅ | 6h |
+| HF-061 | Payment receipt + completion flow | ✅ | 3h |
 
-**Deliverable:** Full payment flow with wallet + commission system. Profile completion enforcement. First sprint to produce PAID jobs end-to-end.
+**Deliverable:** Full payment flow with wallet + commission system. Profile completion enforcement. Admin revenue dashboard. First sprint to produce PAID jobs end-to-end.
 
 ---
 

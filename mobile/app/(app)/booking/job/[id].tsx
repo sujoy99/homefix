@@ -166,10 +166,11 @@ export default function JobDetailScreen() {
     );
   }
 
-  const isPending  = job.status === JobStatus.PENDING;
-  const isActive   = job.status === JobStatus.ACTIVE;
-  const isCancelled = job.status === JobStatus.CANCELLED;
-  const isMyJob    = isProvider && job.provider_id === userId;
+  const isPending        = job.status === JobStatus.PENDING;
+  const isActive         = job.status === JobStatus.ACTIVE;
+  const isAwaitingPayment = job.status === JobStatus.AWAITING_PAYMENT;
+  const isCancelled      = job.status === JobStatus.CANCELLED;
+  const isMyJob          = isProvider && job.provider_id === userId;
   const jobTakenByOther = isProvider && !isPending && !isMyJob;
 
   const title = job.title ?? categoryName ?? t('home.unknown_provider');
@@ -361,6 +362,17 @@ export default function JobDetailScreen() {
       )}
 
       {/* ── Footer CTAs ── */}
+
+      {/* Resident + AWAITING_PAYMENT → Pay Now */}
+      {isResident && isAwaitingPayment && (
+        <View style={styles.footer}>
+          <Button
+            label={t('payment.pay_now')}
+            variant="primary"
+            onPress={() => router.push(`/(app)/payment/${job.id}`)}
+          />
+        </View>
+      )}
 
       {/* Provider + PENDING → Accept / Not Interested */}
       {isProvider && isPending && (

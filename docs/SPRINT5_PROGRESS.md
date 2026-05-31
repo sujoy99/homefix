@@ -1,9 +1,9 @@
 # Sprint 5 — Payments & Wallet — Progress Tracker
 
-> **Backend Branch:** `feature/sprint-5-backend`
+> **Backend Branch:** `feature/sprint-5-backend` (merged to master)
 > **Mobile Branch:** `feature/sprint-5-mobile`
-> **Last updated:** 2026-05-30
-> **Tests:** 233/233 passing
+> **Last updated:** 2026-05-31
+> **Tests:** 90/90 mobile passing (39 new) · 233/233 backend passing
 
 ---
 
@@ -25,10 +25,11 @@
 
 | Ticket | Title | Status | Commit |
 |--------|-------|--------|--------|
-| HF-059 | Payment screen — method selection, TxID input, order summary | ⏳ Pending | — |
-| HF-059B | Profile completion card (Profile screen, both roles) + Provider home banner | ⏳ Pending | — |
-| HF-060 | Provider wallet screen — balance, earnings, commission breakdown | ⏳ Pending | — |
-| HF-061 | Payment receipt + completion flow | ⏳ Pending | — |
+| HF-058B | Admin revenue dashboard mobile screen | ✅ Done | — |
+| HF-059 | Payment screen — method selection, TxID input, order summary | ✅ Done | — |
+| HF-059B | Profile completion card (Profile screen, both roles) + Provider home banner | ✅ Done | — |
+| HF-060 | Provider wallet screen — balance, earnings, commission breakdown | ✅ Done | — |
+| HF-061 | Payment receipt + completion flow | ✅ Done | — |
 
 ---
 

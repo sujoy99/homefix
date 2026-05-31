@@ -27,6 +27,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
+import { ProfileCompletionCard } from '@/components/shared/ProfileCompletionCard';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { useAuthStore } from '@/store/authStore';
 import { categoryService } from '@/services/category.service';
@@ -201,6 +202,9 @@ export default function ProfileScreen() {
           </Text>
           <Text variant="caption" color="muted">{t(`auth.${user?.role}`)}</Text>
         </View>
+
+        {/* Profile completion card (both roles) */}
+        <ProfileCompletionCard />
 
         {/* Personal info */}
         <Card style={styles.section}>

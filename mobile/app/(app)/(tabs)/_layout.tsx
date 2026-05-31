@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Home, CalendarDays, Briefcase, User, ShieldCheck } from 'lucide-react-native';
+import { Home, CalendarDays, Briefcase, User, ShieldCheck, Wallet, TrendingUp } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
 import { UserRole } from '@homefix/shared';
 import { useAuthStore } from '@/store/authStore';
@@ -47,6 +47,22 @@ export default function TabsLayout() {
           title: t('nav.jobs'),
           tabBarIcon: ({ color, size }) => <Briefcase color={color} size={size} />,
           href: isProvider && !isAdmin ? undefined : null,
+        }}
+      />
+      <Tabs.Screen
+        name="wallet"
+        options={{
+          title: t('nav.wallet'),
+          tabBarIcon: ({ color, size }) => <Wallet color={color} size={size} />,
+          href: isProvider && !isAdmin ? undefined : null,
+        }}
+      />
+      <Tabs.Screen
+        name="revenue"
+        options={{
+          title: t('nav.revenue'),
+          tabBarIcon: ({ color, size }) => <TrendingUp color={color} size={size} />,
+          href: isAdmin ? undefined : null,
         }}
       />
       <Tabs.Screen
