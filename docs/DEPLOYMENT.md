@@ -6,23 +6,31 @@ Three services defined in `docker-compose.yml`:
 
 | Service | Image | Port | Purpose |
 |---------|-------|------|---------|
-| `postgres` | postgis/postgis:16-3.5 | 5432 | Primary database (PostGIS enabled via `docker/init/01_enable_postgis.sql`) |
+| `postgres` | postgis/postgis:17-3.5 | 5432 | Primary database (PostGIS enabled via `docker/init/01_enable_postgis.sql`) |
 | `backend` | built from `backend/Dockerfile.dev` | 4000 | Express API (hot reload) |
+
+> **Rule: always use `make` commands — never run `docker compose` directly.**
+>
+> `docker-compose.yml` uses `${DB_NAME}`, `${DB_USER}`, `${DB_PASSWORD}` for the postgres service. These must be resolved from `backend/.env.development`. The Makefile passes `--env-file backend/.env.development` on every call. Running `docker compose up` raw (without make) leaves the vars empty — postgres silently initialises with the default `postgres` database instead of `homefix`, and all your data is unreachable. The compose file now uses `${DB_NAME:?…}` fail-loud syntax and loads `env_file` on the postgres service as a second safety layer, but the make rule is still the right habit.
 
 ### First-Time Setup
 
 ```bash
-# 1. Copy env file (Docker reads it via env_file)
+# 1. Copy env file
 cp backend/.env.sample backend/.env.development
 # Fill in DB_NAME, DB_USER, DB_PASSWORD, JWT secrets, DEFAULT_ADMIN_* values
 
-# 2. Build images and start all services
+# 2. Create the repo-root .env symlink (one-time — already done on this machine)
+#    docker-compose picks this up automatically so 'docker compose up' also works
+ln -sf backend/.env.development .env
+
+# 3. Build images and start all services
 #    → waits for postgres to be healthy
 #    → runs all pending migrations automatically
 #    → starts the dev server (nodemon)
 make up
 
-# 3. Seed reference data (roles, permissions, categories, admin user)
+# 4. Seed reference data (roles, permissions, categories, admin user)
 #    Run this ONCE after the first make up on a fresh database
 make seed
 ```
@@ -78,15 +86,29 @@ Nodemon watches `src/**/*.ts` and restarts when files change.
 
 ### DB_HOST Override
 
-`docker-compose.yml` sets `DB_HOST: postgres` in the `environment:` section. This overrides the `DB_HOST=localhost` in `.env.development` because dotenv does not overwrite pre-set environment variables.
+`docker-compose.yml` sets `DB_HOST: postgres` in the `environment:` section of the backend service. This overrides the `DB_HOST=localhost` in `.env.development` because a pre-set env var is never overwritten by `env_file`.
+
+### Root `.env` symlink
+
+A `.env` symlink at the repo root points to `backend/.env.development`:
+
+```
+.env  →  backend/.env.development
+```
+
+`docker compose` automatically loads `.env` from the working directory. This means both `make up` and a raw `docker compose up` resolve `${DB_NAME}` correctly. The symlink is gitignored (`.env` and `.env.*` are in `.gitignore`). Recreate it on a new machine with:
+
+```bash
+ln -sf backend/.env.development .env
+```
 
 ## Environment Files
 
 | File | Used when |
 |------|----------|
-| `.env.development` | Local dev (both Docker and direct `npm run dev`) |
-| `.env.test` | Test runs |
-| `.env.production` | Production server |
+| `backend/.env.development` | Local dev (Docker + direct `npm run dev`). Symlinked from `.env` at repo root. |
+| `backend/.env.test` | Test runs (`NODE_ENV=test`) |
+| `backend/.env.production` | Production server |
 
 The app loads `.env.${NODE_ENV}` on startup (see `src/config/env.ts`). Never commit `.env.*` files (except `.env.sample`).
 

@@ -3,10 +3,12 @@ services:
     image: postgis/postgis:17-3.5
     container_name: homefix_postgres
     restart: unless-stopped
+    env_file:
+      - backend/.env.development
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:?DB_NAME is not set — run 'make up' not 'docker compose up'}
+      POSTGRES_USER: ${DB_USER:?DB_USER is not set — run 'make up' not 'docker compose up'}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is not set — run 'make up' not 'docker compose up'}
     ports:
       - "5432:5432"
     volumes:
