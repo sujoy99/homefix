@@ -305,3 +305,34 @@ jobRouter.patch(
   validate(jobIdSchema),
   asyncHandler(asAuthenticated(JobController.completeJob))
 );
+
+/**
+ * @openapi
+ * /jobs/{id}/provider-location:
+ *   get:
+ *     summary: Resident fetches the assigned provider's current GPS location (REQ-007)
+ *     tags: [Jobs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Provider latitude/longitude returned
+ *       400:
+ *         description: Job is not ACTIVE
+ *       403:
+ *         description: Not the job's resident
+ *       404:
+ *         description: Job not found or provider location not yet available
+ */
+jobRouter.get(
+  '/:id/provider-location',
+  authGuard,
+  roleGuard(UserRole.RESIDENT),
+  validate(jobIdSchema),
+  asyncHandler(asAuthenticated(JobController.getProviderLocation))
+);

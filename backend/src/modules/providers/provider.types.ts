@@ -42,6 +42,11 @@ export type UpdateProviderProfileInput = {
   longitude?: number;
 };
 
+export type UpdateLocationInput = {
+  latitude: number;
+  longitude: number;
+};
+
 export type AddSkillInput = {
   category_id: string;
   is_primary?: boolean;

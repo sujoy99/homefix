@@ -188,6 +188,35 @@ export class JobService {
     });
   }
 
+  static async getProviderLocation(
+    jobId: string,
+    residentId: string
+  ): Promise<{ latitude: number; longitude: number }> {
+    const job = await JobService.getById(jobId);
+
+    if (job.resident_id !== residentId) {
+      throw new ForbiddenError(ErrorCode.JOB_ACCESS_DENIED, 'You do not own this job');
+    }
+
+    if (job.status !== JobStatus.ACTIVE) {
+      throw new BadRequestError(
+        ErrorCode.INVALID_STATE_TRANSITION,
+        'Provider location is only available for active jobs'
+      );
+    }
+
+    if (!job.provider_id) {
+      throw new NotFoundError(ErrorCode.RESOURCE_NOT_FOUND, 'No provider assigned to this job');
+    }
+
+    const location = await JobRepository.findProviderLocation(jobId);
+    if (!location) {
+      throw new NotFoundError(ErrorCode.RESOURCE_NOT_FOUND, 'Provider location not yet available');
+    }
+
+    return location;
+  }
+
   static async completeJob(jobId: string, providerId: string): Promise<Job> {
     const job = await JobService.getById(jobId);
 

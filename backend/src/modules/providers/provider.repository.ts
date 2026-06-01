@@ -1,7 +1,8 @@
 import type { TransactionOrKnex } from 'objection';
 import { ProviderProfileModel } from './provider_profile.model';
 import { ProviderSkillModel } from './provider_skill.model';
-import { CreateProviderProfileInput, UpdateProviderProfileInput, AddSkillInput } from './provider.types';
+import { CreateProviderProfileInput, UpdateProviderProfileInput, AddSkillInput, UpdateLocationInput } from './provider.types';
+import { User } from '@modules/users/user.model';
 
 export class ProviderRepository {
   static async findByUserId(userId: string): Promise<ProviderProfileModel | undefined> {
@@ -70,6 +71,15 @@ export class ProviderRepository {
 
   static async removeSkill(skillId: string): Promise<number> {
     return ProviderSkillModel.query().deleteById(skillId);
+  }
+
+  static async updateLocation(userId: string, data: UpdateLocationInput): Promise<void> {
+    await User.query().patchAndFetchById(userId, {
+      area: User.knex().raw(
+        `ST_SetSRID(ST_MakePoint(?, ?), 4326)`,
+        [data.longitude, data.latitude]
+      ) as never,
+    });
   }
 
   static async listAvailable(): Promise<ProviderProfileModel[]> {

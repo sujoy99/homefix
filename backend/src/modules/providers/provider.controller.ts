@@ -3,6 +3,7 @@ import { ProviderService } from './provider.service';
 import { HttpResponse } from '@http/response';
 import { AuthenticatedRequest } from '@modules/auth/auth.types';
 import { UpdateProviderProfileDTO, AddSkillDTO } from './provider.dto';
+import type { UpdateLocationDTO } from './provider.dto';
 import { param } from '@utils';
 
 export class ProviderController {
@@ -48,6 +49,13 @@ export class ProviderController {
     const data = req.body as AddSkillDTO;
     const profile = await ProviderService.addSkill(sub, data);
     return HttpResponse.success(res, profile, 'Skill added', 201);
+  }
+
+  static async updateLocation(req: Request, res: Response) {
+    const { sub, role } = (req as AuthenticatedRequest).user;
+    const data = req.body as UpdateLocationDTO;
+    const result = await ProviderService.updateLocation(sub, role, data);
+    return HttpResponse.success(res, result, 'Location updated');
   }
 
   static async removeSkill(req: Request, res: Response) {
