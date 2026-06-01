@@ -70,6 +70,12 @@ export enum ErrorCode {
   COMMISSION_RULE_CONFLICT = 'COMMISSION_RULE_CONFLICT',
 
   /* =========================
+   * Reviews
+   * ========================= */
+  REVIEW_ALREADY_EXISTS = 'REVIEW_ALREADY_EXISTS',
+  REVIEW_NOT_ALLOWED = 'REVIEW_NOT_ALLOWED',
+
+  /* =========================
    * System
    * ========================= */
   INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',

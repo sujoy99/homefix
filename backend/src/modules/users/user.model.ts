@@ -26,6 +26,8 @@ export class User extends Model {
   };
 
   address?: string | null;
+  avg_rating?: string | null; // pg returns DECIMAL as string
+  review_count?: number;
   photo_url?: string | null;
   nid_photo_url?: string | null;
   nid_photo_back_url?: string | null;

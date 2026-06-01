@@ -33,6 +33,7 @@ export async function truncateAll(): Promise<void> {
   await db.raw(`DELETE FROM payments`);
   await db.raw(`DELETE FROM provider_payment_accounts`);
   await db.raw(`DELETE FROM commission_rules`);
+  await db.raw(`DELETE FROM reviews`);
   await db.raw(`DELETE FROM jobs`);
   await db.raw(`DELETE FROM provider_skills`);
   await db.raw(`DELETE FROM provider_profiles`);
