@@ -12,13 +12,14 @@ warn()  { echo "  ⚠ $*"; }
 die()   { echo "  ✗ $*" >&2; exit 1; }
 
 # ── 1. Fix Docker-created root-owned node_modules ──────────────────────────
-info "Fixing ownership of root node_modules (may need sudo)..."
-if [ "$(stat -c '%U' "$REPO_ROOT/node_modules" 2>/dev/null || echo sujoy)" != "$(whoami)" ]; then
-  sudo chown -R "$(whoami):$(whoami)" "$REPO_ROOT/node_modules"
-  ok "Ownership fixed."
-else
-  ok "Ownership already correct, skipping."
-fi
+info "Fixing ownership of node_modules directories (may need sudo)..."
+for dir in "$REPO_ROOT/node_modules" "$REPO_ROOT/backend/node_modules"; do
+  if [ -d "$dir" ] && [ "$(stat -c '%U' "$dir")" != "$(whoami)" ]; then
+    sudo chown -R "$(whoami):$(whoami)" "$dir"
+    ok "Ownership fixed: $dir"
+  fi
+done
+ok "Ownership check done."
 
 # ── 2. Backend .env setup ───────────────────────────────────────────────────
 info "Checking backend environment file..."
@@ -42,12 +43,11 @@ else
   ok "Root .env symlink already exists."
 fi
 
-# ── 4. Install mobile dependencies ─────────────────────────────────────────
-info "Installing mobile dependencies..."
-cd "$REPO_ROOT/mobile"
-npm install
-ok "mobile/node_modules installed."
+# ── 4. Install all workspace dependencies ──────────────────────────────────
+info "Installing all workspace dependencies (npm workspaces — installs to root node_modules)..."
 cd "$REPO_ROOT"
+npm install
+ok "All workspace packages installed."
 
 # ── 5. WSL2 mirrored networking reminder ───────────────────────────────────
 info "WSL2 networking check..."
