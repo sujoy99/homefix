@@ -44,7 +44,7 @@ services:
       - root_node_modules:/app/node_modules
       - backend_node_modules:/app/backend/node_modules
     working_dir: /app/backend
-    command: sh -c "npm run migrate:latest && npm run dev"
+    command: sh -c "npm install --workspaces --if-present && npm run migrate:latest && npm run dev"
 
 volumes:
   postgres_data:
