@@ -31,14 +31,14 @@
 > **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
 
 **Active Sprint:** Sprint 6 — Reviews, Notifications, Real-time & In-App Communication  
-**Sprint Status:** ⏳ In Progress — HF-047 ✅, HF-048 ✅  
+**Sprint Status:** ⏳ In Progress — HF-047 ✅, HF-048 ✅, HF-049 ✅  
 **Git Branch Convention:** `feature/sprint-6-backend` then `feature/sprint-6-mobile`
 
 ### Next Ticket Per Platform
 
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
-| 🖥 Backend | HF-049 | Provider background GPS tracking API (REQ-007) | — |
+| 🖥 Backend | HF-100 | In-app messaging (job_messages, Socket.IO) | — |
 | 📱 Mobile | HF-050 | Review & rating screen (star + text, post-payment only) | — |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
@@ -528,7 +528,7 @@ modules/payments/
 |---|---|---|---|
 | HF-047 | Review & rating module (post-payment only — REQ-024,025,026) | ✅ | 6h |
 | HF-048 | Push notification service (FCM) | ✅ | 8h |
-| HF-049 | Provider background GPS tracking API (REQ-007) | ⏳ | 4h |
+| HF-049 | Provider background GPS tracking API (REQ-007) | ✅ | 4h |
 | HF-100 | In-app messaging — `job_messages` table; `POST /v2/jobs/:id/messages`; `GET /v2/jobs/:id/messages` (cursor-paginated); WebSocket room per job (Socket.IO); push notification to recipient when backgrounded | ⏳ | 10h |
 | HF-101 | Pluggable VoIP call service — `call.interface.ts` contract; Phase 1: `jitsi.provider.ts` (self-hosted Jitsi Meet, free); Phase 2: `agora.provider.ts` (swap in later); `POST /v2/jobs/:id/call/room` returns `{ provider, roomName, serverUrl?, token? }` | ⏳ | 8h |
 
