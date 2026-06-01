@@ -15,6 +15,7 @@ import { adminWithdrawalRouter } from '@modules/payments/wallet/admin-withdrawal
 import { adminRevenueRouter } from '@modules/payments/revenue/revenue.route';
 import { userRouter } from '@modules/users/user.route';
 import { reviewRouter } from '@modules/reviews/review.route';
+import { notificationRouter } from '@modules/notifications/notification.route';
 
 const router = Router();
 
@@ -34,5 +35,6 @@ router.use('/users', userRouter);
 router.use('/jobs', jobRouter);
 router.use('/payments', paymentRouter);
 router.use('/', reviewRouter);
+router.use('/', notificationRouter);
 
 export default router;

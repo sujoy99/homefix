@@ -76,6 +76,11 @@ export enum ErrorCode {
   REVIEW_NOT_ALLOWED = 'REVIEW_NOT_ALLOWED',
 
   /* =========================
+   * Notifications
+   * ========================= */
+  NOTIFICATION_NOT_FOUND = 'NOTIFICATION_NOT_FOUND',
+
+  /* =========================
    * System
    * ========================= */
   INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',

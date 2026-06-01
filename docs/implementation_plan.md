@@ -31,14 +31,14 @@
 > **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
 
 **Active Sprint:** Sprint 6 — Reviews, Notifications, Real-time & In-App Communication  
-**Sprint Status:** ⏳ Not Started — Ready to begin (Sprint 5 fully complete ✅)  
+**Sprint Status:** ⏳ In Progress — HF-047 ✅, HF-048 ✅  
 **Git Branch Convention:** `feature/sprint-6-backend` then `feature/sprint-6-mobile`
 
 ### Next Ticket Per Platform
 
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
-| 🖥 Backend | HF-048 | Push notification service (FCM) | — |
+| 🖥 Backend | HF-049 | Provider background GPS tracking API (REQ-007) | — |
 | 📱 Mobile | HF-050 | Review & rating screen (star + text, post-payment only) | — |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
@@ -527,7 +527,7 @@ modules/payments/
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
 | HF-047 | Review & rating module (post-payment only — REQ-024,025,026) | ✅ | 6h |
-| HF-048 | Push notification service (FCM) | ⏳ | 8h |
+| HF-048 | Push notification service (FCM) | ✅ | 8h |
 | HF-049 | Provider background GPS tracking API (REQ-007) | ⏳ | 4h |
 | HF-100 | In-app messaging — `job_messages` table; `POST /v2/jobs/:id/messages`; `GET /v2/jobs/:id/messages` (cursor-paginated); WebSocket room per job (Socket.IO); push notification to recipient when backgrounded | ⏳ | 10h |
 | HF-101 | Pluggable VoIP call service — `call.interface.ts` contract; Phase 1: `jitsi.provider.ts` (self-hosted Jitsi Meet, free); Phase 2: `agora.provider.ts` (swap in later); `POST /v2/jobs/:id/call/room` returns `{ provider, roomName, serverUrl?, token? }` | ⏳ | 8h |
@@ -709,6 +709,7 @@ Every SRS requirement mapped to its implementing ticket(s):
 | 2026-05-30 | 3.8 | Sprint order rebalanced: Sprint 5 ↔ Sprint 6 swapped. Payments + Wallet moved to Sprint 5 (was 6) so PAID job status is available before Sprint 6 (was 5) reviews are built. REQ-018–023 now S5; REQ-024–026 now S6; REQ-007 (GPS) now S6. SRS traceability matrix and Sprint Flow updated accordingly. |
 | 2026-05-31 | 3.9 | Sprint 5 post-ship hardening. HF-057C: available-balance validation (blocks over-requesting when pending withdrawals exist), `GET /providers/wallet/withdrawals` endpoint, admin list enriched with provider name + MFS account + wallet balance + total_pending_paisa subquery. HF-060B: full withdrawal admin screen (list, complete/reject bottom-sheet modals, balance breakdown per row), provider wallet withdrawal history section, available-balance shown in withdraw modal, pending count badges on revenue CTAs. |
 | 2026-05-31 | 4.0 | Sprint 5 UX polish. HF-058D: admin revenue financial summary card (6 at-a-glance metrics: total payments, verify-pending, platform revenue, provider wallets, provider withdrawn, pending withdrawals) rendered above the revenue hero card. HF-060C: provider withdrawal MFS account selector — multi-account providers choose which MFS account to receive funds; backend validates ownership; backend schema updated. HF-060D: date+time format upgrade to 12-hour clock across transaction history, withdrawal history, and admin withdrawal dashboard. HF-060E: admin "Complete Withdrawal" TxID auto-uppercase. |
+| 2026-06-01 | 4.2 | HF-048: Push notification service — pluggable `IPushProvider` (FCM/stub), `device_tokens` + `notifications` tables, 4 REST endpoints (register/unregister token, list, mark-read), fire-and-forget push with DB persistence, notifications wired into job (accept→resident, complete→resident) and payment (verify→provider) events. `firebase-admin` added. 13 new tests, 273/274 passing. |
 | 2026-06-01 | 4.1 | Sprint 6 opened. HF-047: Review & rating module — `reviews` table (UNIQUE job_id), `avg_rating`/`review_count` on `users`, atomic aggregate update in transaction, `POST /v2/jobs/:id/review` (resident, PAID gate), `GET /v2/providers/:id/reviews` (public, paginated). 13 new tests, 261/261 passing. |
 | 2026-05-30 | 3.7 | Sprint 4 closed. HF-042 (VoiceRecorder, expo-av); HF-045 (VoiceNotePlayer, expo-av); HF-044 (ReadAloudButton, expo-speech, REQ-013); HF-046 (accessibility audit — 30+ touchables labelled, 48px targets, WCAG AA verified, font-scale clean). HF-043 (Voice-to-Text) deferred — requires Whisper backend. 50/50 tests. Docs: TESTING_SPRINT4_MOBILE.md + SPRINT4_USER_MANUAL.md. Current Focus updated to Sprint 5. |
 
