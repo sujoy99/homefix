@@ -31,7 +31,7 @@
 > **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
 
 **Active Sprint:** Sprint 6 — Reviews, Notifications, Real-time & In-App Communication  
-**Sprint Status:** ⏳ In Progress — Backend ✅ complete (HF-047/048/049/100/101) · Mobile 1/6 done (HF-050 ✅)  
+**Sprint Status:** ⏳ In Progress — Backend ✅ complete (HF-047/048/049/100/101) · Mobile 2/6 done (HF-050 ✅ HF-051 ✅)  
 **Git Branch Convention:** `feature/sprint-6-mobile`
 
 ### Next Ticket Per Platform
@@ -39,7 +39,7 @@
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
 | 🖥 Backend | — | Sprint 6 backend ✅ complete | — |
-| 📱 Mobile | HF-051 | Push notification setup (expo-notifications, deep linking) | — |
+| 📱 Mobile | HF-052 | Notification center (bell icon, badge, read/unread) | — |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
 ### How to Pick Up Work

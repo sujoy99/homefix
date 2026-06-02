@@ -3,7 +3,7 @@
 > **Backend Branch:** `feature/sprint-6-backend`
 > **Mobile Branch:** `feature/sprint-6-mobile`
 > **Last updated:** 2026-06-03
-> **Tests:** 312/312 backend passing (51 new) · 15/15 mobile HF-050 tests passing · **Backend sprint complete ✅**
+> **Tests:** 312/312 backend passing (51 new) · 26/26 mobile (HF-050: 15 + HF-051: 11) passing · **Backend sprint complete ✅**
 
 ---
 
@@ -24,7 +24,7 @@
 | Ticket | Title | Status | Commit |
 |--------|-------|--------|--------|
 | HF-050 | Review & rating screen (star + text, post-payment only) | ✅ Done | — |
-| HF-051 | Push notification setup (expo-notifications, deep linking) | ⏳ Not Started | — |
+| HF-051 | Push notification setup (expo-notifications, deep linking) | ✅ Done | — |
 | HF-052 | Notification center (bell icon, badge, read/unread) | ⏳ Not Started | — |
 | HF-053 | Provider location tracking (background GPS) | ⏳ Not Started | — |
 | HF-102 | In-app chat screen | ⏳ Not Started | — |
@@ -51,6 +51,32 @@
 - [x] `tests/services/review.service.test.ts` — 10 cases: submit with/without comment, whitespace trim, REVIEW_NOT_ALLOWED, REVIEW_ALREADY_EXISTS, 401; getProviderReviews defaults, custom params, empty, error
 - [x] `tests/store/reviewStore.test.ts` — 5 cases: initial false, mark→true, isolation, idempotent, multi-job
 - [x] All 15 mobile tests passing
+
+---
+
+### ✅ HF-051 — Push Notification Setup (expo-notifications, deep linking)
+
+**Architecture:**
+- `expo-notifications ~0.32` + `expo-device ~8.0` installed (added to `package.json`)
+- `Notifications.setNotificationHandler({...})` called at module level in `app/_layout.tsx` — controls foreground notification display
+- `notificationService` — `registerDeviceToken(token)` → POST `/v2/users/me/device-token`; `unregisterDeviceToken()` → DELETE same endpoint
+- `usePushNotifications` hook (in `hooks/`) — requests permissions, gets native FCM token via `getDevicePushTokenAsync()`, registers with backend on every login, sets up `addNotificationResponseReceivedListener` for deep-link navigation
+- Hook mounted in `app/(app)/_layout.tsx` — only runs when authenticated; re-runs on every login
+- `authStore.logout()` calls `apiClient.delete('/v2/users/me/device-token')` directly (NOT via `notificationService`) to avoid `authStore → notificationService → apiClient → authStore` circular import
+- Deep-link routing: `JOB_ACCEPTED`, `JOB_COMPLETED`, `PAYMENT_RECEIVED`, `NEW_MESSAGE` → all navigate to `/(app)/booking/job/${data.jobId}`
+- Simulator guard: `Device.isDevice` checked before calling `getDevicePushTokenAsync()` — silently skips on simulators
+- Cancelled guard: `if (finalStatus !== 'granted' || cancelled) return` before token fetch — prevents unmounted hook from polluting test mock counts
+
+- [x] `expo-notifications ~0.32.17` + `expo-device ~8.0.10` added to `package.json` via `npx expo install`
+- [x] `services/notification.service.ts` — `registerDeviceToken`, `unregisterDeviceToken`
+- [x] `hooks/usePushNotifications.ts` — permissions, token, registration, deep-link listener, cleanup
+- [x] `app/_layout.tsx` — `setNotificationHandler` at module level (all imports first)
+- [x] `app/(app)/_layout.tsx` — `usePushNotifications()` call + `booking/job/review/[id]` Stack.Screen added
+- [x] `store/authStore.ts` — `apiClient.delete('/v2/users/me/device-token')` in `logout()` (fire-and-forget)
+- [x] `app.json` — `expo-notifications` plugin added
+- [x] `tests/services/notification.service.test.ts` — 8 cases: register posts correct body, resolves void, 401/500 rejections; unregister sends DELETE, resolves void, 401/404 rejections
+- [x] `tests/hooks/usePushNotifications.test.ts` — 7 cases: registers when granted, requests+registers, denied (no token call), non-device skip, tap→navigate, no jobId→no nav, unmount removes listener
+- [x] All 151 mobile tests passing (0 regressions)
 
 ---
 

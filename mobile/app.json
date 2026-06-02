@@ -30,6 +30,14 @@
       "expo-router",
       "expo-secure-store",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#2563EB",
+          "sounds": []
+        }
+      ],
+      [
         "expo-location",
         {
           "locationWhenInUsePermission": "HomeFix uses your location to set your home address and help providers find you.",

@@ -1,5 +1,6 @@
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
+import * as Notifications from 'expo-notifications';
 import '@/i18n';
 import { useAuthStore } from '../store/authStore';
 import { View, ActivityIndicator } from 'react-native';
@@ -7,18 +8,21 @@ import { theme } from '../theme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toast } from '@/components/ui/Toast';
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowList: true,
+  }),
+});
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { staleTime: 60_000, retry: 1 },
   },
 });
 
-/**
- * ============================
- * Root Layout (App Entry)
- * ============================
- * Protects routes based on authentication state.
- */
 export default function RootLayout() {
   const { isAuthenticated, isLoading, hydrate, hasSeenOnboarding } = useAuthStore();
   const segments = useSegments();
