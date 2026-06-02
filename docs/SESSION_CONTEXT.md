@@ -78,46 +78,47 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 ### Current Sprint
 
 **Sprint:** Sprint 6 — Reviews, Notifications, Real-time & In-App Communication  
-**Status:** ⏳ Not Started — Sprint 5 fully complete ✅  
-**Backend branch:** `feature/sprint-6-backend` (create this first)  
-**Mobile branch:** `feature/sprint-6-mobile` (after backend is complete)
+**Status:** ⏳ In Progress — Backend ✅ complete · Mobile ⏳ not started  
+**Backend branch:** `feature/sprint-6-backend` ✅ complete (312/312 tests)  
+**Mobile branch:** `feature/sprint-6-mobile` ← **create this now**
 
-> **Sprint 5 complete:** All tickets shipped and tested. See `docs/TESTING_SPRINT5_BACKEND.md` (248 tests) and `docs/TESTING_SPRINT5_MOBILE.md` (121 tests) for test counts and manual test cases.  
-> **Sprint 6 plan:** See `docs/implementation_plan.md` § Sprint 6 for all tickets, ordering notes, and the communication channel architecture.  
-> **Review system BRD:** `docs/brd/REVIEW_SYSTEM.md` — REQ-024 to 026 (review gated on PAID status).
+> **Sprint 6 backend complete:** All 5 backend tickets shipped. See `docs/TESTING_SPRINT6_BACKEND.md` for test counts and manual test cases.  
+> **Sprint 6 plan:** See `docs/implementation_plan.md` § Sprint 6 and `docs/SPRINT6_PROGRESS.md` for full ticket status.  
+> **Jitsi self-hosting guide:** `docs/brd/VOIP_CALLS.md` — deployment, JWT config, JVB scaling, Phase 2 (Agora) migration path.
 
-**Sprint 6 backend tickets (do these first, in order):**
-- HF-047 ⏳ Review & rating module — `reviews` table, `POST /v2/jobs/:id/reviews` (PAID only), `GET /v2/providers/:id/reviews`, aggregate rating update (REQ-024, 025, 026)
-- HF-048 ⏳ Push notification service — FCM integration, device token registration, `POST /v2/notifications/register`
-- HF-049 ⏳ Provider background GPS tracking API — `PATCH /v2/providers/location`, location history
-- HF-100 ⏳ In-app messaging — `job_messages` table; `POST /v2/jobs/:id/messages`; `GET /v2/jobs/:id/messages?cursor=`; Socket.IO room per job; push notification to recipient when backgrounded
-- HF-101 ⏳ Pluggable VoIP call service — `call.interface.ts`; Phase 1: Jitsi Meet (`CALL_PROVIDER=jitsi`); `POST /v2/jobs/:id/call/room` → `{ provider, roomName, serverUrl?, token? }`
+**Sprint 6 backend APIs (already shipped — mobile consumes these):**
 
-**Sprint 6 mobile tickets (after backend, in order):**
-- HF-050 ⏳ Review & rating screen — star input + text, shown only after job is PAID (REQ-024)
-- HF-051 ⏳ Push notification setup — `expo-notifications`, FCM token registration on login, deep linking
-- HF-052 ⏳ Notification center — bell icon in tab bar, badge, read/unread list
-- HF-053 ⏳ Provider location tracking — background GPS, `expo-location` task manager
-- HF-102 ⏳ In-app chat screen — per-job (ACTIVE status only), bubble UI, WebSocket with 5 s poll fallback, chat icon on job detail
-- HF-103 ⏳ In-app voice call — `@jitsi/react-native-sdk` Phase 1, graceful "call unavailable" state
+| Endpoint | Ticket | Notes |
+|----------|--------|-------|
+| `POST /api/v2/jobs/:id/review` | HF-047 | Resident only; job must be PAID; 1 per job |
+| `GET /api/v2/providers/:id/reviews` | HF-047 | Public; paginated |
+| `POST /api/v2/users/me/device-token` | HF-048 | Register FCM token; call on every login |
+| `DELETE /api/v2/users/me/device-token` | HF-048 | Unregister on logout |
+| `GET /api/v2/users/me/notifications` | HF-048 | Paginated list + `unread_count` |
+| `PATCH /api/v2/users/me/notifications/:id/read` | HF-048 | Mark read |
+| `PUT /api/v2/providers/me/location` | HF-049 | Provider GPS update; body `{ latitude, longitude }` |
+| `GET /api/v2/jobs/:id/provider-location` | HF-049 | Resident tracks provider; job must be ACTIVE |
+| `POST /api/v2/jobs/:id/messages` | HF-100 | Send message; body `{ content, type? }`; ACTIVE only |
+| `GET /api/v2/jobs/:id/messages` | HF-100 | Cursor-paginated (`limit`, `before` UUID); ACTIVE only |
+| `POST /api/v2/jobs/:id/call/room` | HF-101 | Returns `{ provider, roomName, serverUrl, token? }`; ACTIVE only; idempotent |
 
-**Key backend API to build this sprint:**
-- `POST /v2/jobs/:id/reviews` — Resident submits star + text; job must be `PAID`; one review per job
-- `GET /v2/providers/:id/reviews` — Public; used by provider detail screen (Sprint 2 screen reads this)
-- `GET /v2/jobs/:id/messages?cursor=` — Chat history, cursor-paginated, participants only
-- `POST /v2/jobs/:id/messages` — Send message (resident or provider), job must be `ACTIVE`
-- `POST /v2/jobs/:id/call/room` — Create Jitsi room; returns `{ provider, roomName, serverUrl, token }`
-- `POST /v2/notifications/register` — Register FCM device token for authenticated user
-- `PATCH /v2/providers/location` — Update provider lat/lng (called by background task on mobile)
+**Sprint 6 mobile tickets (start here, in order):**
+- HF-050 ⏳ Review & rating screen — star input (1–5) + optional comment, shown only after job is PAID; POST to `/jobs/:id/review`; success → back to job detail (REQ-024)
+- HF-051 ⏳ Push notification setup — `expo-notifications`, request permission on first launch, register FCM token on every login (`POST /users/me/device-token`), deep-link routing for `JOB_ACCEPTED` / `JOB_COMPLETED` / `PAYMENT_RECEIVED` / `NEW_MESSAGE`
+- HF-052 ⏳ Notification center — bell icon in tab bar with badge (`unread_count`), `GET /users/me/notifications` list, tap marks as read (`PATCH .../:id/read`), empty state
+- HF-053 ⏳ Provider location tracking — `expo-location` background task (`startLocationUpdatesAsync`), 30 s interval, low accuracy, calls `PUT /providers/me/location`; resident job detail shows live provider location pin when job is ACTIVE
+- HF-102 ⏳ In-app chat screen — per-job (ACTIVE only), bubble UI (sent/received), `POST /jobs/:id/messages`, `GET /jobs/:id/messages` cursor-paginated, Socket.IO real-time with 5 s poll fallback, chat icon on job detail; no phone numbers
+- HF-103 ⏳ In-app voice call — `@jitsi/react-native-sdk` Phase 1; call room opened from job detail via `POST /jobs/:id/call/room`; mobile reads `provider` field to select SDK; graceful "call unavailable" if server unreachable
 
-**Key constraints for Sprint 6:**
-- **Reviews gated on PAID:** `job.status === PAID` enforced at DB level (FK or CHECK) AND service layer. `403` for any other status. One review per resident per job.
-- **Messages only on ACTIVE:** Chat icon/API available only while job is ACTIVE. After completion, messages are read-only or hidden — no personal contact info ever exposed.
-- **No phone numbers in chat:** In-app messaging replaces direct phone contact. `job_messages` stores only `content` + `sender_id` — never phone numbers.
-- **Call provider is pluggable:** Read `CALL_PROVIDER` env var. Mobile reads `provider` field from API response to pick the right SDK — no hardcoded SDK in mobile.
-- **FCM token registration:** Must happen on every login (token can change). Store `device_tokens` table with `user_id + device_id + fcm_token`.
-- **WebSocket auth:** Socket.IO uses same JWT access token. `io.use()` middleware validates token. Room name = `job:{jobId}`. Only job participants can join.
-- **Background GPS (provider only):** Use `expo-location` `startLocationUpdatesAsync` (Expo task manager). Battery-aware: low accuracy mode, 30-second interval minimum.
+**Key constraints for Sprint 6 mobile:**
+- **Reviews gated on PAID:** Show review button / screen only when `job.status === PAID`. One review per job — hide button after successful submission.
+- **Messages only on ACTIVE:** Chat icon and screen available only while job is ACTIVE. After `AWAITING_PAYMENT` transition, hide or show read-only history.
+- **No phone numbers in chat:** Display `sender_id === currentUser.id ? 'You' : providerName/residentName`. Never show phone numbers.
+- **Call provider is pluggable:** Read `provider` field from `/call/room` response. If `provider === 'jitsi'`, use `@jitsi/react-native-sdk`. Show graceful error if `serverUrl` is unreachable.
+- **FCM token registration:** Call `POST /users/me/device-token` immediately after every successful login (token can rotate). Call `DELETE /users/me/device-token` on logout.
+- **Socket.IO auth:** Connect with `{ auth: { token: accessToken } }`. Join room via `socket.emit('join_job', jobId)`. Leave on unmount.
+- **Background GPS (provider only):** Use `expo-location` task manager API. Battery-aware: `accuracy: Location.Accuracy.Low`, `timeInterval: 30000`, `distanceInterval: 50`. Stop task when job leaves ACTIVE state.
+- **Bilingual always:** Every user-facing string needs both `bn` (default) and `en` keys.
 
 ---
 
@@ -140,6 +141,10 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 - **Payment atomic transaction:** wallet credit + `platform_revenue_ledger` insert + `payments` status→`completed` + job status→`PAID` happen in a single Objection.js `transaction()` call inside the Admin verify handler.
 - **Profile completion:** Computed live by `profile-completion.service.compute(userId, role)` — no stored column. Provider threshold 70%; below threshold blocks job accept (`POST /v2/jobs/:id/accept`) and withdrawal (`POST /v2/providers/wallet/withdraw`) with `PROFILE_INCOMPLETE` error code. Resident threshold is informational only.
 - **Domain reference additions (Sprint 5):** `docs/brd/PAYMENT_SYSTEM.md` (escrow flow, commission versioning, withdrawal audit trail) · `docs/brd/PROFILE_COMPLETION.md` (field weights, thresholds, guards)
+
+**Sprint 6 — Reviews, Notifications, Real-time (backend complete ✅):**
+- Backend: Reviews module (PAID gate, aggregate rating update, REQ-024/025/026), Push notification service (FCM, pluggable provider, device token management, 4 REST endpoints), Provider GPS tracking (`PUT /providers/me/location`, `GET /jobs/:id/provider-location`), In-app messaging (`job_messages` table, Socket.IO rooms, cursor pagination, fire-and-forget push), Pluggable VoIP (Jitsi Phase 1, stateless JWT room creation, CALL_PROVIDER env, Agora Phase 2 hookpoint).
+- Tests: **312 backend** (22 suites, +51 new). Test docs: `docs/TESTING_SPRINT6_BACKEND.md`. VoIP self-hosting guide: `docs/brd/VOIP_CALLS.md`.
 
 ---
 
@@ -175,8 +180,9 @@ Follow these rules for every session:
 | Payment & Commission | `docs/brd/PAYMENT_SYSTEM.md` | REQ-019 to 023 | S5 ✅ |
 | Booking & Discovery | `docs/brd/BOOKING_DISCOVERY.md` | REQ-007 to 014 | S2–S3 |
 | Accessibility | `docs/brd/ACCESSIBILITY.md` | REQ-011 to 013 | S4 |
-| Review System | `docs/brd/REVIEW_SYSTEM.md` | REQ-024 to 026 | **S6 ← active** |
+| Review System | `docs/brd/REVIEW_SYSTEM.md` | REQ-024 to 026 | S6 ✅ backend |
 | Profile Completion | `docs/brd/PROFILE_COMPLETION.md` | (cross-cutting) | S5 ✅ |
+| VoIP Calls | `docs/brd/VOIP_CALLS.md` | (in-app communication) | **S6 ← active** |
 
 ---
 

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { ProviderController } from './provider.controller';
 import { validate } from '@middlewares/validate';
-import { updateProviderProfileSchema, addSkillSchema, skillIdSchema, providerUserIdSchema, listAvailableSchema } from './provider.schema';
+import { updateProviderProfileSchema, addSkillSchema, skillIdSchema, providerUserIdSchema, listAvailableSchema, updateLocationSchema } from './provider.schema';
 import { authGuard } from '@modules/auth/auth.guard';
 import { asAuthenticated } from '@modules/auth/auth.adapter';
 import { asyncHandler } from '@utils/async-handler';
@@ -49,9 +49,46 @@ providerRouter.get(
 );
 
 /**
- * NOTE: /me/profile routes must be declared BEFORE /:user_id to prevent
+ * NOTE: /me/* routes must be declared BEFORE /:user_id to prevent
  * Express matching "me" as a user_id param.
  */
+
+/**
+ * @openapi
+ * /providers/me/location:
+ *   put:
+ *     summary: Provider updates their current GPS location (REQ-007)
+ *     tags: [Providers]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [latitude, longitude]
+ *             properties:
+ *               latitude:
+ *                 type: number
+ *                 minimum: -90
+ *                 maximum: 90
+ *               longitude:
+ *                 type: number
+ *                 minimum: -180
+ *                 maximum: 180
+ *     responses:
+ *       200:
+ *         description: Location updated
+ *       403:
+ *         description: Not a provider
+ */
+providerRouter.put(
+  '/me/location',
+  authGuard,
+  validate(updateLocationSchema),
+  asyncHandler(asAuthenticated(ProviderController.updateLocation))
+);
 
 /**
  * @openapi

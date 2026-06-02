@@ -12,6 +12,11 @@ export type UpdateProviderProfileDTO = {
   is_available?: boolean;
 };
 
+export type UpdateLocationDTO = {
+  latitude: number;
+  longitude: number;
+};
+
 export type AddSkillDTO = {
   category_id: string;
   is_primary?: boolean;

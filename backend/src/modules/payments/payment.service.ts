@@ -12,6 +12,9 @@ import { PaymentRow } from './payment.types';
 import { Payment } from './payment.model';
 import { NotFoundError, BadRequestError, ForbiddenError } from '@errors/http-errors';
 import { ErrorCode } from '@errors/error-code';
+import { notificationService } from '@modules/notifications/notification.service';
+import { NotificationType } from '@modules/notifications/notification.types';
+import { logger } from '@logger/logger';
 
 type GatewayKey = 'manual' | 'sslcommerz';
 
@@ -85,15 +88,25 @@ async function verifyPayment(paymentId: string, adminId: string): Promise<Paymen
     );
   }
 
-  return transaction(Payment.knex(), async (trx) => {
-    const verified = await PaymentRepository.verify(paymentId, adminId, trx);
-    if (!verified) {
+  const verified = await transaction(Payment.knex(), async (trx) => {
+    const result = await PaymentRepository.verify(paymentId, adminId, trx);
+    if (!result) {
       throw new NotFoundError(ErrorCode.PAYMENT_NOT_FOUND, 'Payment not found after verify');
     }
     await CommissionService.applyCommission(paymentId, trx);
     await JobRepository.updateStatus(payment.job_id, JobStatus.PAID, undefined, trx);
-    return verified as unknown as PaymentRow;
+    return result as unknown as PaymentRow;
   });
+
+  notificationService.send({
+    userId: payment.provider_id,
+    type: NotificationType.PAYMENT_RECEIVED,
+    title: { en: 'Payment Received', bn: 'পেমেন্ট পেয়েছেন' },
+    body: { en: 'You have received payment for your completed job.', bn: 'আপনার সম্পন্ন কাজের জন্য পেমেন্ট পেয়েছেন।' },
+    data: { job_id: payment.job_id },
+  }).catch((err: unknown) => logger.warn(`verifyPayment notification failed: ${String(err)}`));
+
+  return verified;
 }
 
 async function listPendingPayments(): Promise<Record<string, unknown>[]> {

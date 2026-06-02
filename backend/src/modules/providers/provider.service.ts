@@ -2,7 +2,7 @@ import { transaction } from 'objection';
 import { ProviderRepository } from './provider.repository';
 import { CategoryRepository } from '@modules/categories/category.repository';
 import { ProviderProfileModel } from './provider_profile.model';
-import { UpdateProviderProfileInput, AddSkillInput, ProviderProfileWithSkills } from './provider.types';
+import { UpdateProviderProfileInput, AddSkillInput, ProviderProfileWithSkills, UpdateLocationInput } from './provider.types';
 import { NotFoundError, DuplicateError, ForbiddenError } from '@errors/http-errors';
 import { ErrorCode } from '@errors/error-code';
 import { UserRole } from '@modules/users/user.types';
@@ -105,6 +105,14 @@ export class ProviderService {
     }
 
     await ProviderRepository.removeSkill(skillId);
+  }
+
+  static async updateLocation(userId: string, role: UserRole, data: UpdateLocationInput): Promise<UpdateLocationInput> {
+    if (role !== UserRole.PROVIDER) {
+      throw new ForbiddenError(ErrorCode.FORBIDDEN, 'Only providers can update location');
+    }
+    await ProviderRepository.updateLocation(userId, data);
+    return data;
   }
 
   static async listAvailable(): Promise<ProviderProfileWithSkills[]> {

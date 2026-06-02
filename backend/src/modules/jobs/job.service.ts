@@ -13,6 +13,8 @@ import { UserRepository } from '@modules/users/user.repository';
 import { Job as JobModel } from './job.model';
 import { storageService } from '@modules/storage/storage.service';
 import { ProfileCompletionService } from '@modules/users/profile-completion.service';
+import { notificationService } from '@modules/notifications/notification.service';
+import { NotificationType } from '@modules/notifications/notification.types';
 import { logger } from '@logger/logger';
 
 export class JobService {
@@ -121,10 +123,19 @@ export class JobService {
     }
 
     // Transaction: status change + provider assignment must be atomic
-    return transaction(JobModel.knex(), async (trx) => {
-      const updated = await JobRepository.updateStatus(jobId, JobStatus.ACTIVE, providerId, trx);
-      return updated as unknown as Job;
+    const updated = await transaction(JobModel.knex(), async (trx) => {
+      return JobRepository.updateStatus(jobId, JobStatus.ACTIVE, providerId, trx);
     });
+
+    notificationService.send({
+      userId: job.resident_id,
+      type: NotificationType.JOB_ACCEPTED,
+      title: { en: 'Provider Accepted Your Job', bn: 'প্রভাইডার আপনার কাজ গ্রহণ করেছে' },
+      body: { en: 'A provider has accepted your job request and is on the way.', bn: 'একজন প্রভাইডার আপনার কাজের অনুরোধ গ্রহণ করেছে।' },
+      data: { job_id: jobId },
+    }).catch((err: unknown) => logger.warn(`acceptJob notification failed: ${String(err)}`));
+
+    return updated as unknown as Job;
   }
 
   static async addJobMedia(
@@ -177,6 +188,35 @@ export class JobService {
     });
   }
 
+  static async getProviderLocation(
+    jobId: string,
+    residentId: string
+  ): Promise<{ latitude: number; longitude: number }> {
+    const job = await JobService.getById(jobId);
+
+    if (job.resident_id !== residentId) {
+      throw new ForbiddenError(ErrorCode.JOB_ACCESS_DENIED, 'You do not own this job');
+    }
+
+    if (job.status !== JobStatus.ACTIVE) {
+      throw new BadRequestError(
+        ErrorCode.INVALID_STATE_TRANSITION,
+        'Provider location is only available for active jobs'
+      );
+    }
+
+    if (!job.provider_id) {
+      throw new NotFoundError(ErrorCode.RESOURCE_NOT_FOUND, 'No provider assigned to this job');
+    }
+
+    const location = await JobRepository.findProviderLocation(jobId);
+    if (!location) {
+      throw new NotFoundError(ErrorCode.RESOURCE_NOT_FOUND, 'Provider location not yet available');
+    }
+
+    return location;
+  }
+
   static async completeJob(jobId: string, providerId: string): Promise<Job> {
     const job = await JobService.getById(jobId);
 
@@ -191,10 +231,19 @@ export class JobService {
       );
     }
 
-    // Transaction: payment trigger will be added here in HF-Sprint6
-    return transaction(JobModel.knex(), async (trx) => {
-      const updated = await JobRepository.updateStatus(jobId, JobStatus.AWAITING_PAYMENT, undefined, trx);
-      return updated as unknown as Job;
+    // Transaction: atomic status transition
+    const updated = await transaction(JobModel.knex(), async (trx) => {
+      return JobRepository.updateStatus(jobId, JobStatus.AWAITING_PAYMENT, undefined, trx);
     });
+
+    notificationService.send({
+      userId: job.resident_id,
+      type: NotificationType.JOB_COMPLETED,
+      title: { en: 'Work Completed — Payment Required', bn: 'কাজ সম্পন্ন — পেমেন্ট প্রয়োজন' },
+      body: { en: 'Your provider has completed the work. Please proceed to payment.', bn: 'আপনার প্রভাইডার কাজ সম্পন্ন করেছে। অনুগ্রহ করে পেমেন্ট করুন।' },
+      data: { job_id: jobId },
+    }).catch((err: unknown) => logger.warn(`completeJob notification failed: ${String(err)}`));
+
+    return updated as unknown as Job;
   }
 }

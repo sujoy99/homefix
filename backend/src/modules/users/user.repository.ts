@@ -1,5 +1,5 @@
 
-import { transaction, PartialModelObject } from 'objection';
+import { TransactionOrKnex, PartialModelObject } from 'objection';
 import { User } from '@modules/users/user.model';
 import { UserWithAuth } from '@modules/auth/auth.types';
 
@@ -7,6 +7,18 @@ export class UserRepository {
 
     static async findById(id: string): Promise<User | undefined> {
       return User.query().findById(id);
+    }
+
+    static async incrementRating(providerId: string, rating: number, trx?: TransactionOrKnex): Promise<void> {
+      await User.query(trx)
+        .patch({
+          avg_rating: User.raw(
+            'CASE WHEN avg_rating IS NULL THEN ? ELSE (avg_rating * review_count + ?) / (review_count + 1) END',
+            [rating, rating]
+          ),
+          review_count: User.raw('review_count + 1'),
+        } as PartialModelObject<User>)
+        .where('id', providerId);
     }
 
     static async findUserWithAuth(identifier: string, method: string): Promise<UserWithAuth | undefined> {

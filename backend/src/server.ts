@@ -1,9 +1,11 @@
+import http from 'http';
 import { app } from './app';
 import { env } from '@config/env'; // 1. loads dotenv internally
 import '@config/db';                // 2️. DB loaded
 import { logger } from '@logger/logger';
 import { permissionCache } from '@modules/auth/permission.cache';
 import { UserRole } from '@modules/users/user.types';
+import { initSocket } from '@lib/socket';
 
 async function loadPermissionsWithRetry(maxAttempts = 5): Promise<void> {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -36,7 +38,10 @@ async function bootstrap() {
     logger.warn('Permission cache has 0 admin permissions — DB may not be seeded yet. Run: make seed && make restart');
   }
 
-  app.listen(env.port, () => {
+  const httpServer = http.createServer(app);
+  initSocket(httpServer);
+
+  httpServer.listen(env.port, () => {
     logger.info('HomeFix API started', {
       port: env.port,
       env: env.nodeEnv,

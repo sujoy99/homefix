@@ -36,6 +36,13 @@ export const providerUserIdSchema = z.object({
   params: z.object({ user_id: z.uuid() }),
 });
 
+export const updateLocationSchema = z.object({
+  body: z.object({
+    latitude: z.number().min(-90).max(90),
+    longitude: z.number().min(-180).max(180),
+  }),
+});
+
 export const listAvailableSchema = z.object({
   query: z.object({
     lat: z.coerce.number().min(-90).max(90).optional(),

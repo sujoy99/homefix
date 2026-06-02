@@ -86,6 +86,23 @@ export class JobRepository {
       } as PartialModelObject<Job>);
   }
 
+  static async findProviderLocation(
+    jobId: string
+  ): Promise<{ latitude: number; longitude: number } | null> {
+    const row = await Job.knex()
+      .select(
+        Job.knex().raw('ST_Y(users.area::geometry) as latitude'),
+        Job.knex().raw('ST_X(users.area::geometry) as longitude')
+      )
+      .from('jobs')
+      .join('users', 'users.id', 'jobs.provider_id')
+      .where('jobs.id', jobId)
+      .whereNotNull('users.area')
+      .first() as { latitude: number; longitude: number } | undefined;
+
+    return row ?? null;
+  }
+
   static async setVoiceNote(
     id: string,
     voiceNoteUrl: string,

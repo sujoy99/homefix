@@ -14,6 +14,10 @@ import { walletRouter } from '@modules/payments/wallet/wallet.route';
 import { adminWithdrawalRouter } from '@modules/payments/wallet/admin-withdrawal.route';
 import { adminRevenueRouter } from '@modules/payments/revenue/revenue.route';
 import { userRouter } from '@modules/users/user.route';
+import { reviewRouter } from '@modules/reviews/review.route';
+import { notificationRouter } from '@modules/notifications/notification.route';
+import { messageRouter } from '@modules/messages/message.route';
+import { callRouter } from '@modules/calls/call.route';
 
 const router = Router();
 
@@ -32,5 +36,9 @@ router.use('/config', configRouter);
 router.use('/users', userRouter);
 router.use('/jobs', jobRouter);
 router.use('/payments', paymentRouter);
+router.use('/', reviewRouter);
+router.use('/', notificationRouter);
+router.use('/', messageRouter);
+router.use('/', callRouter);
 
 export default router;

@@ -75,4 +75,9 @@ export class JobController {
     const job = await JobService.completeJob(param(req, 'id'), req.user.sub);
     return HttpResponse.success(res, job, 'Job marked as complete');
   }
+
+  static async getProviderLocation(req: AuthenticatedRequest, res: Response): Promise<Response> {
+    const location = await JobService.getProviderLocation(param(req, 'id'), req.user.sub);
+    return HttpResponse.success(res, location, 'Provider location fetched');
+  }
 }

@@ -70,6 +70,27 @@ export enum ErrorCode {
   COMMISSION_RULE_CONFLICT = 'COMMISSION_RULE_CONFLICT',
 
   /* =========================
+   * Reviews
+   * ========================= */
+  REVIEW_ALREADY_EXISTS = 'REVIEW_ALREADY_EXISTS',
+  REVIEW_NOT_ALLOWED = 'REVIEW_NOT_ALLOWED',
+
+  /* =========================
+   * Notifications
+   * ========================= */
+  NOTIFICATION_NOT_FOUND = 'NOTIFICATION_NOT_FOUND',
+
+  /* =========================
+   * Messaging
+   * ========================= */
+  MESSAGING_NOT_AVAILABLE = 'MESSAGING_NOT_AVAILABLE',
+
+  /* =========================
+   * Calls
+   * ========================= */
+  CALL_NOT_AVAILABLE = 'CALL_NOT_AVAILABLE',
+
+  /* =========================
    * System
    * ========================= */
   INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',

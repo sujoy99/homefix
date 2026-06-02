@@ -1,5 +1,5 @@
 import { request } from '../../helpers/app';
-import { truncateAll, closeTestDb } from '../../helpers/db';
+import { truncateAll, closeTestDb, getTestDb } from '../../helpers/db';
 import { createProvider } from '../../factories/provider.factory';
 import { createUser } from '../../factories/user.factory';
 import { createCategory } from '../../factories/category.factory';
@@ -198,6 +198,85 @@ describe('POST /api/v2/providers/me/skills', () => {
       .post('/api/v2/providers/me/skills')
       .set('Authorization', `Bearer ${token}`)
       .send({ category_id: 'not-a-uuid' });
+
+    expect(res.status).toBe(400);
+  });
+});
+
+// ─── PUT /providers/me/location ──────────────────────────────────────────
+
+describe('PUT /api/v2/providers/me/location', () => {
+  it('provider updates their GPS location', async () => {
+    const provider = await createProvider();
+    const token = await loginAs(provider.mobile, provider.password);
+
+    const res = await request
+      .put('/api/v2/providers/me/location')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ latitude: 23.8103, longitude: 90.4125 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.body).toMatchObject({ latitude: 23.8103, longitude: 90.4125 });
+  });
+
+  it('persists location so it appears in the users table', async () => {
+    const db = getTestDb();
+    const provider = await createProvider();
+    const token = await loginAs(provider.mobile, provider.password);
+
+    await request
+      .put('/api/v2/providers/me/location')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ latitude: 23.8103, longitude: 90.4125 });
+
+    const row = await db.raw(
+      `SELECT ST_Y(area::geometry) as lat, ST_X(area::geometry) as lon FROM users WHERE id = ?`,
+      [provider.userId]
+    );
+    expect(Number(row.rows[0].lat)).toBeCloseTo(23.8103, 3);
+    expect(Number(row.rows[0].lon)).toBeCloseTo(90.4125, 3);
+  });
+
+  it('returns 403 for a resident', async () => {
+    const resident = await createUser({ role: UserRole.RESIDENT });
+    const token = await loginAs(resident.mobile, resident.password);
+
+    const res = await request
+      .put('/api/v2/providers/me/location')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ latitude: 23.8103, longitude: 90.4125 });
+
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 401 without token', async () => {
+    const res = await request
+      .put('/api/v2/providers/me/location')
+      .send({ latitude: 23.8103, longitude: 90.4125 });
+
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 400 for out-of-range latitude', async () => {
+    const provider = await createProvider();
+    const token = await loginAs(provider.mobile, provider.password);
+
+    const res = await request
+      .put('/api/v2/providers/me/location')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ latitude: 200, longitude: 90.4125 });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when longitude is missing', async () => {
+    const provider = await createProvider();
+    const token = await loginAs(provider.mobile, provider.password);
+
+    const res = await request
+      .put('/api/v2/providers/me/location')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ latitude: 23.8103 });
 
     expect(res.status).toBe(400);
   });

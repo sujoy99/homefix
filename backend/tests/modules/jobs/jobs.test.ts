@@ -1,5 +1,5 @@
 import { request } from '../../helpers/app';
-import { truncateAll, closeTestDb } from '../../helpers/db';
+import { truncateAll, closeTestDb, getTestDb } from '../../helpers/db';
 import { createUser } from '../../factories/user.factory';
 import { createProvider, addSkillToProvider } from '../../factories/provider.factory';
 import { createCategory } from '../../factories/category.factory';
@@ -702,5 +702,135 @@ describe('PATCH /api/v2/jobs/:id/voice-note (HF-033)', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(400);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HF-049: GET /jobs/:id/provider-location — Resident tracks provider GPS
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('GET /api/v2/jobs/:id/provider-location (HF-049)', () => {
+  async function setProviderLocation(userId: string, lat: number, lon: number) {
+    const db = getTestDb();
+    await db.raw(
+      `UPDATE users SET area = ST_SetSRID(ST_MakePoint(?, ?), 4326) WHERE id = ?`,
+      [lon, lat, userId]
+    );
+  }
+
+  it('returns provider location for an ACTIVE job', async () => {
+    const resident = await createUser({ role: UserRole.RESIDENT });
+    const provider = await createProvider();
+    const category = await createCategory({ slug: 'plumbing' });
+    const job = await createJob({
+      resident_id: resident.userId,
+      category_id: category.id,
+      provider_id: provider.userId,
+      status: JobStatus.ACTIVE,
+    });
+    await setProviderLocation(provider.userId, 23.8103, 90.4125);
+    const token = await loginAs(resident.mobile, resident.password);
+
+    const res = await request
+      .get(`/api/v2/jobs/${job.id}/provider-location`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.body.latitude).toBeCloseTo(23.8103, 3);
+    expect(res.body.body.longitude).toBeCloseTo(90.4125, 3);
+  });
+
+  it('returns 404 when provider has not set a location yet', async () => {
+    const db = getTestDb();
+    const resident = await createUser({ role: UserRole.RESIDENT });
+    const provider = await createProvider();
+    // Clear the factory-seeded GPS point so the provider has no location
+    await db('users').where('id', provider.userId).update({ area: null });
+    const category = await createCategory({ slug: 'plumbing' });
+    const job = await createJob({
+      resident_id: resident.userId,
+      category_id: category.id,
+      provider_id: provider.userId,
+      status: JobStatus.ACTIVE,
+    });
+    const token = await loginAs(resident.mobile, resident.password);
+
+    const res = await request
+      .get(`/api/v2/jobs/${job.id}/provider-location`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 400 when job is not ACTIVE', async () => {
+    const resident = await createUser({ role: UserRole.RESIDENT });
+    const category = await createCategory({ slug: 'plumbing' });
+    const job = await createJob({
+      resident_id: resident.userId,
+      category_id: category.id,
+      status: JobStatus.PENDING,
+    });
+    const token = await loginAs(resident.mobile, resident.password);
+
+    const res = await request
+      .get(`/api/v2/jobs/${job.id}/provider-location`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 403 when a different resident tries', async () => {
+    const owner = await createUser({ role: UserRole.RESIDENT });
+    const other = await createUser({ role: UserRole.RESIDENT });
+    const provider = await createProvider();
+    const category = await createCategory({ slug: 'plumbing' });
+    const job = await createJob({
+      resident_id: owner.userId,
+      category_id: category.id,
+      provider_id: provider.userId,
+      status: JobStatus.ACTIVE,
+    });
+    const token = await loginAs(other.mobile, other.password);
+
+    const res = await request
+      .get(`/api/v2/jobs/${job.id}/provider-location`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 403 when called by a provider', async () => {
+    const resident = await createUser({ role: UserRole.RESIDENT });
+    const provider = await createProvider();
+    const category = await createCategory({ slug: 'plumbing' });
+    const job = await createJob({
+      resident_id: resident.userId,
+      category_id: category.id,
+      provider_id: provider.userId,
+      status: JobStatus.ACTIVE,
+    });
+    const token = await loginAs(provider.mobile, provider.password);
+
+    const res = await request
+      .get(`/api/v2/jobs/${job.id}/provider-location`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 401 without token', async () => {
+    const res = await request.get(`/api/v2/jobs/${NULL_UUID}/provider-location`);
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 404 for non-existent job', async () => {
+    const resident = await createUser({ role: UserRole.RESIDENT });
+    const token = await loginAs(resident.mobile, resident.password);
+
+    const res = await request
+      .get(`/api/v2/jobs/${NULL_UUID}/provider-location`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
   });
 });
