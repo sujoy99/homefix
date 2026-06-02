@@ -81,6 +81,11 @@ export enum ErrorCode {
   NOTIFICATION_NOT_FOUND = 'NOTIFICATION_NOT_FOUND',
 
   /* =========================
+   * Messaging
+   * ========================= */
+  MESSAGING_NOT_AVAILABLE = 'MESSAGING_NOT_AVAILABLE',
+
+  /* =========================
    * System
    * ========================= */
   INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',

@@ -17,6 +17,7 @@ module.exports = {
     '^@errors/(.*)$': '<rootDir>/src/errors/$1',
     '^@http/(.*)$': '<rootDir>/src/http/$1',
     '^@modules/(.*)$': '<rootDir>/src/modules/$1',
+    '^@lib/(.*)$': '<rootDir>/src/lib/$1',
   },
   transform: {
     '^.+\\.ts$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.test.json' }],

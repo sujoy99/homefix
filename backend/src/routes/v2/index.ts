@@ -16,6 +16,7 @@ import { adminRevenueRouter } from '@modules/payments/revenue/revenue.route';
 import { userRouter } from '@modules/users/user.route';
 import { reviewRouter } from '@modules/reviews/review.route';
 import { notificationRouter } from '@modules/notifications/notification.route';
+import { messageRouter } from '@modules/messages/message.route';
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.use('/jobs', jobRouter);
 router.use('/payments', paymentRouter);
 router.use('/', reviewRouter);
 router.use('/', notificationRouter);
+router.use('/', messageRouter);
 
 export default router;
