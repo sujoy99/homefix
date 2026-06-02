@@ -16,7 +16,7 @@
 | HF-047 | Review & rating module (post-payment only — REQ-024,025,026) | ✅ Done | — |
 | HF-048 | Push notification service (FCM) | ✅ Done | — |
 | HF-049 | Provider background GPS tracking API (REQ-007) | ✅ Done | a86e599 |
-| HF-100 | In-app messaging — job_messages, Socket.IO | ✅ Done | — |
+| HF-100 | In-app messaging — job_messages, Socket.IO | ✅ Done | 25f30a0 |
 | HF-101 | Pluggable VoIP call service (Jitsi Phase 1) | ⏳ Not Started | — |
 
 ### Mobile
