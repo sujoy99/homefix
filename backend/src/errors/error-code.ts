@@ -86,6 +86,11 @@ export enum ErrorCode {
   MESSAGING_NOT_AVAILABLE = 'MESSAGING_NOT_AVAILABLE',
 
   /* =========================
+   * Calls
+   * ========================= */
+  CALL_NOT_AVAILABLE = 'CALL_NOT_AVAILABLE',
+
+  /* =========================
    * System
    * ========================= */
   INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',

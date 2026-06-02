@@ -37,4 +37,11 @@ export const env = {
     '15m') as SignOptions['expiresIn'],
   jwtRefreshExpiresIn: (process.env.JWT_REFRESH_EXPIRES_IN ??
     '7d') as SignOptions['expiresIn'],
+
+  /** VoIP / Calls */
+  callProvider: (process.env['CALL_PROVIDER'] ?? 'jitsi') as 'jitsi' | 'agora',
+  // Dev default: meet.jit.si (no setup). Production: point at your Jitsi server.
+  jitsiServerUrl: process.env['JITSI_SERVER_URL'] ?? 'https://meet.jit.si',
+  jitsiAppId: process.env['JITSI_APP_ID'],
+  jitsiAppSecret: process.env['JITSI_APP_SECRET'],
 };

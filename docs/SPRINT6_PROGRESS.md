@@ -3,7 +3,7 @@
 > **Backend Branch:** `feature/sprint-6-backend`
 > **Mobile Branch:** `feature/sprint-6-mobile` (not started)
 > **Last updated:** 2026-06-03
-> **Tests:** 302/303 backend passing (42 new) · All TypeScript checks passing (1 pre-existing storage flaky — not our code)
+> **Tests:** 312/312 backend passing (51 new) · All TypeScript checks passing · **Backend sprint complete ✅**
 
 ---
 
@@ -17,7 +17,7 @@
 | HF-048 | Push notification service (FCM) | ✅ Done | — |
 | HF-049 | Provider background GPS tracking API (REQ-007) | ✅ Done | a86e599 |
 | HF-100 | In-app messaging — job_messages, Socket.IO | ✅ Done | 25f30a0 |
-| HF-101 | Pluggable VoIP call service (Jitsi Phase 1) | ⏳ Not Started | — |
+| HF-101 | Pluggable VoIP call service (Jitsi Phase 1) | ✅ Done | — |
 
 ### Mobile
 
@@ -33,6 +33,39 @@
 ---
 
 ## Detailed Step Checklist
+
+### ✅ HF-101 — Pluggable VoIP Call Service (Jitsi Phase 1)
+
+**Architecture:**
+- `ICallProvider` interface — `createRoom(jobId, userId): Promise<RoomConfig>`
+- `RoomConfig`: `{ provider, roomName, serverUrl?, token? }` — mobile reads `provider` to pick the right SDK
+- `JitsiProvider`: stateless room name (`homefix-job-{jobId}`) + optional JWT (scoped to room + user, 2 h expiry) — no external API call, scales horizontally with no shared state
+- JWT generated only when `JITSI_APP_ID` + `JITSI_APP_SECRET` are set (self-hosted auth); absent = tokenless (dev / `meet.jit.si`)
+- `CALL_PROVIDER` env selects provider; Agora Phase 2 is a compile-time hookpoint (comment in service)
+- `JITSI_SERVER_URL` defaults to `meet.jit.si`; production: point at your own Jitsi server or load balancer
+- Backend is **never in the media path** — Jitsi JVBs handle all audio/video directly with clients
+- Room name is deterministic → calling `/call/room` twice returns the same config (idempotent)
+- Same participant + ACTIVE guard as messaging
+
+**API endpoint:**
+- `POST /api/v2/jobs/:id/call/room` — returns RoomConfig; 400 if not ACTIVE, 403 if non-participant
+
+**Production scaling:** Set `JITSI_SERVER_URL` to a load balancer in front of multiple JVB nodes (Jitsi Octo cascade). Backend scales normally — no call-specific shared state.
+
+- [x] `call.types.ts` — `CallProviderType`, `RoomConfig`
+- [x] `call.interface.ts` — `ICallProvider`
+- [x] `call.schema.ts` — Zod: `createRoomSchema`
+- [x] `providers/jitsi.provider.ts` — JWT + room name generation
+- [x] `call.service.ts` — provider resolution, participant + ACTIVE guard
+- [x] `call.controller.ts` + `call.route.ts`
+- [x] Route registered in `src/routes/v2/index.ts`
+- [x] `CALL_NOT_AVAILABLE` error code added
+- [x] `CALL_PROVIDER`, `JITSI_SERVER_URL`, `JITSI_APP_ID`, `JITSI_APP_SECRET` added to `env.ts` + `.env.development` comments
+- [x] Tests: 9 passing (resident/provider 201, idempotent 201, PENDING 400, AWAITING_PAYMENT 400, non-participant 403, wrong provider 403, 401, 404)
+- [x] `npm run type-check` passes
+- [x] `npm test` 312/312 passing
+
+---
 
 ### ✅ HF-100 — In-App Job Messaging (Socket.IO + cursor pagination)
 
