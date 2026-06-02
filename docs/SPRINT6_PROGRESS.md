@@ -1,9 +1,9 @@
 # Sprint 6 — Reviews, Notifications, Real-time & In-App Communication — Progress Tracker
 
 > **Backend Branch:** `feature/sprint-6-backend`
-> **Mobile Branch:** `feature/sprint-6-mobile` (not started)
+> **Mobile Branch:** `feature/sprint-6-mobile`
 > **Last updated:** 2026-06-03
-> **Tests:** 312/312 backend passing (51 new) · All TypeScript checks passing · **Backend sprint complete ✅**
+> **Tests:** 312/312 backend passing (51 new) · 15/15 mobile HF-050 tests passing · **Backend sprint complete ✅**
 
 ---
 
@@ -23,7 +23,7 @@
 
 | Ticket | Title | Status | Commit |
 |--------|-------|--------|--------|
-| HF-050 | Review & rating screen (star + text, post-payment only) | ⏳ Not Started | — |
+| HF-050 | Review & rating screen (star + text, post-payment only) | ✅ Done | — |
 | HF-051 | Push notification setup (expo-notifications, deep linking) | ⏳ Not Started | — |
 | HF-052 | Notification center (bell icon, badge, read/unread) | ⏳ Not Started | — |
 | HF-053 | Provider location tracking (background GPS) | ⏳ Not Started | — |
@@ -33,6 +33,26 @@
 ---
 
 ## Detailed Step Checklist
+
+### ✅ HF-050 — Review & Rating Screen (post-payment only)
+
+**Architecture:**
+- `reviewService` — `submitReview(jobId, rating, comment?)` → POST `/v2/jobs/:id/review`; `getProviderReviews(providerId, page, limit)` → GET `/v2/providers/:id/reviews`
+- `reviewStore` (Zustand + AsyncStorage) — persists `reviewedJobIds[]` across restarts so the CTA is hidden after a review is submitted
+- Review screen at `app/(app)/booking/job/review/[id].tsx` — 5-star tap input + optional 1000-char comment, `KeyboardAvoidingView + ScrollView`
+- Job detail updated: "Leave a Review" footer CTA shown only when `isResident && isPaid && !hasReviewed(job.id)`
+- Graceful handling of `REVIEW_ALREADY_EXISTS` (409) and `REVIEW_NOT_ALLOWED` (400) — marks job reviewed locally and navigates back with toast
+
+- [x] `services/review.service.ts` — `submitReview`, `getProviderReviews`
+- [x] `store/reviewStore.ts` — Zustand + AsyncStorage, `markJobReviewed`, `hasReviewed`
+- [x] `app/(app)/booking/job/review/[id].tsx` — star input, comment textarea, submit
+- [x] `app/(app)/booking/job/[id].tsx` — `isPaid` flag + "Leave a Review" CTA + `reviewStore` import
+- [x] `i18n/locales/bn.json` + `i18n/locales/en.json` — `review` section (21 keys each)
+- [x] `tests/services/review.service.test.ts` — 10 cases: submit with/without comment, whitespace trim, REVIEW_NOT_ALLOWED, REVIEW_ALREADY_EXISTS, 401; getProviderReviews defaults, custom params, empty, error
+- [x] `tests/store/reviewStore.test.ts` — 5 cases: initial false, mark→true, isolation, idempotent, multi-job
+- [x] All 15 mobile tests passing
+
+---
 
 ### ✅ HF-101 — Pluggable VoIP Call Service (Jitsi Phase 1)
 

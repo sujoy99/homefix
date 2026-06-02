@@ -32,6 +32,7 @@ import { jobService } from '@/services/job.service';
 import { categoryService } from '@/services/category.service';
 import { providerService } from '@/services/provider.service';
 import { useAuthStore } from '@/store/authStore';
+import { useReviewStore } from '@/store/reviewStore';
 import { toast } from '@/utils/toast';
 import { resolveMediaUrl } from '@/utils/media';
 import { VoiceNotePlayer } from '@/components/shared/VoiceNotePlayer';
@@ -66,6 +67,7 @@ export default function JobDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const userRole = useAuthStore((s) => s.user?.role);
   const userId   = useAuthStore((s) => s.user?.id);
+  const hasReviewed = useReviewStore((s) => s.hasReviewed);
 
   const [isAccepting,   setIsAccepting]   = useState(false);
   const [isCompleting,  setIsCompleting]  = useState(false);
@@ -171,6 +173,7 @@ export default function JobDetailScreen() {
   const isPending        = job.status === JobStatus.PENDING;
   const isActive         = job.status === JobStatus.ACTIVE;
   const isAwaitingPayment = job.status === JobStatus.AWAITING_PAYMENT;
+  const isPaid           = job.status === JobStatus.PAID;
   const isCancelled      = job.status === JobStatus.CANCELLED;
   const isMyJob          = isProvider && job.provider_id === userId;
   const jobTakenByOther = isProvider && !isPending && !isMyJob;
@@ -414,6 +417,17 @@ export default function JobDetailScreen() {
             variant="secondary"
             disabled={isCompleting}
             onPress={handleMarkComplete}
+          />
+        </View>
+      )}
+
+      {/* Resident + PAID + not yet reviewed → Leave a Review */}
+      {isResident && isPaid && !hasReviewed(job.id) && (
+        <View style={styles.footer}>
+          <Button
+            label={t('review.cta')}
+            variant="primary"
+            onPress={() => router.push(`/(app)/booking/job/review/${job.id}`)}
           />
         </View>
       )}

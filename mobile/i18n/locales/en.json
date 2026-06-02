@@ -632,5 +632,26 @@
     "voice_recording": "Recording...",
     "voice_recorded": "Recording saved — submit to attach",
     "error_voice": "Job posted but voice note could not be uploaded."
+  },
+  "review": {
+    "title": "Rate Your Experience",
+    "cta": "Leave a Review",
+    "rating_label": "How was the service?",
+    "rating_hint": "Tap a star to rate",
+    "rating_1": "Poor",
+    "rating_2": "Fair",
+    "rating_3": "Good",
+    "rating_4": "Very Good",
+    "rating_5": "Excellent",
+    "star_label": "{{n}} star",
+    "comment_label": "Comments (optional)",
+    "comment_placeholder": "Tell us about your experience...",
+    "submit": "Submit Review",
+    "submitting": "Submitting...",
+    "success": "Thank you for your review!",
+    "error_no_rating": "Please select a star rating before submitting.",
+    "error_already_submitted": "You have already reviewed this job.",
+    "error_not_allowed": "Reviews are only available after payment is complete.",
+    "error_generic": "Could not submit review. Please try again."
   }
 }

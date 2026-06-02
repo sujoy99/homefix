@@ -31,15 +31,15 @@
 > **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
 
 **Active Sprint:** Sprint 6 — Reviews, Notifications, Real-time & In-App Communication  
-**Sprint Status:** ⏳ In Progress — Backend ✅ complete (HF-047/048/049/100/101) · Mobile ⏳ not started  
-**Git Branch Convention:** `feature/sprint-6-backend` then `feature/sprint-6-mobile`
+**Sprint Status:** ⏳ In Progress — Backend ✅ complete (HF-047/048/049/100/101) · Mobile 1/6 done (HF-050 ✅)  
+**Git Branch Convention:** `feature/sprint-6-mobile`
 
 ### Next Ticket Per Platform
 
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
-| 🖥 Backend | — | Sprint 6 backend ✅ complete — start Sprint 6 mobile or Sprint 7 web | Sprint 6 mobile |
-| 📱 Mobile | HF-050 | Review & rating screen (star + text, post-payment only) | — |
+| 🖥 Backend | — | Sprint 6 backend ✅ complete | — |
+| 📱 Mobile | HF-051 | Push notification setup (expo-notifications, deep linking) | — |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
 ### How to Pick Up Work
