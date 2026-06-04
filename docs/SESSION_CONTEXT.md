@@ -8,7 +8,7 @@
 
 ---
 
-I'm working on **HomeFix** — a geo-located home services marketplace for Bangladesh. Monorepo: `backend/` (Node 20 + Express + TypeScript + PostgreSQL + PostGIS), `mobile/` (Expo SDK 53 + React Native + Expo Router v4), `web/` (Next.js 15, Sprint 7), `packages/shared/` (shared types/schemas/constants).
+I'm working on **HomeFix** — a geo-located home services marketplace for Bangladesh. Monorepo: `backend/` (Node 20 + Express + TypeScript + PostgreSQL + PostGIS), `mobile/` (Expo SDK 54 + React Native + Expo Router v4), `web/` (Next.js 15, Sprint 7), `packages/shared/` (shared types/schemas/constants).
 
 ### Read these files first (in order):
 
@@ -78,12 +78,12 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 ### Current Sprint
 
 **Sprint:** Sprint 6 — Reviews, Notifications, Real-time & In-App Communication  
-**Status:** ⏳ In Progress — Backend ✅ complete · Mobile ⏳ not started  
+**Status:** ⏳ In Progress — Backend ✅ complete · Mobile 2/6 done (HF-050 ✅ HF-051 ✅)  
 **Backend branch:** `feature/sprint-6-backend` ✅ complete (312/312 tests)  
-**Mobile branch:** `feature/sprint-6-mobile` ← **create this now**
+**Mobile branch:** `feature/sprint-6-mobile` (active — 26/26 tests, 151/151 full suite)
 
-> **Sprint 6 backend complete:** All 5 backend tickets shipped. See `docs/TESTING_SPRINT6_BACKEND.md` for test counts and manual test cases.  
-> **Sprint 6 plan:** See `docs/implementation_plan.md` § Sprint 6 and `docs/SPRINT6_PROGRESS.md` for full ticket status.  
+> **Sprint 6 backend complete:** All 5 backend tickets shipped. See `docs/TESTING_SPRINT6_BACKEND.md` for test counts.  
+> **Sprint 6 plan:** See `docs/implementation_plan.md` § Sprint 6 and `docs/SPRINT6_PROGRESS.md` for full ticket status + step checklists.  
 > **Jitsi self-hosting guide:** `docs/brd/VOIP_CALLS.md` — deployment, JWT config, JVB scaling, Phase 2 (Agora) migration path.
 
 **Sprint 6 backend APIs (already shipped — mobile consumes these):**
@@ -102,13 +102,13 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 | `GET /api/v2/jobs/:id/messages` | HF-100 | Cursor-paginated (`limit`, `before` UUID); ACTIVE only |
 | `POST /api/v2/jobs/:id/call/room` | HF-101 | Returns `{ provider, roomName, serverUrl, token? }`; ACTIVE only; idempotent |
 
-**Sprint 6 mobile tickets (start here, in order):**
-- HF-050 ⏳ Review & rating screen — star input (1–5) + optional comment, shown only after job is PAID; POST to `/jobs/:id/review`; success → back to job detail (REQ-024)
-- HF-051 ⏳ Push notification setup — `expo-notifications`, request permission on first launch, register FCM token on every login (`POST /users/me/device-token`), deep-link routing for `JOB_ACCEPTED` / `JOB_COMPLETED` / `PAYMENT_RECEIVED` / `NEW_MESSAGE`
-- HF-052 ⏳ Notification center — bell icon in tab bar with badge (`unread_count`), `GET /users/me/notifications` list, tap marks as read (`PATCH .../:id/read`), empty state
-- HF-053 ⏳ Provider location tracking — `expo-location` background task (`startLocationUpdatesAsync`), 30 s interval, low accuracy, calls `PUT /providers/me/location`; resident job detail shows live provider location pin when job is ACTIVE
-- HF-102 ⏳ In-app chat screen — per-job (ACTIVE only), bubble UI (sent/received), `POST /jobs/:id/messages`, `GET /jobs/:id/messages` cursor-paginated, Socket.IO real-time with 5 s poll fallback, chat icon on job detail; no phone numbers
-- HF-103 ⏳ In-app voice call — `@jitsi/react-native-sdk` Phase 1; call room opened from job detail via `POST /jobs/:id/call/room`; mobile reads `provider` field to select SDK; graceful "call unavailable" if server unreachable
+**Sprint 6 mobile tickets — status:**
+- HF-050 ✅ Review & rating screen — star input (1–5) + optional comment, post-payment only; commit `119ac58`
+- HF-051 ✅ Push notification setup — `expo-notifications ~0.32`, `expo-device ~8.0`; FCM token registration on login/logout; deep-link routing; commit `3357472`
+- HF-052 ⏳ **← NEXT** Notification center — bell icon in tab bar with badge (`unread_count`), `GET /users/me/notifications` list, tap marks as read (`PATCH .../:id/read`), empty state
+- HF-053 ⏳ Provider location tracking — `expo-location` background task, 30 s interval, low accuracy, `PUT /providers/me/location`; resident job detail shows live provider pin when ACTIVE
+- HF-102 ⏳ In-app chat screen — per-job (ACTIVE only), bubble UI, `POST/GET /jobs/:id/messages`, Socket.IO real-time + 5 s poll fallback, no phone numbers
+- HF-103 ⏳ In-app voice call — `@jitsi/react-native-sdk` Phase 1; `POST /jobs/:id/call/room`; reads `provider` field; graceful error if unreachable
 
 **Key constraints for Sprint 6 mobile:**
 - **Reviews gated on PAID:** Show review button / screen only when `job.status === PAID`. One review per job — hide button after successful submission.
@@ -142,9 +142,16 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 - **Profile completion:** Computed live by `profile-completion.service.compute(userId, role)` — no stored column. Provider threshold 70%; below threshold blocks job accept (`POST /v2/jobs/:id/accept`) and withdrawal (`POST /v2/providers/wallet/withdraw`) with `PROFILE_INCOMPLETE` error code. Resident threshold is informational only.
 - **Domain reference additions (Sprint 5):** `docs/brd/PAYMENT_SYSTEM.md` (escrow flow, commission versioning, withdrawal audit trail) · `docs/brd/PROFILE_COMPLETION.md` (field weights, thresholds, guards)
 
-**Sprint 6 — Reviews, Notifications, Real-time (backend complete ✅):**
+**Sprint 6 — Reviews, Notifications, Real-time (backend ✅ complete, mobile 2/6 done):**
 - Backend: Reviews module (PAID gate, aggregate rating update, REQ-024/025/026), Push notification service (FCM, pluggable provider, device token management, 4 REST endpoints), Provider GPS tracking (`PUT /providers/me/location`, `GET /jobs/:id/provider-location`), In-app messaging (`job_messages` table, Socket.IO rooms, cursor pagination, fire-and-forget push), Pluggable VoIP (Jitsi Phase 1, stateless JWT room creation, CALL_PROVIDER env, Agora Phase 2 hookpoint).
-- Tests: **312 backend** (22 suites, +51 new). Test docs: `docs/TESTING_SPRINT6_BACKEND.md`. VoIP self-hosting guide: `docs/brd/VOIP_CALLS.md`.
+- Tests: **312 backend** (22 suites, +51 new) · **26 mobile** (HF-050: 15 + HF-051: 11). Test docs: `docs/TESTING_SPRINT6_BACKEND.md`. VoIP self-hosting guide: `docs/brd/VOIP_CALLS.md`.
+
+**Sprint 6 mobile — architectural decisions made so far:**
+- `reviewStore` (Zustand + AsyncStorage persist) tracks `reviewedJobIds[]` — hides "Leave a Review" CTA after submission across app restarts. On `REVIEW_ALREADY_EXISTS` 409, marks job reviewed locally and navigates back.
+- `usePushNotifications` hook in `hooks/` — mounted in `app/(app)/_layout.tsx` (authenticated shell only). Registers FCM token on every mount (= every login). `Notifications.setNotificationHandler` at module level in `app/_layout.tsx` for foreground display.
+- **Circular import rule:** `authStore.ts` must NOT import `notificationService` — `apiClient` already imports `authStore`, creating a cycle. Instead, `authStore.logout()` calls `apiClient.delete('/v2/users/me/device-token')` directly.
+- `expo-notifications ~0.32.17` + `expo-device ~8.0.10` added to `mobile/package.json` via `npx expo install`.
+- `app.json` — `expo-notifications` plugin added with `icon` + `color` config.
 
 ---
 
