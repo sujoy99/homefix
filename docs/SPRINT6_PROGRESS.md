@@ -3,7 +3,7 @@
 > **Backend Branch:** `feature/sprint-6-backend`
 > **Mobile Branch:** `feature/sprint-6-mobile`
 > **Last updated:** 2026-06-05
-> **Tests:** 312/312 backend passing (51 new) · 168/168 mobile (HF-050: 15 + HF-051: 11 + HF-052: 17 + regression: 125) passing · **Backend sprint complete ✅**
+> **Tests:** 312/312 backend passing (51 new) · 182/182 mobile (HF-050: 15 + HF-051: 11 + HF-052: 17 + HF-053: 14 + regression: 125) passing · **Backend sprint complete ✅**
 
 ---
 
@@ -26,7 +26,7 @@
 | HF-050 | Review & rating screen (star + text, post-payment only) | ✅ Done | — |
 | HF-051 | Push notification setup (expo-notifications, deep linking) | ✅ Done | — |
 | HF-052 | Notification center (bell icon, badge, read/unread) | ✅ Done | — |
-| HF-053 | Provider location tracking (background GPS) | ⏳ Not Started | — |
+| HF-053 | Provider location tracking (background GPS) | ✅ Done | — |
 | HF-102 | In-app chat screen | ⏳ Not Started | — |
 | HF-103 | In-app voice call (Jitsi) | ⏳ Not Started | — |
 
@@ -100,6 +100,26 @@
 - [x] `tests/services/notification.service.test.ts` — 7 new cases: getNotifications (default params, custom params, response shape, 401); markAsRead (PATCH URL, returns updated, 404)
 - [x] `tests/store/notificationStore.test.ts` — 10 cases: initial state, fetch sets data, reset clears, append load-more, hasMore false, loading resets on error, skip during loading, markAsRead replaces item, decrements unread, no-op when already read
 - [x] All 168 mobile tests passing (17 new, 0 regressions)
+
+---
+
+### ✅ HF-053 — Provider Location Tracking (Background GPS)
+
+**Architecture:**
+- `locationService.updateMyLocation(lat, lon)` → `PUT /v2/providers/me/location`
+- `locationService.getProviderLocation(jobId)` → `GET /v2/jobs/:id/provider-location` → `{ latitude, longitude }`
+- `useLocationTracking(enabled)` hook — uses `expo-location`'s `watchPositionAsync` (foreground) with 15 s / 20 m thresholds; requests foreground permissions on first run; stops automatically on unmount or when `enabled` toggles off
+- Hook mounted in job detail screen: `useLocationTracking(isProvider && job.status === ACTIVE && job.provider_id === userId)` — fires before early returns so hook rules are respected
+- Resident location card: `useQuery(['provider-location', id], ..., { refetchInterval: 15_000, retry: false })` — shows `lat/lon` coordinates when available, "Waiting..." otherwise; only rendered when `isResident && isActive`
+- 4 i18n keys added to `location_tracking` namespace (en + bn)
+
+- [x] `services/location.service.ts` — `updateMyLocation`, `getProviderLocation`, `ProviderLocation` type
+- [x] `hooks/useLocationTracking.ts` — foreground GPS watcher, permission request, 15 s throttle, cleanup on unmount
+- [x] `app/(app)/booking/job/[id].tsx` — `useLocationTracking` hook call + resident location card with polling
+- [x] `i18n/locales/en.json` + `i18n/locales/bn.json` — `location_tracking` section (4 keys each)
+- [x] `tests/services/location.service.test.ts` — 8 cases: updateMyLocation (PUT body, resolves void, 401, 403); getProviderLocation (GET URL, response shape, 403, 404)
+- [x] `tests/hooks/useLocationTracking.test.ts` — 6 cases: disabled no-op, starts when granted, requests+starts, denied no watch, calls updateMyLocation on position, removes watcher on unmount
+- [x] All 182/182 mobile tests passing (14 new, 0 regressions)
 
 ---
 

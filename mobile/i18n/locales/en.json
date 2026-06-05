@@ -672,5 +672,11 @@
       "JOB_CANCELLED": "Job Cancelled",
       "NEW_MESSAGE": "New Message"
     }
+  },
+  "location_tracking": {
+    "card_title": "Provider Location",
+    "on_the_way": "Provider is on the way",
+    "waiting": "Waiting for provider location...",
+    "permission_denied": "Location permission required for tracking"
   }
 }

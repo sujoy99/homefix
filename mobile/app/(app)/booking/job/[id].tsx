@@ -23,6 +23,7 @@ import {
   CheckCircle2,
   Circle,
   User,
+  Navigation2,
 } from 'lucide-react-native';
 import { JobStatus, UserRole } from '@homefix/shared';
 import { Text } from '@/components/ui/Text';
@@ -33,6 +34,8 @@ import { categoryService } from '@/services/category.service';
 import { providerService } from '@/services/provider.service';
 import { useAuthStore } from '@/store/authStore';
 import { useReviewStore } from '@/store/reviewStore';
+import { locationService } from '@/services/location.service';
+import { useLocationTracking } from '@/hooks/useLocationTracking';
 import { toast } from '@/utils/toast';
 import { resolveMediaUrl } from '@/utils/media';
 import { VoiceNotePlayer } from '@/components/shared/VoiceNotePlayer';
@@ -97,6 +100,19 @@ export default function JobDetailScreen() {
     queryFn:  () => providerService.getProfile(job!.provider_id!),
     enabled:  isResident && !!job?.provider_id,
   });
+
+  // ── Provider location — resident polls every 15 s while job is ACTIVE ──────
+  const { data: providerLocation } = useQuery({
+    queryKey: ['provider-location', id],
+    queryFn:  () => locationService.getProviderLocation(id),
+    enabled:  isResident && !!id && job?.status === JobStatus.ACTIVE,
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: false,
+    retry: false,
+  });
+
+  // ── GPS tracking — provider sends location while their own job is ACTIVE ───
+  useLocationTracking(isProvider && job?.status === JobStatus.ACTIVE && job?.provider_id === userId);
 
   const categoryName = categories.find((c) => c.id === job?.category_id)?.name;
 
@@ -251,6 +267,31 @@ export default function JobDetailScreen() {
                 )}
               </View>
             </View>
+          </Card>
+        )}
+
+        {/* ── Provider location card (resident, ACTIVE job only) ── */}
+        {isResident && isActive && (
+          <Card style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Navigation2 color={theme.colors.primary} size={16} />
+              <Text variant="body" weight="semibold" style={styles.sectionTitle}>
+                {t('location_tracking.card_title')}
+              </Text>
+            </View>
+            {providerLocation ? (
+              <View style={styles.locationRow}>
+                <Text variant="body" color="muted">
+                  {providerLocation.latitude.toFixed(5)}°N,{'  '}
+                  {providerLocation.longitude.toFixed(5)}°E
+                </Text>
+                <Text variant="caption" color="muted">
+                  {t('location_tracking.on_the_way')}
+                </Text>
+              </View>
+            ) : (
+              <Text variant="caption" color="muted">{t('location_tracking.waiting')}</Text>
+            )}
           </Card>
         )}
 
@@ -554,6 +595,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   sectionTitle: { marginBottom: theme.spacing.xs },
+  // Location tracking
+  locationRow: { gap: 2 },
   // Provider info
   providerRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
   providerAvatar: {
