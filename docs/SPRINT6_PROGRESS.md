@@ -2,8 +2,8 @@
 
 > **Backend Branch:** `feature/sprint-6-backend`
 > **Mobile Branch:** `feature/sprint-6-mobile`
-> **Last updated:** 2026-06-03
-> **Tests:** 312/312 backend passing (51 new) · 26/26 mobile (HF-050: 15 + HF-051: 11) passing · **Backend sprint complete ✅**
+> **Last updated:** 2026-06-05
+> **Tests:** 312/312 backend passing (51 new) · 168/168 mobile (HF-050: 15 + HF-051: 11 + HF-052: 17 + regression: 125) passing · **Backend sprint complete ✅**
 
 ---
 
@@ -25,7 +25,7 @@
 |--------|-------|--------|--------|
 | HF-050 | Review & rating screen (star + text, post-payment only) | ✅ Done | — |
 | HF-051 | Push notification setup (expo-notifications, deep linking) | ✅ Done | — |
-| HF-052 | Notification center (bell icon, badge, read/unread) | ⏳ Not Started | — |
+| HF-052 | Notification center (bell icon, badge, read/unread) | ✅ Done | — |
 | HF-053 | Provider location tracking (background GPS) | ⏳ Not Started | — |
 | HF-102 | In-app chat screen | ⏳ Not Started | — |
 | HF-103 | In-app voice call (Jitsi) | ⏳ Not Started | — |
@@ -77,6 +77,29 @@
 - [x] `tests/services/notification.service.test.ts` — 8 cases: register posts correct body, resolves void, 401/500 rejections; unregister sends DELETE, resolves void, 401/404 rejections
 - [x] `tests/hooks/usePushNotifications.test.ts` — 7 cases: registers when granted, requests+registers, denied (no token call), non-device skip, tap→navigate, no jobId→no nav, unmount removes listener
 - [x] All 151 mobile tests passing (0 regressions)
+
+---
+
+### ✅ HF-052 — Notification Center (bell icon, badge, read/unread)
+
+**Architecture:**
+- `notificationService.getNotifications(page, limit)` → GET `/v2/users/me/notifications?page=&limit=`; returns `{ items, pagination, unread_count }`
+- `notificationService.markAsRead(id)` → PATCH `/v2/users/me/notifications/:id/read`; returns updated notification
+- `useNotificationStore` (Zustand, no persist) — `notifications[]`, `unreadCount`, `page`, `hasMore`, `loading`, `fetchNotifications(reset?)`, `markAsRead(id)`
+- `app/(app)/(tabs)/notifications.tsx` — FlatList with pull-to-refresh, "load more" footer, relative timestamps, unread dot + highlight
+- Bell tab in `tabs/_layout.tsx` — hidden for admin, shows red badge with count when `unreadCount > 0`
+- Tap notification: marks as read, navigates to `/(app)/booking/job/:id` if `data.jobId` present
+- `AppNotification` + `NotificationListResult` types exported from `notification.service.ts`
+- `relativeTime()` helper: just now / Xm ago / Xh ago / Xd ago
+
+- [x] `services/notification.service.ts` — `getNotifications`, `markAsRead`, `AppNotification`, `NotificationListResult` types
+- [x] `store/notificationStore.ts` — Zustand, `fetchNotifications` (reset/append), `markAsRead` with optimistic unreadCount decrement
+- [x] `app/(app)/(tabs)/notifications.tsx` — list screen with relative time, unread UI, load more, pull-to-refresh
+- [x] `app/(app)/(tabs)/_layout.tsx` — Bell tab + red badge; tab hidden for admin role
+- [x] `i18n/locales/en.json` + `i18n/locales/bn.json` — `notifications` section (13 keys each)
+- [x] `tests/services/notification.service.test.ts` — 7 new cases: getNotifications (default params, custom params, response shape, 401); markAsRead (PATCH URL, returns updated, 404)
+- [x] `tests/store/notificationStore.test.ts` — 10 cases: initial state, fetch sets data, reset clears, append load-more, hasMore false, loading resets on error, skip during loading, markAsRead replaces item, decrements unread, no-op when already read
+- [x] All 168 mobile tests passing (17 new, 0 regressions)
 
 ---
 

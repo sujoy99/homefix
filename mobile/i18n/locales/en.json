@@ -653,5 +653,24 @@
     "error_already_submitted": "You have already reviewed this job.",
     "error_not_allowed": "Reviews are only available after payment is complete.",
     "error_generic": "Could not submit review. Please try again."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty_title": "No notifications yet",
+    "empty_desc": "We'll notify you when something happens with your jobs.",
+    "load_more": "Load more",
+    "load_error": "Could not load notifications. Pull down to retry.",
+    "mark_read_error": "Could not mark as read.",
+    "just_now": "Just now",
+    "minutes_ago": "{{count}}m ago",
+    "hours_ago": "{{count}}h ago",
+    "days_ago": "{{count}}d ago",
+    "types": {
+      "JOB_ACCEPTED": "Job Accepted",
+      "JOB_COMPLETED": "Job Completed",
+      "PAYMENT_RECEIVED": "Payment Received",
+      "JOB_CANCELLED": "Job Cancelled",
+      "NEW_MESSAGE": "New Message"
+    }
   }
 }

@@ -653,5 +653,24 @@
     "error_already_submitted": "আপনি এই কাজের রিভিউ আগেই দিয়েছেন।",
     "error_not_allowed": "পেমেন্ট সম্পন্নের পরেই রিভিউ দেওয়া যাবে।",
     "error_generic": "রিভিউ জমা দেওয়া যায়নি। আবার চেষ্টা করুন।"
+  },
+  "notifications": {
+    "title": "বিজ্ঞপ্তি",
+    "empty_title": "এখনো কোনো বিজ্ঞপ্তি নেই",
+    "empty_desc": "আপনার কাজের আপডেট পেলে আমরা জানাবো।",
+    "load_more": "আরও দেখুন",
+    "load_error": "বিজ্ঞপ্তি লোড হয়নি। নিচে টানুন।",
+    "mark_read_error": "পঠিত চিহ্নিত করা যায়নি।",
+    "just_now": "এইমাত্র",
+    "minutes_ago": "{{count}} মিনিট আগে",
+    "hours_ago": "{{count}} ঘন্টা আগে",
+    "days_ago": "{{count}} দিন আগে",
+    "types": {
+      "JOB_ACCEPTED": "কাজ গ্রহণ করা হয়েছে",
+      "JOB_COMPLETED": "কাজ সম্পন্ন হয়েছে",
+      "PAYMENT_RECEIVED": "পেমেন্ট গৃহীত হয়েছে",
+      "JOB_CANCELLED": "কাজ বাতিল করা হয়েছে",
+      "NEW_MESSAGE": "নতুন বার্তা"
+    }
   }
 }

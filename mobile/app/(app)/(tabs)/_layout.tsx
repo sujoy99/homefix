@@ -1,14 +1,16 @@
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Home, CalendarDays, Briefcase, User, ShieldCheck, Wallet, TrendingUp } from 'lucide-react-native';
-import { StyleSheet } from 'react-native';
+import { Home, CalendarDays, Briefcase, User, ShieldCheck, Wallet, TrendingUp, Bell } from 'lucide-react-native';
+import { StyleSheet, View, Text as RNText } from 'react-native';
 import { UserRole } from '@homefix/shared';
 import { useAuthStore } from '@/store/authStore';
+import { useNotificationStore } from '@/store/notificationStore';
 import { theme } from '@/theme';
 
 export default function TabsLayout() {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
 
   const isProvider = user?.role === UserRole.PROVIDER;
   const isAdmin = user?.role === UserRole.ADMIN;
@@ -66,6 +68,25 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="notifications"
+        options={{
+          title: t('notifications.title'),
+          tabBarIcon: ({ color, size }) => (
+            <View>
+              <Bell color={color} size={size} />
+              {unreadCount > 0 && (
+                <View style={styles.badge}>
+                  <RNText style={styles.badgeText}>
+                    {unreadCount > 99 ? '99+' : String(unreadCount)}
+                  </RNText>
+                </View>
+              )}
+            </View>
+          ),
+          href: isAdmin ? null : undefined,
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: t('nav.profile'),
@@ -87,5 +108,23 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 11,
     fontWeight: '500',
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -6,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: theme.colors.error,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  badgeText: {
+    color: theme.colors.textInverse,
+    fontSize: 9,
+    fontWeight: '700',
+    lineHeight: 14,
   },
 });
