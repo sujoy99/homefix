@@ -2,8 +2,8 @@
 
 > **Backend Branch:** `feature/sprint-6-backend`
 > **Mobile Branch:** `feature/sprint-6-mobile`
-> **Last updated:** 2026-06-05
-> **Tests:** 312/312 backend passing (51 new) · 182/182 mobile (HF-050: 15 + HF-051: 11 + HF-052: 17 + HF-053: 14 + regression: 125) passing · **Backend sprint complete ✅**
+> **Last updated:** 2026-06-06
+> **Tests:** 312/312 backend passing (51 new) · 231/231 mobile (HF-050: 15 + HF-051: 11 + HF-052: 17 + HF-053: 14 + HF-102: 49 + regression: 125) passing · **Backend sprint complete ✅**
 
 ---
 
@@ -27,7 +27,7 @@
 | HF-051 | Push notification setup (expo-notifications, deep linking) | ✅ Done | — |
 | HF-052 | Notification center (bell icon, badge, read/unread) | ✅ Done | — |
 | HF-053 | Provider location tracking (background GPS) | ✅ Done | — |
-| HF-102 | In-app chat screen | ⏳ Not Started | — |
+| HF-102 | In-app chat screen (text/image/voice, WebSocket + poll fallback) | ✅ Done | — |
 | HF-103 | In-app voice call (Jitsi) | ⏳ Not Started | — |
 
 ---
@@ -120,6 +120,33 @@
 - [x] `tests/services/location.service.test.ts` — 8 cases: updateMyLocation (PUT body, resolves void, 401, 403); getProviderLocation (GET URL, response shape, 403, 404)
 - [x] `tests/hooks/useLocationTracking.test.ts` — 6 cases: disabled no-op, starts when granted, requests+starts, denied no watch, calls updateMyLocation on position, removes watcher on unmount
 - [x] All 182/182 mobile tests passing (14 new, 0 regressions)
+
+---
+
+### ✅ HF-102 — In-App Chat Screen (text + image + voice)
+
+**Architecture:**
+- `services/message.service.ts` — `list(jobId, before?)`, `send(jobId, content, type)`, `uploadImage(asset)`; `MessageType = 'text' | 'image' | 'audio'`
+- `hooks/useChat.ts` — Socket.IO real-time (`io(SERVER_ROOT, { path: '/socket.io', transports: ['websocket'] })`); 3-second timeout before polling fallback kicks in; deduplicates messages by id; exposes `sendText`, `sendImage`, `sendAudio`, `loadMore`, `refresh`, `isConnected`
+- `app/(app)/booking/job/chat/[id].tsx` — inverted FlatList (newest at bottom); `RecordMode = 'idle' | 'recording' | 'uploading'`; `AudioBubble` inline component with expo-av playback (play/pause, progress bar); header shows Wifi/WifiOff connection indicator
+- `app/(app)/booking/job/[id].tsx` — chat icon in header (`MessageCircle`) when job is ACTIVE and user is a participant
+- Audio upload reuses `messageService.uploadImage` with synthetic asset `{ uri, fileName, mimeType }`
+- Backend: `message.types.ts` + `message.schema.ts` extended with `'audio'` type — no DB migration (varchar(20), no CHECK constraint)
+- Voice note UX: compact inline recorder (not full VoiceRecorder component) — mic button in input bar → timer/pulse dot → stop-and-send or cancel
+
+**Test coverage (49 tests):**
+- `tests/services/message.service.test.ts` — 9 cases: list (default limit, cursor, next_cursor); send (text/image/audio, full object return); uploadImage (multipart post, url return, mime fallback)
+- `tests/hooks/useChat.test.ts` — 14 cases: initial load, messages, hasMore; socket connect/disconnect/message/dedup; sendText/sendImage/sendAudio; loadMore (with cursor, no-op); cleanup (leave_job + disconnect)
+- `tests/screens/chat.test.tsx` — 26 cases: loading/empty states, header; connection indicator; text/image/audio/load-more bubbles; text input send flow; image attach (open picker, upload, cancel, permission denied); voice recording (start→show stop/cancel, permission denied, cancel→idle, stop→upload+sendAudio→idle)
+
+- [x] `backend/src/modules/messages/message.types.ts` — `'audio'` added to `MessageType`
+- [x] `backend/src/modules/messages/message.schema.ts` — Zod enum extended to `['text', 'image', 'audio']`
+- [x] `mobile/services/message.service.ts` — `list`, `send`, `uploadImage`, `MessageType`, `Message`, `MessageListResult`
+- [x] `mobile/hooks/useChat.ts` — Socket.IO + polling fallback, `sendText`, `sendImage`, `sendAudio`, `loadMore`
+- [x] `mobile/app/(app)/booking/job/chat/[id].tsx` — full chat screen + AudioBubble
+- [x] `mobile/app/(app)/booking/job/[id].tsx` — chat icon in header
+- [x] `mobile/i18n/locales/en.json` + `bn.json` — `chat` namespace (17 keys each)
+- [x] All 49 mobile tests passing (0 regressions)
 
 ---
 

@@ -31,7 +31,7 @@
 > **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
 
 **Active Sprint:** Sprint 6 — Reviews, Notifications, Real-time & In-App Communication  
-**Sprint Status:** ⏳ In Progress — Backend ✅ complete (HF-047/048/049/100/101) · Mobile 4/6 done (HF-050 ✅ HF-051 ✅ HF-052 ✅ HF-053 ✅)  
+**Sprint Status:** ⏳ In Progress — Backend ✅ complete (HF-047/048/049/100/101) · Mobile 5/6 done (HF-050 ✅ HF-051 ✅ HF-052 ✅ HF-053 ✅ HF-102 ✅)  
 **Git Branch Convention:** `feature/sprint-6-mobile`
 
 ### Next Ticket Per Platform
@@ -39,7 +39,7 @@
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
 | 🖥 Backend | — | Sprint 6 backend ✅ complete | — |
-| 📱 Mobile | HF-102 | In-app chat screen | — |
+| 📱 Mobile | HF-103 | In-app voice call | — |
 | 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
 
 ### How to Pick Up Work
@@ -540,7 +540,7 @@ modules/payments/
 | HF-051 | Push notification setup (expo-notifications, deep linking) | ✅ | 6h |
 | HF-052 | Notification center (bell icon, badge, read/unread) | ✅ | 6h |
 | HF-053 | Provider location tracking (background GPS) | ✅ | 6h |
-| HF-102 | In-app chat screen — per-job messaging (ACTIVE status only); bubble UI (sent/received), image attachment, real-time WebSocket with 5 s poll fallback; chat icon on job detail; no phone numbers exposed | ⏳ | 10h |
+| HF-102 | In-app chat screen — per-job messaging (ACTIVE status only); bubble UI (sent/received), image attachment, **voice note recording + playback**, real-time WebSocket with 5 s poll fallback; chat icon on job detail; no phone numbers exposed | ✅ | 10h |
 | HF-103 | In-app voice call — `@jitsi/react-native-sdk` (Phase 1, self-hosted, free); call room opened from job detail; provider-agnostic (reads `provider` field from API response to select SDK at runtime); graceful "call unavailable" state if server unreachable | ⏳ | 8h |
 
 **Deliverable:** Reviews (fully testable end-to-end), notifications, GPS tracking, private messaging + voice call for active jobs.

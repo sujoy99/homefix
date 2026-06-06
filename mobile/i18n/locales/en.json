@@ -678,5 +678,21 @@
     "on_the_way": "Provider is on the way",
     "waiting": "Waiting for provider location...",
     "permission_denied": "Location permission required for tracking"
+  },
+  "chat": {
+    "title": "Chat",
+    "open": "Open chat",
+    "placeholder": "Type a message...",
+    "send": "Send",
+    "attach_image": "Attach image",
+    "load_more": "Load older messages",
+    "empty_title": "No messages yet",
+    "empty_desc": "Start the conversation with your service partner.",
+    "record_voice": "Record voice message",
+    "cancel_recording": "Cancel recording",
+    "stop_and_send": "Stop and send",
+    "error_mic_permission": "Microphone permission is required to record voice messages.",
+    "error_send": "Could not send message. Please try again.",
+    "uploading": "Uploading..."
   }
 }

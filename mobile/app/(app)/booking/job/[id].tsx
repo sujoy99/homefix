@@ -24,6 +24,7 @@ import {
   Circle,
   User,
   Navigation2,
+  MessageCircle,
 } from 'lucide-react-native';
 import { JobStatus, UserRole } from '@homefix/shared';
 import { Text } from '@/components/ui/Text';
@@ -214,7 +215,11 @@ export default function JobDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <Header onBack={() => router.back()} title={t('job_detail.title')} />
+      <Header
+        onBack={() => router.back()}
+        title={t('job_detail.title')}
+        onChat={isActive && (isResident || isMyJob) ? () => router.push(`/(app)/booking/job/chat/${id}`) : undefined}
+      />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
@@ -540,7 +545,7 @@ function StatusStepper({
 }
 
 // ─── Header sub-component ─────────────────────────────────────────────────────
-function Header({ onBack, title }: { onBack: () => void; title: string }) {
+function Header({ onBack, title, onChat }: { onBack: () => void; title: string; onChat?: () => void }) {
   const { t } = useTranslation();
   return (
     <View style={styles.header}>
@@ -554,7 +559,19 @@ function Header({ onBack, title }: { onBack: () => void; title: string }) {
         <ArrowLeft color={theme.colors.text} size={22} />
       </TouchableOpacity>
       <Text variant="h4" weight="bold" style={styles.headerTitle}>{title}</Text>
-      <View style={styles.backBtn} />
+      {onChat ? (
+        <TouchableOpacity
+          onPress={onChat}
+          style={styles.backBtn}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t('chat.open')}
+        >
+          <MessageCircle color={theme.colors.primary} size={22} />
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.backBtn} />
+      )}
     </View>
   );
 }
