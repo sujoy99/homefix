@@ -42,6 +42,9 @@ export class LocalStorageProvider implements IStorageProvider {
       'image/webp': '.webp',
       'audio/mpeg': '.mp3',
       'audio/webm': '.webm',
+      'audio/mp4': '.m4a',
+      'audio/aac': '.m4a',
+      'audio/x-m4a': '.m4a',
       'video/mp4': '.mp4',
     };
     return map[mime] ?? '';

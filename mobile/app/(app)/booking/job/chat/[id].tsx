@@ -130,18 +130,19 @@ export default function ChatScreen() {
 
     setRecordMode('uploading');
     try {
+      // Capture URI before stopping — some Android versions clear it on unload
+      const fileUri = recording.getURI();
       await recording.stopAndUnloadAsync();
       await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
-      const fileUri = recording.getURI();
       recordingRef.current = null;
 
       if (!fileUri) throw new Error('no uri');
 
-      // Upload the audio file
       const asset = { uri: fileUri, fileName: `voice_${Date.now()}.m4a`, mimeType: 'audio/mp4' } as ImagePicker.ImagePickerAsset;
       const url = await messageService.uploadImage(asset);
       await sendAudio(url);
-    } catch {
+    } catch (err) {
+      console.error('[Chat] voice send failed:', err);
       toast.error(t('chat.error_send'));
     } finally {
       setRecordMode('idle');

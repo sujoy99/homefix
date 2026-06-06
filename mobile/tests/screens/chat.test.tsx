@@ -1,7 +1,8 @@
+// @ts-nocheck
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native';
 import ChatScreen from '../../app/(app)/booking/job/chat/[id]';
-import type { Message } from '../../services/message.service';
+import { Message } from '../../services/message.service';
 
 jest.setTimeout(15000);
 
@@ -18,7 +19,7 @@ jest.mock('expo-router', () => ({
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (k: string) => k,
+    t: k => k,
   }),
 }));
 
@@ -37,7 +38,7 @@ jest.mock('react-native-safe-area-context', () => {
   const React = require('react');
   const { View } = require('react-native');
   return {
-    SafeAreaView: ({ children, ...p }: { children: React.ReactNode }) =>
+    SafeAreaView: ({ children, ...p }) =>
       React.createElement(View, p, children),
   };
 });
@@ -45,8 +46,7 @@ jest.mock('react-native-safe-area-context', () => {
 // ── authStore ────────────────────────────────────────────────────────────────
 
 jest.mock('../../store/authStore', () => ({
-  useAuthStore: (sel: (s: { user: { id: string } }) => unknown) =>
-    sel({ user: { id: 'me-123' } }),
+  useAuthStore: (sel) => sel({ user: { id: 'me-123' } }),
 }));
 
 // ── useChat hook ──────────────────────────────────────────────────────────────
@@ -80,7 +80,7 @@ jest.mock('../../hooks/useChat', () => ({
 
 const mockUploadImage = jest.fn();
 jest.mock('../../services/message.service', () => ({
-  messageService: { uploadImage: (...args: unknown[]) => mockUploadImage(...args) },
+  messageService: { uploadImage: (...args) => mockUploadImage(...args) },
 }));
 
 // ── expo-av ───────────────────────────────────────────────────────────────────
@@ -101,8 +101,8 @@ const mockRecordingInstance = {
 
 jest.mock('expo-av', () => ({
   Audio: {
-    requestPermissionsAsync:  (...a: unknown[]) => mockRequestPermissionsAsync(...a),
-    setAudioModeAsync:        (...a: unknown[]) => mockSetAudioModeAsync(...a),
+    requestPermissionsAsync:  (...a) => mockRequestPermissionsAsync(...a),
+    setAudioModeAsync:        (...a) => mockSetAudioModeAsync(...a),
     RecordingOptionsPresets:  { HIGH_QUALITY: {} },
     Recording: jest.fn().mockImplementation(() => mockRecordingInstance),
     Sound: {
@@ -124,8 +124,8 @@ jest.mock('expo-av', () => ({
 const mockRequestMediaLibraryPermissionsAsync = jest.fn();
 const mockLaunchImageLibraryAsync             = jest.fn();
 jest.mock('expo-image-picker', () => ({
-  requestMediaLibraryPermissionsAsync: (...a: unknown[]) => mockRequestMediaLibraryPermissionsAsync(...a),
-  launchImageLibraryAsync:             (...a: unknown[]) => mockLaunchImageLibraryAsync(...a),
+  requestMediaLibraryPermissionsAsync: (...a) => mockRequestMediaLibraryPermissionsAsync(...a),
+  launchImageLibraryAsync:             (...a) => mockLaunchImageLibraryAsync(...a),
 }));
 
 // ── utils ─────────────────────────────────────────────────────────────────────
@@ -135,7 +135,7 @@ jest.mock('../../utils/toast', () => ({
 }));
 
 jest.mock('../../utils/media', () => ({
-  resolveMediaUrl: (url: string) => `http://localhost:4000${url}`,
+  resolveMediaUrl: url => `http://localhost:4000${url}`,
 }));
 
 // ─────────────────────────────────────────────────────────────────────────────
