@@ -10,6 +10,9 @@ const ALLOWED_MIME_TYPES = new Set([
   'image/webp',
   'audio/mpeg',
   'audio/webm',
+  'audio/mp4',   // .m4a from iOS/Android expo-av
+  'audio/aac',
+  'audio/x-m4a',
   'video/mp4',
 ]);
 

@@ -2,8 +2,8 @@
 
 > **Backend Branch:** `feature/sprint-6-backend`
 > **Mobile Branch:** `feature/sprint-6-mobile`
-> **Last updated:** 2026-06-06
-> **Tests:** 312/312 backend passing (51 new) · 231/231 mobile (HF-050: 15 + HF-051: 11 + HF-052: 17 + HF-053: 14 + HF-102: 49 + regression: 125) passing · **Backend sprint complete ✅**
+> **Last updated:** 2026-06-07
+> **Tests:** 312/312 backend passing (51 new) · 246/246 mobile (HF-050: 15 + HF-051: 11 + HF-052: 17 + HF-053: 14 + HF-102: 49 + HF-103: 15 + pre-S6: 125) passing · **Sprint 6 COMPLETE ✅ (backend + mobile)**
 
 ---
 
@@ -28,7 +28,7 @@
 | HF-052 | Notification center (bell icon, badge, read/unread) | ✅ Done | — |
 | HF-053 | Provider location tracking (background GPS) | ✅ Done | — |
 | HF-102 | In-app chat screen (text/image/voice, WebSocket + poll fallback) | ✅ Done | — |
-| HF-103 | In-app voice call (Jitsi) | ⏳ Not Started | — |
+| HF-103 | In-app voice call (Jitsi via expo-web-browser) | ✅ Done | — |
 
 ---
 
@@ -120,6 +120,30 @@
 - [x] `tests/services/location.service.test.ts` — 8 cases: updateMyLocation (PUT body, resolves void, 401, 403); getProviderLocation (GET URL, response shape, 403, 404)
 - [x] `tests/hooks/useLocationTracking.test.ts` — 6 cases: disabled no-op, starts when granted, requests+starts, denied no watch, calls updateMyLocation on position, removes watcher on unmount
 - [x] All 182/182 mobile tests passing (14 new, 0 regressions)
+
+---
+
+### ✅ HF-103 — In-App Voice Call (Jitsi via expo-web-browser)
+
+**Architecture:**
+- `services/call.service.ts` — `createRoom(jobId)` → `POST /v2/jobs/:id/call/room`; `buildCallUrl(config)` → constructs Jitsi URL (`${serverUrl}/${roomName}?jwt=${token}`, falls back to `meet.jit.si`)
+- `hooks/useVoiceCall.ts` — `startCall()` + `isCallLoading` state; calls `createRoom`, builds URL, opens via `expo-web-browser` (`openBrowserAsync`); shows error toast on any failure
+- `app/(app)/booking/job/[id].tsx` — phone icon (`Phone` from lucide) in header alongside chat icon; both visible when job is ACTIVE and user is a participant; `isCallLoading` dims the icon and disables the press
+- `expo-web-browser` used instead of `@jitsi/react-native-sdk` — native SDK incompatible with Expo managed workflow; in-app browser provides equivalent UX and returns to app after call
+- Backend `RoomConfig.provider` field preserved for future SDK selection at runtime (Phase 2 Agora)
+- No DB migration — purely frontend + API consumption
+
+**Test coverage (15 tests):**
+- `tests/services/call.service.test.ts` — 8 cases: `createRoom` (correct URL, returns body, rejects); `buildCallUrl` (serverUrl+no token, serverUrl+token, fallback to meet.jit.si, fallback+token, agora provider)
+- `tests/hooks/useVoiceCall.test.ts` — 7 cases: initial `isCallLoading` false; `startCall` calls `createRoom` with jobId; calls `buildCallUrl` with config; opens browser with built URL; `isCallLoading` true-in-flight/false-after; error toast + reset on `createRoom` throw; error toast + reset on `openBrowserAsync` throw
+
+- [x] `expo-web-browser` installed (`npx expo install expo-web-browser`)
+- [x] `mobile/services/call.service.ts` — `createRoom`, `buildCallUrl`, `RoomConfig` type
+- [x] `mobile/hooks/useVoiceCall.ts` — `startCall`, `isCallLoading`
+- [x] `mobile/app/(app)/booking/job/[id].tsx` — `Phone` icon in header + `useVoiceCall` wired
+- [x] `mobile/i18n/locales/en.json` + `bn.json` — `call` namespace (3 keys each)
+- [x] All 15 tests passing (0 regressions)
+- [x] 246/246 total mobile tests passing
 
 ---
 

@@ -25,6 +25,7 @@ import {
   User,
   Navigation2,
   MessageCircle,
+  Phone,
 } from 'lucide-react-native';
 import { JobStatus, UserRole } from '@homefix/shared';
 import { Text } from '@/components/ui/Text';
@@ -37,6 +38,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useReviewStore } from '@/store/reviewStore';
 import { locationService } from '@/services/location.service';
 import { useLocationTracking } from '@/hooks/useLocationTracking';
+import { useVoiceCall } from '@/hooks/useVoiceCall';
 import { toast } from '@/utils/toast';
 import { resolveMediaUrl } from '@/utils/media';
 import { VoiceNotePlayer } from '@/components/shared/VoiceNotePlayer';
@@ -114,6 +116,8 @@ export default function JobDetailScreen() {
 
   // ── GPS tracking — provider sends location while their own job is ACTIVE ───
   useLocationTracking(isProvider && job?.status === JobStatus.ACTIVE && job?.provider_id === userId);
+
+  const { startCall, isCallLoading } = useVoiceCall(id ?? '');
 
   const categoryName = categories.find((c) => c.id === job?.category_id)?.name;
 
@@ -219,6 +223,8 @@ export default function JobDetailScreen() {
         onBack={() => router.back()}
         title={t('job_detail.title')}
         onChat={isActive && (isResident || isMyJob) ? () => router.push(`/(app)/booking/job/chat/${id}`) : undefined}
+        onCall={isActive && (isResident || isMyJob) ? startCall : undefined}
+        isCallLoading={isCallLoading}
       />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -545,8 +551,21 @@ function StatusStepper({
 }
 
 // ─── Header sub-component ─────────────────────────────────────────────────────
-function Header({ onBack, title, onChat }: { onBack: () => void; title: string; onChat?: () => void }) {
+function Header({
+  onBack,
+  title,
+  onChat,
+  onCall,
+  isCallLoading,
+}: {
+  onBack: () => void;
+  title: string;
+  onChat?: () => void;
+  onCall?: () => void;
+  isCallLoading?: boolean;
+}) {
   const { t } = useTranslation();
+  const showActions = onChat || onCall;
   return (
     <View style={styles.header}>
       <TouchableOpacity
@@ -559,16 +578,30 @@ function Header({ onBack, title, onChat }: { onBack: () => void; title: string; 
         <ArrowLeft color={theme.colors.text} size={22} />
       </TouchableOpacity>
       <Text variant="h4" weight="bold" style={styles.headerTitle}>{title}</Text>
-      {onChat ? (
-        <TouchableOpacity
-          onPress={onChat}
-          style={styles.backBtn}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={t('chat.open')}
-        >
-          <MessageCircle color={theme.colors.primary} size={22} />
-        </TouchableOpacity>
+      {showActions ? (
+        <View style={styles.headerActions}>
+          {onCall && (
+            <TouchableOpacity
+              onPress={isCallLoading ? undefined : onCall}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t('call.start')}
+              accessibilityState={{ disabled: isCallLoading }}
+            >
+              <Phone color={isCallLoading ? theme.colors.textMuted : theme.colors.primary} size={22} />
+            </TouchableOpacity>
+          )}
+          {onChat && (
+            <TouchableOpacity
+              onPress={onChat}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t('chat.open')}
+            >
+              <MessageCircle color={theme.colors.primary} size={22} />
+            </TouchableOpacity>
+          )}
+        </View>
       ) : (
         <View style={styles.backBtn} />
       )}
@@ -590,6 +623,7 @@ const styles = StyleSheet.create({
   },
   backBtn: { width: 48, height: 48, justifyContent: 'center', alignItems: 'center' },
   headerTitle: { flex: 1, textAlign: 'center' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
   loader: { marginTop: theme.spacing['2xl'] },
   errorWrap: { flex: 1, justifyContent: 'center', padding: theme.spacing.xl },
   scroll: {

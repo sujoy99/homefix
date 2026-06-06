@@ -679,6 +679,11 @@
     "waiting": "Waiting for provider location...",
     "permission_denied": "Location permission required for tracking"
   },
+  "call": {
+    "start": "Start Call",
+    "error_start": "Could not start call. Please try again.",
+    "unavailable": "Call unavailable"
+  },
   "chat": {
     "title": "Chat",
     "open": "Open chat",

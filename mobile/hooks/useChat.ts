@@ -55,11 +55,12 @@ export function useChat({ jobId }: UseChatOptions): UseChatResult {
   const refresh = useCallback(async () => {
     try {
       const result = await messageService.list(jobId);
-      const sorted = [...result.items].reverse();
-      setMessages(sorted);
+      // API returns newest-first; inverted FlatList renders index-0 at the bottom,
+      // so newest-first array = newest at bottom (correct chat ordering).
+      setMessages(result.items);
       setHasMore(result.next_cursor !== null);
       cursorRef.current = result.next_cursor ?? undefined;
-      if (sorted.length) latestIdRef.current = sorted[sorted.length - 1]?.id;
+      if (result.items.length) latestIdRef.current = result.items[0]?.id;
     } catch {
       // silently ignore — UI shows empty state
     } finally {
@@ -72,8 +73,9 @@ export function useChat({ jobId }: UseChatOptions): UseChatResult {
     if (!hasMore || !cursorRef.current) return;
     try {
       const result = await messageService.list(jobId, cursorRef.current);
-      const sorted = [...result.items].reverse();
-      prependMessages(sorted);
+      // Older page also comes newest-first; appending to array end puts them
+      // at the visual top of the inverted FlatList (older history above).
+      prependMessages(result.items);
       setHasMore(result.next_cursor !== null);
       cursorRef.current = result.next_cursor ?? undefined;
     } catch {
@@ -87,12 +89,11 @@ export function useChat({ jobId }: UseChatOptions): UseChatResult {
     pollTimerRef.current = setInterval(async () => {
       try {
         const result = await messageService.list(jobId);
-        const sorted = [...result.items].reverse();
-        // Only append genuinely new messages to avoid resetting scroll
+        // Novel messages are newer → prepend to front so inverted list shows them at bottom
         setMessages((prev) => {
           const existingIds = new Set(prev.map((m) => m.id));
-          const novel = sorted.filter((m) => !existingIds.has(m.id));
-          return novel.length ? [...prev, ...novel] : prev;
+          const novel = result.items.filter((m) => !existingIds.has(m.id));
+          return novel.length ? [...novel, ...prev] : prev;
         });
       } catch {
         // ignore poll failures

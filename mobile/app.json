@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "HomeFix",
+    "slug": "homefix-mobile",
+    "scheme": "homefix",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,9 +14,11 @@
       "backgroundColor": "#2563EB"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.homefix.mobile"
     },
     "android": {
+      "package": "com.homefix.mobile",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -43,7 +46,8 @@
           "locationWhenInUsePermission": "HomeFix uses your location to set your home address and help providers find you.",
           "locationAlwaysAndWhenInUsePermission": "HomeFix uses your location in the background to track active service visits."
         }
-      ]
+      ],
+      "expo-web-browser"
     ]
   }
 }

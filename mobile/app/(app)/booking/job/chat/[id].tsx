@@ -194,7 +194,7 @@ export default function ChatScreen() {
 
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* ── Message list ─────────────────────────────────────────────────── */}
         {isLoading ? (
@@ -214,6 +214,7 @@ export default function ChatScreen() {
             renderItem={renderMessage}
             keyExtractor={(item) => item.id}
             inverted
+            style={styles.flex}
             contentContainerStyle={styles.messageList}
             showsVerticalScrollIndicator={false}
             ListFooterComponent={renderLoadMore}
