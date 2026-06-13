@@ -81,10 +81,11 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 **Status:** ⏳ Not started
 **Web branch:** `feature/sprint-7-web` (to be created)
 
-> **Sprint 6 COMPLETE ✅** — All backend + mobile tickets shipped.
+> **Sprint 6 COMPLETE ✅** — All backend + mobile tickets shipped + post-ship fixes committed.
 > - Backend: 312/312 tests · branch `feature/sprint-6-backend`
 > - Mobile: 246/246 tests · branch `feature/sprint-6-mobile`
-> - Docs: `docs/SPRINT6_PROGRESS.md`, `docs/TESTING_SPRINT6_MOBILE.md`, `docs/SPRINT6_USER_MANUAL.md`
+> - Docs: `docs/SPRINT6_PROGRESS.md`, `docs/TESTING_SPRINT6_MOBILE.md`, `docs/SPRINT6_USER_MANUAL.md`, `docs/PUSH_NOTIFICATIONS.md`, `docs/brd/VOIP_CALLS.md`
+> - **Pending action before testing push notifications:** Run a new EAS APK build (`eas build --profile development --platform android` from `mobile/`) to bake `google-services.json` into the APK. OTA update is not sufficient for this native change.
 
 **Sprint 6 shipped features (available to Sprint 7 web):**
 
@@ -131,17 +132,28 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 - **Profile completion:** Computed live by `profile-completion.service.compute(userId, role)` — no stored column. Provider threshold 70%; below threshold blocks job accept (`POST /v2/jobs/:id/accept`) and withdrawal (`POST /v2/providers/wallet/withdraw`) with `PROFILE_INCOMPLETE` error code. Resident threshold is informational only.
 - **Domain reference additions (Sprint 5):** `docs/brd/PAYMENT_SYSTEM.md` (escrow flow, commission versioning, withdrawal audit trail) · `docs/brd/PROFILE_COMPLETION.md` (field weights, thresholds, guards)
 
-**Sprint 6 — Reviews, Notifications, Real-time & In-App Communication ✅ COMPLETE:**
+**Sprint 6 — Reviews, Notifications, Real-time & In-App Communication ✅ COMPLETE (including post-ship fixes):**
 - Backend: Reviews module (PAID gate, aggregate rating, REQ-024/025/026), Push notification service (FCM, pluggable, device tokens, 4 endpoints), Provider GPS tracking, In-app messaging (`job_messages`, Socket.IO, cursor pagination), Pluggable VoIP (Jitsi Phase 1, stateless JWT, CALL_PROVIDER env, Agora Phase 2 hookpoint).
 - Mobile: Review + rating screen, Push notification setup (expo-notifications), Notification center (bell + badge), Provider live location (expo-location), In-app chat (text/image/voice, WebSocket + poll fallback), Voice call (expo-web-browser → Jitsi room).
-- Tests: **312 backend** (22 suites, +51 new) · **246 mobile** (26 suites, +125 new). Docs: `docs/TESTING_SPRINT6_BACKEND.md`, `docs/TESTING_SPRINT6_MOBILE.md`, `docs/SPRINT6_USER_MANUAL.md`. VoIP guide: `docs/brd/VOIP_CALLS.md`.
+- Tests: **312 backend** (22 suites, +51 new) · **246 mobile** (26 suites, +125 new). Docs: `docs/TESTING_SPRINT6_BACKEND.md`, `docs/TESTING_SPRINT6_MOBILE.md`, `docs/SPRINT6_USER_MANUAL.md`. VoIP guide: `docs/brd/VOIP_CALLS.md`. Push guide: `docs/PUSH_NOTIFICATIONS.md`.
 
-**Sprint 6 mobile — architectural decisions made so far:**
+**Post-Sprint 6 fixes (committed 2026-06-13, branch `feature/sprint-6-mobile`):**
+- `google-services.json` (Firebase project `homefix-cd142`) placed in `mobile/` + `app.config.js` `android.googleServicesFile` wired. **Requires new EAS APK build** — background FCM token was previously from Expo's Firebase project (mismatch with backend service account).
+- `NEW_MESSAGE` notification tap now routes to `/(app)/booking/job/chat/:id` — fixed in `notifications.tsx` `handlePress` AND `usePushNotifications.ts` response listener (both had the same bug).
+- `CALL_STARTED` notification tap in notification tab now opens Jitsi URL via `WebBrowser.openBrowserAsync` (was routing to job detail).
+- Jitsi hash params added to both `mobile/services/call.service.ts` `buildCallUrl` and `backend/src/modules/calls/call.service.ts` push callUrl: `#config.prejoinPageEnabled=false&config.lobby.enabled=false&config.startWithVideoMuted=true`.
+- `meet.jit.si` limitations: requires Google login to be moderator (since ~2023); lobby cannot be disabled via URL hash. Dev-only for smoke tests. Documented in `docs/brd/VOIP_CALLS.md`.
+- 8x8 JaaS alternative documented: RS256 JWT with `moderator: true` + `features.lobby: false`, no Google login, free 5000 min/month.
+- `(app)/_layout.tsx` Stack now explicitly registers `booking/job/chat/[id]` screen.
+
+**Sprint 6 mobile — architectural decisions:**
 - `reviewStore` (Zustand + AsyncStorage persist) tracks `reviewedJobIds[]` — hides "Leave a Review" CTA after submission across app restarts. On `REVIEW_ALREADY_EXISTS` 409, marks job reviewed locally and navigates back.
 - `usePushNotifications` hook in `hooks/` — mounted in `app/(app)/_layout.tsx` (authenticated shell only). Registers FCM token on every mount (= every login). `Notifications.setNotificationHandler` at module level in `app/_layout.tsx` for foreground display.
+- **Notification routing rules (tap/background):** `CALL_STARTED` + `callUrl` → `WebBrowser.openBrowserAsync(callUrl)`; `NEW_MESSAGE` + `jobId` → `/(app)/booking/job/chat/${jobId}`; all others with `jobId` → `/(app)/booking/job/${jobId}`. Same logic applies in both `usePushNotifications.ts` (OS tap) and `notifications.tsx` `handlePress` (in-app notification tab tap).
+- **FCM token requirement:** `google-services.json` must be present in `mobile/` and `app.config.js` must reference it via `android.googleServicesFile`. Without it, `getDevicePushTokenAsync()` returns a token registered with Expo's Firebase project — backend FCM service account cannot deliver to those tokens. Any change to `google-services.json` requires a new native EAS build (not OTA).
 - **Circular import rule:** `authStore.ts` must NOT import `notificationService` — `apiClient` already imports `authStore`, creating a cycle. Instead, `authStore.logout()` calls `apiClient.delete('/v2/users/me/device-token')` directly.
 - `expo-notifications ~0.32.17` + `expo-device ~8.0.10` added to `mobile/package.json` via `npx expo install`.
-- `app.json` — `expo-notifications` plugin added with `icon` + `color` config.
+- `app.config.js` — `expo-notifications` plugin with `icon` + `color`; `android.googleServicesFile` pointing to `./google-services.json` (or `GOOGLE_SERVICES_JSON` env for EAS secrets).
 
 ---
 
@@ -177,9 +189,11 @@ Follow these rules for every session:
 | Payment & Commission | `docs/brd/PAYMENT_SYSTEM.md` | REQ-019 to 023 | S5 ✅ |
 | Booking & Discovery | `docs/brd/BOOKING_DISCOVERY.md` | REQ-007 to 014 | S2–S3 |
 | Accessibility | `docs/brd/ACCESSIBILITY.md` | REQ-011 to 013 | S4 |
-| Review System | `docs/brd/REVIEW_SYSTEM.md` | REQ-024 to 026 | S6 ✅ backend |
+| Review System | `docs/brd/REVIEW_SYSTEM.md` | REQ-024 to 026 | S6 ✅ |
 | Profile Completion | `docs/brd/PROFILE_COMPLETION.md` | (cross-cutting) | S5 ✅ |
-| VoIP Calls | `docs/brd/VOIP_CALLS.md` | (in-app communication) | **S6 ← active** |
+| VoIP Calls | `docs/brd/VOIP_CALLS.md` | (in-app communication) | S6 ✅ |
+| Chat Messaging | `docs/brd/CHAT_MESSAGING.md` | (Socket.IO · REST · polling fallback) | S6 ✅ |
+| Push Notifications | `docs/PUSH_NOTIFICATIONS.md` | (FCM, Android active · iOS future) | S6 ✅ |
 
 ---
 

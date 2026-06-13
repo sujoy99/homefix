@@ -86,16 +86,30 @@ Mobile (provider)                                      │
 
 **Dev:** Omit `JITSI_APP_ID` and `JITSI_APP_SECRET` → tokenless rooms on `meet.jit.si`. Works immediately with zero setup.
 
-**Production:** Set all four vars. Self-hosted server enforces token auth so only your app can create valid rooms.
+> **meet.jit.si limitations discovered during Sprint 6 testing:**
+> - Since ~2023, `meet.jit.si` requires participants to **log in with a Google account** to be the room moderator. Without login, you land in a lobby and see "asking to join meeting."
+> - The lobby **cannot** be disabled via URL hash params (`#config.lobby.enabled=false`) — the public server blocks client-side config overrides.
+> - This means `meet.jit.si` is **development-only for quick smoke tests**, not suitable for real user testing or production. HomeFix users (residents, providers in Bangladesh) should never need a Google account to make a call.
+> - With no Google account, both participants get stuck in the lobby unless one of them is logged into Google and can "Admit" the other.
+
+**Production:** Set all four vars. Self-hosted server enforces token auth so only your app can create valid rooms. No Google login required — your JWT is the identity.
 
 ---
 
-## JWT Token Structure (Jitsi)
+## JWT Token Structure (Jitsi / JaaS)
+
+For **self-hosted Jitsi**, the token identifies the user and grants moderator status to bypass lobby:
 
 ```json
 {
   "context": {
-    "user": { "id": "<callerId>" }
+    "user": {
+      "id": "<callerId>",
+      "moderator": true
+    },
+    "features": {
+      "lobby": false
+    }
   },
   "aud": "jitsi",
   "iss": "<JITSI_APP_ID>",
@@ -107,6 +121,10 @@ Mobile (provider)                                      │
 ```
 
 Signed with `HS256` using `JITSI_APP_SECRET`. Expires in 2 hours.
+
+> **Important:** Both the caller AND the recipient need their own JWT token with `moderator: true` and `features.lobby: false`. The current `JitsiProvider` generates a token only for the caller. The recipient's URL (sent via push notification) has no token. On a self-hosted server with `allow_empty_token = false`, the recipient's URL will be rejected. **Fix needed before going live:** call `createRoom` for both participants and include the second token in the push notification payload.
+
+For **8x8 JaaS**, the token structure is slightly different — see the JaaS section below.
 
 ---
 
@@ -245,6 +263,64 @@ make down && make up
 
 ---
 
+## 8x8 JaaS — Jitsi as a Service (Alternative to Self-Hosting)
+
+8x8 JaaS is the managed version of Jitsi. No server to provision. Free tier: 5,000 participant-minutes/month, up to 100 participants per room.
+
+**When to use:** You want proper Jitsi (no Google login, no lobby) without running your own server. Good bridge between `meet.jit.si` (unusable for real users) and full self-hosting.
+
+### Setup
+
+1. Sign up at [jaas.8x8.vc](https://jaas.8x8.vc)
+2. Create an app → note your **App ID** (looks like `vpaas-magic-cookie-xxxxxxxx`)
+3. Generate an **API key** → download the RSA private key (`.pem` file) and note the **Key ID**
+
+### Environment Variables
+
+```env
+JITSI_SERVER_URL=https://8x8.vc
+JITSI_APP_ID=vpaas-magic-cookie-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+JITSI_APP_SECRET=<contents of the .pem private key file>
+JITSI_KEY_ID=<key ID from JaaS console>
+```
+
+### JaaS JWT Token Structure
+
+JaaS uses RS256 (RSA) signing, not HS256. The token structure differs from self-hosted:
+
+```json
+{
+  "context": {
+    "user": {
+      "id": "<callerId>",
+      "name": "<display name>",
+      "moderator": true
+    },
+    "features": {
+      "lobby": false,
+      "recording": false
+    }
+  },
+  "aud": "jitsi",
+  "iss": "chat",
+  "sub": "8x8.vc",
+  "room": "<JITSI_APP_ID>/homefix-job-<jobId>",
+  "exp": <now + 7200>
+}
+```
+
+Signed with `RS256` using the private key. The `JitsiProvider` needs updating to use `RS256` and the JaaS room name format (`<appId>/homefix-job-<jobId>`).
+
+### URL Format
+
+```
+https://8x8.vc/<appId>/homefix-job-<jobId>?jwt=<token>
+```
+
+Both participants need their own JWT (both with `moderator: true`). No lobby, no Google login.
+
+---
+
 ## Phase 2 — Agora RTC Migration
 
 When ready for Phase 2 (higher SLA, less infrastructure management):
@@ -271,10 +347,11 @@ No mobile code changes needed — mobile reads the `provider` field at runtime.
 
 ## Cost Comparison
 
-| Option | Cost | SLA | Setup Effort |
-|--------|------|-----|--------------|
-| `meet.jit.si` (public) | Free | None | Zero — dev only |
-| Self-hosted Jitsi | VPS cost (~$10–20/mo) | Yours | ~2 hours |
-| Agora RTC | ~$0.99/1000 min | 99.9% | 1 day (Phase 2) |
+| Option | Cost | Google login required | Lobby issue | Setup Effort |
+|--------|------|-----------------------|-------------|--------------|
+| `meet.jit.si` (public) | Free | Yes (blocks real users) | Yes (can't disable) | Zero — **smoke tests only** |
+| 8x8 JaaS | Free ≤5,000 min/mo | No | No (JWT controls it) | ~1 hour |
+| Self-hosted Jitsi | VPS ~$10–20/mo | No | No (config controls it) | ~2 hours |
+| Agora RTC | ~$0.99/1,000 min | No | N/A | 1 day (Phase 2) |
 
-**Recommendation:** Start with self-hosted Jitsi. Migrate to Agora when monthly call minutes consistently exceed 50,000 (≈ $50/mo threshold).
+**Recommendation:** Use **8x8 JaaS** for development and early production (free tier covers thousands of calls/month). Migrate to self-hosted or Agora when monthly minutes consistently exceed 5,000.

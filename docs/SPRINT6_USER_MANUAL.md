@@ -3,7 +3,7 @@
 > **Sprint:** Sprint 6 — Reviews, Notifications, Real-time & In-App Communication (Mobile)
 > **Covers:** HF-050 · HF-051 · HF-052 · HF-053 · HF-102 · HF-103
 > **Audience:** QA, Product Owner, Business Stakeholder
-> **Last updated:** 2026-06-06
+> **Last updated:** 2026-06-13 (post-ship fixes applied)
 
 ---
 
@@ -94,7 +94,12 @@ Sprint 6 features require a job that goes through the full lifecycle:
    - Provider accepts a job → **Resident** receives "Job Accepted" notification
    - Provider marks work complete → **Resident** receives "Job Completed" notification
    - Admin verifies payment → **Provider** receives "Payment Received" notification
-3. Tap the notification → app opens and navigates directly to the relevant job detail
+   - Either participant sends a chat message → other participant receives "New Message" notification
+   - Either participant starts a call → other participant receives "Incoming Call" notification
+3. Tap the notification — routing depends on the notification type:
+   - **Job updates** (`JOB_ACCEPTED`, `JOB_COMPLETED`, `PAYMENT_RECEIVED`) → opens job detail
+   - **New message** (`NEW_MESSAGE`) → opens the chat screen for that job directly
+   - **Incoming call** (`CALL_STARTED`) → opens the Jitsi call URL in the in-app browser
 
 **Platform notes:**
 - **Android:** FCM delivers directly. Works on real Android devices and emulators that have Google Play Services installed.
@@ -112,10 +117,12 @@ Sprint 6 features require a job that goes through the full lifecycle:
 2. Observe the **bell icon** in the bottom tab bar — a red badge shows the unread count
 3. Tap the bell → **Notifications** screen opens
 4. Unread notifications are visually highlighted with a blue dot
-5. Tap a notification → it is marked read (dot disappears), and the app navigates to the relevant job
+5. Tap a notification → it is marked read (dot disappears), then:
+   - **Job updates** → navigates to job detail
+   - **New message** → navigates directly to the chat screen for that job
+   - **Incoming call** → opens the Jitsi call URL in the in-app browser
 6. Pull down to refresh the list
 7. When no notifications exist, an empty state is shown
-8. Tap any notification with `data.jobId` → routes to `/(app)/booking/job/:id`
 
 **Badge behavior:**
 - Badge decrements as notifications are read
@@ -225,35 +232,34 @@ This is NOT a waiting room. It is just a setup step. Enter a display name and pr
 Waiting to be admitted...
 [ Ask to join ]
 ```
-This appears when the first person who joined has the **Lobby** feature enabled inside Jitsi. The first person (who is automatically the moderator) sees a notification and must press **Admit** to let the second person in.
+This appears on the public `meet.jit.si` server because **meet.jit.si requires a Google account login to become a room moderator** (enforced server-side since ~2023). Without a Google login, you land in the lobby and cannot admit others.
 
 ---
 
-#### Step-by-step for both participants
+#### Step-by-step for both participants (development with meet.jit.si)
+
+**Workaround for meet.jit.si — both participants must be logged into a Google account:**
 
 | Step | Resident | Provider |
 |------|----------|----------|
 | 1 | Tap phone icon on job detail | Tap phone icon on job detail |
-| 2 | Browser opens → Pre-join screen | Browser opens → Pre-join screen |
+| 2 | Browser opens → sign in with Google if prompted | Browser opens → sign in with Google if prompted |
 | 3 | Enter name → **Join Meeting** | Enter name → **Join Meeting** |
-| 4 | Inside the room (becomes moderator) | Joins the same room |
+| 4 | Inside the room (moderator) | Joins the same room |
 | 5 | ✅ Both connected — call starts | ✅ Both connected |
 
-If the second person sees the Lobby screen:
-- The first person will see a banner inside the call: **"[Name] wants to join"**
-- Press **Admit** → second person enters immediately
+If the second person sees the Lobby screen and the first person is signed into Google:
+- The first person sees a banner: **"[Name] wants to join"** → press **Admit**
+
+**This Google login requirement is a development-only limitation.** On a self-hosted Jitsi server or 8x8 JaaS, the JWT token grants moderator status directly — no Google account needed. See `docs/brd/VOIP_CALLS.md` for production setup.
 
 ---
 
-#### Disable the lobby (for smoother experience)
+#### Disable the lobby (self-hosted Jitsi / JaaS only)
 
-On the public `meet.jit.si` server, the lobby can turn on automatically. To disable it:
+On a self-hosted server, the backend JWT includes `"features": { "lobby": false }` and `"moderator": true` — the lobby is bypassed automatically for both participants. No manual action needed.
 
-**During a call (first person):**
-Inside the Jitsi call → tap the **Shield icon** (Security) → toggle **Lobby** off → the second person enters without waiting.
-
-**For production (self-hosted Jitsi):**
-Set `JITSI_SERVER_URL` in the backend `.env.development` to your own Jitsi server where lobby is disabled in Jitsi config. The backend JWT (`JITSI_APP_ID` + `JITSI_APP_SECRET`) can also enforce moderator roles automatically.
+On 8x8 JaaS (free managed Jitsi, 5000 min/month), the same JWT claims work without needing to run your own server.
 
 ---
 
@@ -261,11 +267,13 @@ Set `JITSI_SERVER_URL` in the backend `.env.development` to your own Jitsi serve
 
 ```
 # Development (no JWT configured)
-https://meet.jit.si/homefix-job-<jobId>
+https://meet.jit.si/homefix-job-<jobId>#config.prejoinPageEnabled=false&config.lobby.enabled=false&config.startWithVideoMuted=true
 
 # Production (self-hosted Jitsi + JWT)
-https://meet.homefix.app/homefix-job-<jobId>?jwt=<signed-token>
+https://meet.homefix.app/homefix-job-<jobId>?jwt=<signed-token>#config.prejoinPageEnabled=false&config.lobby.enabled=false&config.startWithVideoMuted=true
 ```
+
+> **Note:** The `#config.*` hash params are applied by the app for self-hosted Jitsi servers (where they skip the pre-join screen and disable the lobby). On the public `meet.jit.si` server, these params are **ignored** — the server blocks client-side config overrides.
 
 ---
 
@@ -295,7 +303,9 @@ All Sprint 6 features are bilingual. Switch between Bengali and English:
 |-----------|--------|
 | Chat read-only after ACTIVE | Chat icon disappears when job moves to AWAITING_PAYMENT — history is not shown. Sprint 7 may add read-only history view. |
 | Push requires physical device | FCM works on real Android + iOS devices. iOS simulators and Android emulators without Play Services cannot receive push. iOS requires APNs key in Firebase Console. |
+| Push requires new EAS build | `google-services.json` (Firebase project `homefix-cd142`) must be baked into the APK via a new EAS build (`eas build --profile development --platform android`). OTA/Metro reload is not sufficient for this native change. |
 | Voice call opens in browser | `@jitsi/react-native-sdk` requires bare React Native — using `expo-web-browser` instead for Expo managed compatibility |
+| meet.jit.si requires Google login | On the public `meet.jit.si` (dev default), both participants must be signed into a Google account to avoid the lobby. Production requires self-hosted Jitsi or 8x8 JaaS (see `docs/brd/VOIP_CALLS.md`). |
 | Location on-demand only | Provider location card shows last-known coordinates, not a map pin. Map integration is planned for Sprint 7. |
 | Voice-to-text deferred | HF-043 (Whisper STT) deferred — requires server-side Whisper or Groq API decision |
 
@@ -315,13 +325,17 @@ All Sprint 6 features are bilingual. Switch between Bengali and English:
 ### HF-051 — Push notifications
 - [ ] FCM token registers on login (check backend logs: `PUT /v2/users/me/device-token`)
 - [ ] Token unregistered on logout
-- [ ] Job accepted notification received on resident device
-- [ ] Tapping notification navigates to job detail
+- [ ] Job accepted notification received on resident device (background push)
+- [ ] Tapping `JOB_ACCEPTED` / `JOB_COMPLETED` / `PAYMENT_RECEIVED` notification → job detail
+- [ ] Tapping `NEW_MESSAGE` notification → chat screen for that job
+- [ ] Tapping `CALL_STARTED` notification → Jitsi call URL opens in browser
 
 ### HF-052 — Notification center
 - [ ] Bell badge shows correct unread count
 - [ ] Badge disappears when all read
-- [ ] Tapping notification marks it read + navigates
+- [ ] Tapping `JOB_ACCEPTED` / `JOB_COMPLETED` / `PAYMENT_RECEIVED` → marks read + navigates to job detail
+- [ ] Tapping `NEW_MESSAGE` notification → marks read + navigates to chat screen
+- [ ] Tapping `CALL_STARTED` notification → marks read + opens Jitsi call URL in browser
 - [ ] Pull-to-refresh works
 - [ ] Empty state shown when no notifications
 

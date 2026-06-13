@@ -2,8 +2,10 @@
 
 > **Backend Branch:** `feature/sprint-6-backend`
 > **Mobile Branch:** `feature/sprint-6-mobile`
-> **Last updated:** 2026-06-07
+> **Last updated:** 2026-06-13
 > **Tests:** 312/312 backend passing (51 new) · 246/246 mobile (HF-050: 15 + HF-051: 11 + HF-052: 17 + HF-053: 14 + HF-102: 49 + HF-103: 15 + pre-S6: 125) passing · **Sprint 6 COMPLETE ✅ (backend + mobile)**
+>
+> **Post-ship fixes committed 2026-06-13** — see section at bottom of this file.
 
 ---
 
@@ -63,7 +65,7 @@
 - `usePushNotifications` hook (in `hooks/`) — requests permissions, gets native FCM token via `getDevicePushTokenAsync()`, registers with backend on every login, sets up `addNotificationResponseReceivedListener` for deep-link navigation
 - Hook mounted in `app/(app)/_layout.tsx` — only runs when authenticated; re-runs on every login
 - `authStore.logout()` calls `apiClient.delete('/v2/users/me/device-token')` directly (NOT via `notificationService`) to avoid `authStore → notificationService → apiClient → authStore` circular import
-- Deep-link routing: `JOB_ACCEPTED`, `JOB_COMPLETED`, `PAYMENT_RECEIVED`, `NEW_MESSAGE` → all navigate to `/(app)/booking/job/${data.jobId}`
+- Deep-link routing (corrected in post-ship fix — see below): `CALL_STARTED` + `callUrl` → `WebBrowser.openBrowserAsync(callUrl)`; `NEW_MESSAGE` + `jobId` → `/(app)/booking/job/chat/${jobId}`; all others (`JOB_ACCEPTED`, `JOB_COMPLETED`, `PAYMENT_RECEIVED`) + `jobId` → `/(app)/booking/job/${jobId}`
 - Simulator guard: `Device.isDevice` checked before calling `getDevicePushTokenAsync()` — silently skips on simulators
 - Cancelled guard: `if (finalStatus !== 'granted' || cancelled) return` before token fetch — prevents unmounted hook from polluting test mock counts
 
@@ -130,8 +132,10 @@
 - `hooks/useVoiceCall.ts` — `startCall()` + `isCallLoading` state; calls `createRoom`, builds URL, opens via `expo-web-browser` (`openBrowserAsync`); shows error toast on any failure
 - `app/(app)/booking/job/[id].tsx` — phone icon (`Phone` from lucide) in header alongside chat icon; both visible when job is ACTIVE and user is a participant; `isCallLoading` dims the icon and disables the press
 - `expo-web-browser` used instead of `@jitsi/react-native-sdk` — native SDK incompatible with Expo managed workflow; in-app browser provides equivalent UX and returns to app after call
+- `buildCallUrl` appends hash params (corrected in post-ship fix): `#config.prejoinPageEnabled=false&config.lobby.enabled=false&config.startWithVideoMuted=true`
 - Backend `RoomConfig.provider` field preserved for future SDK selection at runtime (Phase 2 Agora)
 - No DB migration — purely frontend + API consumption
+- **Known limitation:** `meet.jit.si` (dev default) requires both participants to be logged into a Google account to be a room moderator. Hash params are ignored server-side on `meet.jit.si`. Production requires self-hosted Jitsi or 8x8 JaaS. See `docs/brd/VOIP_CALLS.md`.
 
 **Test coverage (15 tests):**
 - `tests/services/call.service.test.ts` — 8 cases: `createRoom` (correct URL, returns body, rejects); `buildCallUrl` (serverUrl+no token, serverUrl+token, fallback to meet.jit.si, fallback+token, agora provider)
@@ -329,17 +333,51 @@
 
 ---
 
-## Resuming This Session
+---
 
-**Step 1 — Paste `docs/SESSION_CONTEXT.md` as your first message.**
+## Post-Ship Fixes (2026-06-13)
 
-**Step 2 — Then add:**
+These bugs were found during end-to-end testing after Sprint 6 was marked complete. All fixes committed to `feature/sprint-6-mobile`.
 
-> Sprint 6 is in progress on `feature/sprint-6-backend`. See `docs/SPRINT6_PROGRESS.md` for full ticket status and step checklists.
->
-> HF-047 (Review & rating module) is currently in progress. Check the checklist in `SPRINT6_PROGRESS.md` for what's done and what's next.
+### Fix 1 — `google-services.json` missing from EAS build (background push broken)
 
-**Step 3 — Confirm branch:**
-```bash
-git checkout feature/sprint-6-backend
+**Root cause:** `getDevicePushTokenAsync()` was returning a token registered with Expo's shared Firebase project, not the project's own Firebase project (`homefix-cd142`). The backend FCM service account (`homefix-cd142`) cannot deliver to tokens from a different Firebase project. Result: background push notifications never arrived.
+
+**Fix:**
+- `mobile/google-services.json` added (Firebase project `homefix-cd142`, project number `395779812115`)
+- `mobile/app.config.js` updated: `android: { googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json' }`
+- **Requires a new EAS APK build** to bake `google-services.json` into the native layer
+
+### Fix 2 — `NEW_MESSAGE` notification tap went to job detail instead of chat
+
+**Root cause:** Both `usePushNotifications.ts` response listener and `notifications.tsx` `handlePress` routed all `jobId` notifications to `/(app)/booking/job/${jobId}`, regardless of type.
+
+**Fix:** Added `NEW_MESSAGE` type check before the generic `jobId` route in both files:
+- `hooks/usePushNotifications.ts` — OS tap listener
+- `app/(app)/(tabs)/notifications.tsx` — in-app notification tab tap handler
+
+### Fix 3 — `CALL_STARTED` notification tab tap went to job detail instead of call URL
+
+**Root cause:** `notifications.tsx` `handlePress` only checked `jobId` and never read `item.type`. `CALL_STARTED` notifications have a `callUrl` in `data`, not a jobId to navigate.
+
+**Fix:** Added `CALL_STARTED` type + `callUrl` check at the top of `handlePress` — opens via `WebBrowser.openBrowserAsync(callUrl)` and returns early.
+
+### Fix 4 — Jitsi pre-join screen / lobby params
+
+**Fix:** `buildCallUrl` in `mobile/services/call.service.ts` and the push `callUrl` in `backend/src/modules/calls/call.service.ts` now append:
 ```
+#config.prejoinPageEnabled=false&config.lobby.enabled=false&config.startWithVideoMuted=true
+```
+
+**Known limitation:** `meet.jit.si` blocks all `config.*` URL hash overrides server-side. The params are ineffective on `meet.jit.si`; they will work correctly on a self-hosted Jitsi instance or 8x8 JaaS.
+
+### Fix 5 — Stack screen registration for chat route
+
+`app/(app)/_layout.tsx` now explicitly registers `booking/job/chat/[id]` in the Stack so push notification deep links can route to the chat screen correctly.
+
+---
+
+## Sprint Status
+
+**Sprint 6 is CLOSED.** All tickets ✅ complete. Post-ship fixes committed.  
+Next: **Sprint 7 — Web App & Admin Panel** (`feature/sprint-7-web` to be created).
