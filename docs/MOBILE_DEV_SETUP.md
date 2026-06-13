@@ -72,7 +72,7 @@ make logs      # verify backend started and migrations ran cleanly
 
 ### Step 6 — Run the mobile app
 
-`google-services.json` is already committed to the repo — no extra step needed.
+`mobile/google-services.json` is **not committed** to git (contains a Google API key). Copy it from a secure location (team password manager or ask the project lead). Place it at `mobile/google-services.json` — it is only required when doing a local native build. For Expo Go / Metro, it is not needed.
 
 ```bash
 cd mobile

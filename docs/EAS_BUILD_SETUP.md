@@ -530,22 +530,89 @@ jobs:
 
 ## 10. Secrets Reference
 
-| Secret name | Where used | How to set |
-|-------------|-----------|------------|
-| `GOOGLE_MAPS_API_KEY` | `app.config.js` → `react-native-maps` plugin | `eas secret:create` |
-| `FCM_SERVICE_ACCOUNT_JSON` | Backend push notifications (Firebase FCM) | `backend/.env.development` — paste full service account JSON as single line. See [docs/PUSH_NOTIFICATIONS.md](PUSH_NOTIFICATIONS.md) |
-| `GOOGLE_SERVICES_JSON` | Android app FCM token registration — links app to your Firebase project | Place file at `mobile/google-services.json` for dev builds. For EAS production builds: `eas secret:create --scope project --name GOOGLE_SERVICES_JSON --value "$(cat mobile/google-services.json)"`. **Native change — requires new EAS build.** See [docs/PUSH_NOTIFICATIONS.md](PUSH_NOTIFICATIONS.md) |
-| `EXPO_TOKEN` | CI authentication | expo.dev → Account Settings → Access Tokens |
-| `APPLE_API_KEY_ID` | iOS non-interactive submit | `eas secret:create` |
-| `APPLE_API_KEY_ISSUER_ID` | iOS non-interactive submit | `eas secret:create` |
-| `APPLE_API_PRIVATE_KEY` | iOS non-interactive submit | `eas secret:create` |
-| `GOOGLE_SERVICE_ACCOUNT_KEY` | Android Play Store submit | `eas secret:create` |
-| `GOOGLE_SERVICE_INFO_PLIST` | iOS push notifications (future phase) | `eas secret:create` — see [docs/PUSH_NOTIFICATIONS.md](PUSH_NOTIFICATIONS.md) |
-
-List all configured secrets:
+### 10.1 List secrets
 
 ```bash
-eas secret:list
+# From mobile/ directory
+eas env:list                   # new command (recommended)
+eas secret:list                # deprecated alias — still works
+```
+
+`eas env:list` shows all secrets scoped to the project and your account. Secrets stored here are injected as environment variables at EAS build time — they are never exposed in the APK or in logs.
+
+---
+
+### 10.2 Add a secret
+
+```bash
+# Generic form
+eas secret:create --scope project --name <SECRET_NAME> --value "<value>"
+
+# For file-based secrets (JSON, plist) — read from file so shell doesn't mangle special chars
+eas secret:create --scope project --name <SECRET_NAME> --value "$(cat path/to/file)"
+```
+
+`--scope project` — available to all builds for this project (recommended).  
+`--scope account` — available to all projects under your Expo account.
+
+> **Note:** `eas secret:create` is the stable command for setting secrets. `eas env:create` is the newer equivalent — both work. Use `secret:create` until the env commands are fully stable.
+
+---
+
+### 10.3 Update an existing secret
+
+EAS does not support editing a secret value in place. Delete and recreate:
+
+```bash
+eas secret:delete --name <SECRET_NAME>
+eas secret:create --scope project --name <SECRET_NAME> --value "<new value>"
+```
+
+---
+
+### 10.4 HomeFix secrets — full reference
+
+| Secret name | Scope | Where used in build | How to set |
+|-------------|-------|---------------------|-----------|
+| `GOOGLE_MAPS_API_KEY` | project | `app.config.js` → `withGoogleMapsAndroid` plugin injects into `AndroidManifest.xml` | `eas secret:create --scope project --name GOOGLE_MAPS_API_KEY --value "AIza..."` |
+| `GOOGLE_SERVICES_JSON` | project | `app.config.js` `android.googleServicesFile` → links Android app to Firebase project (`homefix-cd142`); enables FCM token registration | `eas secret:create --scope project --name GOOGLE_SERVICES_JSON --value "$(cat mobile/google-services.json)"` |
+| `GOOGLE_SERVICE_INFO_PLIST` | project | iOS push notifications (future) — `app.config.js` iOS block | `eas secret:create --scope project --name GOOGLE_SERVICE_INFO_PLIST --value "$(cat GoogleService-Info.plist)"` |
+| `EXPO_TOKEN` | account | CI/CD authentication for non-interactive EAS builds | expo.dev → Account Settings → Access Tokens → Create |
+| `APPLE_API_KEY_ID` | project | iOS non-interactive App Store submission | From Apple Developer → Keys |
+| `APPLE_API_KEY_ISSUER_ID` | project | iOS non-interactive App Store submission | From Apple Developer → Keys |
+| `APPLE_API_PRIVATE_KEY` | project | iOS non-interactive App Store submission | `.p8` file contents |
+| `GOOGLE_SERVICE_ACCOUNT_KEY` | project | Android Play Store submission via `eas submit` | Google Play Console → Service Accounts |
+
+> **`FCM_SERVICE_ACCOUNT_JSON` is a backend secret — not an EAS secret.** It goes in `backend/.env.development` (local) or your Railway/production env vars. See [docs/PUSH_NOTIFICATIONS.md](PUSH_NOTIFICATIONS.md).
+
+---
+
+### 10.5 Current status
+
+Run from `mobile/` to see what is already configured:
+
+```bash
+eas env:list
+```
+
+Expected for a fully working Android dev build:
+
+| Secret | Status |
+|--------|--------|
+| `GOOGLE_MAPS_API_KEY` | ✅ Set |
+| `GOOGLE_SERVICES_JSON` | ⚠️ Set this next (see command below) |
+
+**Set `GOOGLE_SERVICES_JSON` now** (required for FCM push in EAS builds):
+
+```bash
+cd /home/sujoy/projects/homefix/mobile
+eas secret:create --scope project --name GOOGLE_SERVICES_JSON --value "$(cat google-services.json)"
+```
+
+Then rebuild:
+
+```bash
+eas build --profile development --platform android
 ```
 
 ---
