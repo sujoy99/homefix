@@ -632,5 +632,76 @@
     "voice_recording": "Recording...",
     "voice_recorded": "Recording saved — submit to attach",
     "error_voice": "Job posted but voice note could not be uploaded."
+  },
+  "review": {
+    "title": "Rate Your Experience",
+    "cta": "Leave a Review",
+    "rating_label": "How was the service?",
+    "rating_hint": "Tap a star to rate",
+    "rating_1": "Poor",
+    "rating_2": "Fair",
+    "rating_3": "Good",
+    "rating_4": "Very Good",
+    "rating_5": "Excellent",
+    "star_label": "{{n}} star",
+    "comment_label": "Comments (optional)",
+    "comment_placeholder": "Tell us about your experience...",
+    "submit": "Submit Review",
+    "submitting": "Submitting...",
+    "success": "Thank you for your review!",
+    "error_no_rating": "Please select a star rating before submitting.",
+    "error_already_submitted": "You have already reviewed this job.",
+    "error_not_allowed": "Reviews are only available after payment is complete.",
+    "error_generic": "Could not submit review. Please try again."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty_title": "No notifications yet",
+    "empty_desc": "We'll notify you when something happens with your jobs.",
+    "load_more": "Load more",
+    "load_error": "Could not load notifications. Pull down to retry.",
+    "mark_read_error": "Could not mark as read.",
+    "just_now": "Just now",
+    "minutes_ago": "{{count}}m ago",
+    "hours_ago": "{{count}}h ago",
+    "days_ago": "{{count}}d ago",
+    "types": {
+      "JOB_ACCEPTED": "Job Accepted",
+      "JOB_COMPLETED": "Job Completed",
+      "PAYMENT_RECEIVED": "Payment Received",
+      "JOB_CANCELLED": "Job Cancelled",
+      "NEW_MESSAGE": "New Message",
+      "CALL_STARTED": "Incoming Call"
+    }
+  },
+  "location_tracking": {
+    "card_title": "Provider Location",
+    "on_the_way": "Provider is on the way",
+    "waiting": "Waiting for provider location...",
+    "permission_denied": "Location permission required for tracking"
+  },
+  "call": {
+    "start": "Start Call",
+    "error_start": "Could not start call. Please try again.",
+    "unavailable": "Call unavailable",
+    "incoming_title": "Incoming Call",
+    "incoming_body": "Your job partner is calling you.",
+    "join": "Join Call"
+  },
+  "chat": {
+    "title": "Chat",
+    "open": "Open chat",
+    "placeholder": "Type a message...",
+    "send": "Send",
+    "attach_image": "Attach image",
+    "load_more": "Load older messages",
+    "empty_title": "No messages yet",
+    "empty_desc": "Start the conversation with your service partner.",
+    "record_voice": "Record voice message",
+    "cancel_recording": "Cancel recording",
+    "stop_and_send": "Stop and send",
+    "error_mic_permission": "Microphone permission is required to record voice messages.",
+    "error_send": "Could not send message. Please try again.",
+    "uploading": "Uploading..."
   }
 }

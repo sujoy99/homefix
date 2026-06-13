@@ -6,7 +6,7 @@ export const sendMessageSchema = z.object({
   }),
   body: z.object({
     content: z.string().min(1, 'Message content cannot be empty').max(2000),
-    type: z.enum(['text', 'image']).optional().default('text'),
+    type: z.enum(['text', 'image', 'audio']).optional().default('text'),
   }),
 });
 

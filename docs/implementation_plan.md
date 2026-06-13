@@ -20,7 +20,7 @@
 | Sprint 3 — Booking + Jobs | ✅ Completed | 2026-05-29 | 2026-05-30 |
 | Sprint 4 — Voice + Accessibility | ✅ Done | 2026-05-30 | 2026-05-30 |
 | Sprint 5 — Payments + Wallet | ✅ Complete | `feature/sprint-5-mobile` | 2026-05-31 |
-| Sprint 6 — Reviews + Notifications + In-App Communication | ⏳ Not Started | — | — |
+| Sprint 6 — Reviews + Notifications + In-App Communication | ✅ Completed | 2026-06-01 | 2026-06-13 |
 | Sprint 7 — Web + Admin | ⏳ Not Started | — | — |
 | Sprint 8 — Production Readiness | ⏳ Not Started | — | — |
 
@@ -30,17 +30,25 @@
 
 > **This section is the single source of truth for "what's next". Update it every time a ticket is completed.**
 
-**Active Sprint:** Sprint 6 — Reviews, Notifications, Real-time & In-App Communication  
-**Sprint Status:** ⏳ In Progress — Backend ✅ complete (HF-047/048/049/100/101) · Mobile ⏳ not started  
-**Git Branch Convention:** `feature/sprint-6-backend` then `feature/sprint-6-mobile`
+**Active Sprint:** Sprint 7 — Web App & Admin Panel  
+**Sprint Status:** ⏳ Not started  
+**Git Branch Convention:** `feature/sprint-7-web` (to be created)
+
+> **Sprint 6 COMPLETE ✅** — All backend + mobile tickets shipped. Post-ship push notification fixes also committed to `feature/sprint-6-mobile`:
+> - `google-services.json` added to `mobile/` + `app.config.js` wired via `android.googleServicesFile` (fixes FCM token mismatch — background push now works)
+> - `NEW_MESSAGE` notification tap now routes to chat screen `/(app)/booking/job/chat/:id` (was incorrectly routing to job detail)
+> - `CALL_STARTED` notification tap in notification tab now opens Jitsi call URL via `expo-web-browser` (was routing to job detail)
+> - Jitsi URL hash params added: `#config.prejoinPageEnabled=false&config.lobby.enabled=false&config.startWithVideoMuted=true`
+> - `meet.jit.si` limitations documented in `docs/brd/VOIP_CALLS.md` (Google login required, lobby can't be disabled server-side)
+> - 8x8 JaaS alternative documented (no Google login, lobby disabled via JWT, RS256 signing, free 5000 min/month)
 
 ### Next Ticket Per Platform
 
 | Platform | Next Ticket | Title | Blocked By |
 |----------|-------------|-------|------------|
-| 🖥 Backend | — | Sprint 6 backend ✅ complete — start Sprint 6 mobile or Sprint 7 web | Sprint 6 mobile |
-| 📱 Mobile | HF-050 | Review & rating screen (star + text, post-payment only) | — |
-| 🌐 Web | — | Sprint 7 (not started) | Sprints 2–6 |
+| 🖥 Backend | — | Sprint 7 backend tickets TBD | — |
+| 📱 Mobile | — | Sprint 6 complete · Sprint 7 mobile TBD | — |
+| 🌐 Web | HF-062 | Next.js project init + shared package imports | — |
 
 ### How to Pick Up Work
 
@@ -536,12 +544,12 @@ modules/payments/
 
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
-| HF-050 | Review & rating screen (star + text, post-payment only) | ⏳ | 6h |
-| HF-051 | Push notification setup (expo-notifications, deep linking) | ⏳ | 6h |
-| HF-052 | Notification center (bell icon, badge, read/unread) | ⏳ | 6h |
-| HF-053 | Provider location tracking (background GPS) | ⏳ | 6h |
-| HF-102 | In-app chat screen — per-job messaging (ACTIVE status only); bubble UI (sent/received), image attachment, real-time WebSocket with 5 s poll fallback; chat icon on job detail; no phone numbers exposed | ⏳ | 10h |
-| HF-103 | In-app voice call — `@jitsi/react-native-sdk` (Phase 1, self-hosted, free); call room opened from job detail; provider-agnostic (reads `provider` field from API response to select SDK at runtime); graceful "call unavailable" state if server unreachable | ⏳ | 8h |
+| HF-050 | Review & rating screen (star + text, post-payment only) | ✅ | 6h |
+| HF-051 | Push notification setup (expo-notifications, deep linking) | ✅ | 6h |
+| HF-052 | Notification center (bell icon, badge, read/unread) | ✅ | 6h |
+| HF-053 | Provider location tracking (background GPS) | ✅ | 6h |
+| HF-102 | In-app chat screen — per-job messaging (ACTIVE status only); bubble UI (sent/received), image attachment, **voice note recording + playback**, real-time WebSocket with 5 s poll fallback; chat icon on job detail; no phone numbers exposed | ✅ | 10h |
+| HF-103 | In-app voice call — `expo-web-browser` opens Jitsi room URL; call room opened from job detail; provider-agnostic (reads `provider` field from API response); graceful error toast if server unreachable | ✅ | 8h |
 
 **Deliverable:** Reviews (fully testable end-to-end), notifications, GPS tracking, private messaging + voice call for active jobs.
 
@@ -625,6 +633,7 @@ type RoomConfig = {
 
 | Ticket | Title | Status | Est. |
 |---|---|---|---|
+| HF-075B | `EXPO_PUBLIC_API_URL` env var — update `mobile/api/client.ts` to prefer `process.env.EXPO_PUBLIC_API_URL` over `Constants.expoConfig?.hostUri` fallback; add to `mobile/.env` (gitignored) for local preview builds; wire into `eas.json` `preview`/`production` env blocks. **Required before preview/production builds can reach the backend.** See `docs/EAS_BUILD_SETUP.md` § 4.2 for full spec. | ⏳ | 1h |
 | HF-076 | Performance (lazy loading, image optimization, < 15MB) | ⏳ | 6h |
 | HF-077 | Offline data layer (cache categories, bookings, profile with MMKV/WatermelonDB) | ⏳ | 8h |
 | HF-078 | Offline operation queue (queue mutations when offline, auto-sync on reconnect) | ⏳ | 8h |
@@ -709,6 +718,7 @@ Every SRS requirement mapped to its implementing ticket(s):
 | 2026-05-30 | 3.8 | Sprint order rebalanced: Sprint 5 ↔ Sprint 6 swapped. Payments + Wallet moved to Sprint 5 (was 6) so PAID job status is available before Sprint 6 (was 5) reviews are built. REQ-018–023 now S5; REQ-024–026 now S6; REQ-007 (GPS) now S6. SRS traceability matrix and Sprint Flow updated accordingly. |
 | 2026-05-31 | 3.9 | Sprint 5 post-ship hardening. HF-057C: available-balance validation (blocks over-requesting when pending withdrawals exist), `GET /providers/wallet/withdrawals` endpoint, admin list enriched with provider name + MFS account + wallet balance + total_pending_paisa subquery. HF-060B: full withdrawal admin screen (list, complete/reject bottom-sheet modals, balance breakdown per row), provider wallet withdrawal history section, available-balance shown in withdraw modal, pending count badges on revenue CTAs. |
 | 2026-05-31 | 4.0 | Sprint 5 UX polish. HF-058D: admin revenue financial summary card (6 at-a-glance metrics: total payments, verify-pending, platform revenue, provider wallets, provider withdrawn, pending withdrawals) rendered above the revenue hero card. HF-060C: provider withdrawal MFS account selector — multi-account providers choose which MFS account to receive funds; backend validates ownership; backend schema updated. HF-060D: date+time format upgrade to 12-hour clock across transaction history, withdrawal history, and admin withdrawal dashboard. HF-060E: admin "Complete Withdrawal" TxID auto-uppercase. |
+| 2026-06-13 | 4.5 | Sprint 6 CLOSED. Post-ship push notification fixes: (1) `google-services.json` + `app.config.js` `android.googleServicesFile` — fixes FCM token mismatch so background pushes arrive; new EAS APK build required to bake in the file. (2) `NEW_MESSAGE` tap now routes to `/(app)/booking/job/chat/:id` (was job detail) — fixed in both `notifications.tsx` `handlePress` and `usePushNotifications.ts` response listener. (3) `CALL_STARTED` tap in notification tab opens Jitsi URL via `expo-web-browser` (was routing to job detail). (4) Jitsi URL hash params appended in `call.service.ts` (mobile) and `call.service.ts` (backend push): `#config.prejoinPageEnabled=false&config.lobby.enabled=false&config.startWithVideoMuted=true`. (5) `meet.jit.si` limitations + 8x8 JaaS alternative documented in `docs/brd/VOIP_CALLS.md`. (6) `docs/PUSH_NOTIFICATIONS.md` created — full FCM setup guide for Android (active) and iOS (future). Sprint 7 opened. |
 | 2026-06-03 | 4.4 | HF-101: Pluggable VoIP call service — `ICallProvider` interface, `JitsiProvider` (stateless room creation, JWT scoped to room+user, 2 h expiry; JITSI_SERVER_URL/APP_ID/APP_SECRET env vars), `CALL_PROVIDER` selects provider, Agora Phase 2 hookpoint, `POST /v2/jobs/:id/call/room` (participant+ACTIVE gate, idempotent). 9 new tests, 312/312 passing. Sprint 6 backend ✅ complete. |
 | 2026-06-03 | 4.3 | HF-100: In-app job messaging — `job_messages` table (FK cascade, cursor-indexed), Socket.IO singleton (`initSocket`/`emitToJob`), full messages module (model/types/schema/dto/repo/service/controller/route), `@lib/*` alias, participant+ACTIVE guard, cursor pagination, fire-and-forget push to recipient. 16 new tests, 302/303 passing (1 pre-existing storage flaky). |
 | 2026-06-01 | 4.2 | HF-048: Push notification service — pluggable `IPushProvider` (FCM/stub), `device_tokens` + `notifications` tables, 4 REST endpoints (register/unregister token, list, mark-read), fire-and-forget push with DB persistence, notifications wired into job (accept→resident, complete→resident) and payment (verify→provider) events. `firebase-admin` added. 13 new tests, 273/274 passing. |

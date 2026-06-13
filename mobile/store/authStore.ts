@@ -55,6 +55,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     try {
+      // Unregister device token before access token is cleared (fire-and-forget)
+      apiClient.delete('/v2/users/me/device-token').catch(() => {});
       const refreshToken = await authStorage.getRefreshToken();
       if (refreshToken) {
         await apiClient.post('/v2/auth/logout', { refreshToken });

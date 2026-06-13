@@ -10,6 +10,7 @@
     "web"
   ],
   "scripts": {
+    "postinstall": "chmod +x node_modules/react-native/sdks/hermesc/linux64-bin/hermesc 2>/dev/null || true",
     "backend:dev": "npm run dev --workspace=backend",
     "backend:build": "npm run build --workspace=backend",
     "mobile:dev": "npm run dev --workspace=mobile",

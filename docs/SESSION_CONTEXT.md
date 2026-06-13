@@ -8,7 +8,7 @@
 
 ---
 
-I'm working on **HomeFix** — a geo-located home services marketplace for Bangladesh. Monorepo: `backend/` (Node 20 + Express + TypeScript + PostgreSQL + PostGIS), `mobile/` (Expo SDK 53 + React Native + Expo Router v4), `web/` (Next.js 15, Sprint 7), `packages/shared/` (shared types/schemas/constants).
+I'm working on **HomeFix** — a geo-located home services marketplace for Bangladesh. Monorepo: `backend/` (Node 20 + Express + TypeScript + PostgreSQL + PostGIS), `mobile/` (Expo SDK 54 + React Native + Expo Router v4), `web/` (Next.js 15, Sprint 7), `packages/shared/` (shared types/schemas/constants).
 
 ### Read these files first (in order):
 
@@ -77,48 +77,38 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 
 ### Current Sprint
 
-**Sprint:** Sprint 6 — Reviews, Notifications, Real-time & In-App Communication  
-**Status:** ⏳ In Progress — Backend ✅ complete · Mobile ⏳ not started  
-**Backend branch:** `feature/sprint-6-backend` ✅ complete (312/312 tests)  
-**Mobile branch:** `feature/sprint-6-mobile` ← **create this now**
+**Sprint:** Sprint 7 — Web Dashboard (Next.js 15 App Router)
+**Status:** ⏳ Not started
+**Web branch:** `feature/sprint-7-web` (to be created)
 
-> **Sprint 6 backend complete:** All 5 backend tickets shipped. See `docs/TESTING_SPRINT6_BACKEND.md` for test counts and manual test cases.  
-> **Sprint 6 plan:** See `docs/implementation_plan.md` § Sprint 6 and `docs/SPRINT6_PROGRESS.md` for full ticket status.  
-> **Jitsi self-hosting guide:** `docs/brd/VOIP_CALLS.md` — deployment, JWT config, JVB scaling, Phase 2 (Agora) migration path.
+> **Sprint 6 COMPLETE ✅** — All backend + mobile tickets shipped + post-ship fixes committed.
+> - Backend: 312/312 tests · branch `feature/sprint-6-backend`
+> - Mobile: 246/246 tests · branch `feature/sprint-6-mobile`
+> - Docs: `docs/SPRINT6_PROGRESS.md`, `docs/TESTING_SPRINT6_MOBILE.md`, `docs/SPRINT6_USER_MANUAL.md`, `docs/PUSH_NOTIFICATIONS.md`, `docs/brd/VOIP_CALLS.md`
+> - **Pending action before testing push notifications:** Run a new EAS APK build (`eas build --profile development --platform android` from `mobile/`) to bake `google-services.json` into the APK. OTA update is not sufficient for this native change.
 
-**Sprint 6 backend APIs (already shipped — mobile consumes these):**
+**Sprint 6 shipped features (available to Sprint 7 web):**
 
-| Endpoint | Ticket | Notes |
-|----------|--------|-------|
-| `POST /api/v2/jobs/:id/review` | HF-047 | Resident only; job must be PAID; 1 per job |
+| API Endpoint | Ticket | Notes |
+|-------------|--------|-------|
+| `POST /api/v2/jobs/:id/review` | HF-047 | Resident; PAID gate; 1 per job |
 | `GET /api/v2/providers/:id/reviews` | HF-047 | Public; paginated |
-| `POST /api/v2/users/me/device-token` | HF-048 | Register FCM token; call on every login |
+| `POST /api/v2/users/me/device-token` | HF-048 | Register FCM token |
 | `DELETE /api/v2/users/me/device-token` | HF-048 | Unregister on logout |
 | `GET /api/v2/users/me/notifications` | HF-048 | Paginated list + `unread_count` |
 | `PATCH /api/v2/users/me/notifications/:id/read` | HF-048 | Mark read |
-| `PUT /api/v2/providers/me/location` | HF-049 | Provider GPS update; body `{ latitude, longitude }` |
-| `GET /api/v2/jobs/:id/provider-location` | HF-049 | Resident tracks provider; job must be ACTIVE |
-| `POST /api/v2/jobs/:id/messages` | HF-100 | Send message; body `{ content, type? }`; ACTIVE only |
-| `GET /api/v2/jobs/:id/messages` | HF-100 | Cursor-paginated (`limit`, `before` UUID); ACTIVE only |
-| `POST /api/v2/jobs/:id/call/room` | HF-101 | Returns `{ provider, roomName, serverUrl, token? }`; ACTIVE only; idempotent |
+| `PUT /api/v2/providers/me/location` | HF-049 | Provider GPS update |
+| `GET /api/v2/jobs/:id/provider-location` | HF-049 | Resident tracks provider (ACTIVE only) |
+| `POST /api/v2/jobs/:id/messages` | HF-100 | Send text/image/audio; ACTIVE only |
+| `GET /api/v2/jobs/:id/messages` | HF-100 | Cursor-paginated (limit, before UUID) |
+| `POST /api/v2/jobs/:id/call/room` | HF-101 | Returns RoomConfig; ACTIVE only; idempotent |
 
-**Sprint 6 mobile tickets (start here, in order):**
-- HF-050 ⏳ Review & rating screen — star input (1–5) + optional comment, shown only after job is PAID; POST to `/jobs/:id/review`; success → back to job detail (REQ-024)
-- HF-051 ⏳ Push notification setup — `expo-notifications`, request permission on first launch, register FCM token on every login (`POST /users/me/device-token`), deep-link routing for `JOB_ACCEPTED` / `JOB_COMPLETED` / `PAYMENT_RECEIVED` / `NEW_MESSAGE`
-- HF-052 ⏳ Notification center — bell icon in tab bar with badge (`unread_count`), `GET /users/me/notifications` list, tap marks as read (`PATCH .../:id/read`), empty state
-- HF-053 ⏳ Provider location tracking — `expo-location` background task (`startLocationUpdatesAsync`), 30 s interval, low accuracy, calls `PUT /providers/me/location`; resident job detail shows live provider location pin when job is ACTIVE
-- HF-102 ⏳ In-app chat screen — per-job (ACTIVE only), bubble UI (sent/received), `POST /jobs/:id/messages`, `GET /jobs/:id/messages` cursor-paginated, Socket.IO real-time with 5 s poll fallback, chat icon on job detail; no phone numbers
-- HF-103 ⏳ In-app voice call — `@jitsi/react-native-sdk` Phase 1; call room opened from job detail via `POST /jobs/:id/call/room`; mobile reads `provider` field to select SDK; graceful "call unavailable" if server unreachable
-
-**Key constraints for Sprint 6 mobile:**
-- **Reviews gated on PAID:** Show review button / screen only when `job.status === PAID`. One review per job — hide button after successful submission.
-- **Messages only on ACTIVE:** Chat icon and screen available only while job is ACTIVE. After `AWAITING_PAYMENT` transition, hide or show read-only history.
-- **No phone numbers in chat:** Display `sender_id === currentUser.id ? 'You' : providerName/residentName`. Never show phone numbers.
-- **Call provider is pluggable:** Read `provider` field from `/call/room` response. If `provider === 'jitsi'`, use `@jitsi/react-native-sdk`. Show graceful error if `serverUrl` is unreachable.
-- **FCM token registration:** Call `POST /users/me/device-token` immediately after every successful login (token can rotate). Call `DELETE /users/me/device-token` on logout.
-- **Socket.IO auth:** Connect with `{ auth: { token: accessToken } }`. Join room via `socket.emit('join_job', jobId)`. Leave on unmount.
-- **Background GPS (provider only):** Use `expo-location` task manager API. Battery-aware: `accuracy: Location.Accuracy.Low`, `timeInterval: 30000`, `distanceInterval: 50`. Stop task when job leaves ACTIVE state.
-- **Bilingual always:** Every user-facing string needs both `bn` (default) and `en` keys.
+**Sprint 6 mobile architectural decisions (relevant if Sprint 7 web has similar features):**
+- Chat uses Socket.IO real-time with 3s polling fallback; clients join `job:{jobId}` rooms
+- `MessageType = 'text' | 'image' | 'audio'` — audio uses same upload endpoint as images
+- Voice call uses `expo-web-browser` (Expo managed constraint) — web can use `@jitsi/react-native-sdk` or `lib-jitsi-meet` directly
+- Provider location: foreground GPS every 15s (expo-location) — not background task (Expo managed constraint)
+- `reviewStore` (Zustand + AsyncStorage persist) tracks reviewed jobs client-side
 
 ---
 
@@ -142,9 +132,28 @@ I'm working on **HomeFix** — a geo-located home services marketplace for Bangl
 - **Profile completion:** Computed live by `profile-completion.service.compute(userId, role)` — no stored column. Provider threshold 70%; below threshold blocks job accept (`POST /v2/jobs/:id/accept`) and withdrawal (`POST /v2/providers/wallet/withdraw`) with `PROFILE_INCOMPLETE` error code. Resident threshold is informational only.
 - **Domain reference additions (Sprint 5):** `docs/brd/PAYMENT_SYSTEM.md` (escrow flow, commission versioning, withdrawal audit trail) · `docs/brd/PROFILE_COMPLETION.md` (field weights, thresholds, guards)
 
-**Sprint 6 — Reviews, Notifications, Real-time (backend complete ✅):**
-- Backend: Reviews module (PAID gate, aggregate rating update, REQ-024/025/026), Push notification service (FCM, pluggable provider, device token management, 4 REST endpoints), Provider GPS tracking (`PUT /providers/me/location`, `GET /jobs/:id/provider-location`), In-app messaging (`job_messages` table, Socket.IO rooms, cursor pagination, fire-and-forget push), Pluggable VoIP (Jitsi Phase 1, stateless JWT room creation, CALL_PROVIDER env, Agora Phase 2 hookpoint).
-- Tests: **312 backend** (22 suites, +51 new). Test docs: `docs/TESTING_SPRINT6_BACKEND.md`. VoIP self-hosting guide: `docs/brd/VOIP_CALLS.md`.
+**Sprint 6 — Reviews, Notifications, Real-time & In-App Communication ✅ COMPLETE (including post-ship fixes):**
+- Backend: Reviews module (PAID gate, aggregate rating, REQ-024/025/026), Push notification service (FCM, pluggable, device tokens, 4 endpoints), Provider GPS tracking, In-app messaging (`job_messages`, Socket.IO, cursor pagination), Pluggable VoIP (Jitsi Phase 1, stateless JWT, CALL_PROVIDER env, Agora Phase 2 hookpoint).
+- Mobile: Review + rating screen, Push notification setup (expo-notifications), Notification center (bell + badge), Provider live location (expo-location), In-app chat (text/image/voice, WebSocket + poll fallback), Voice call (expo-web-browser → Jitsi room).
+- Tests: **312 backend** (22 suites, +51 new) · **246 mobile** (26 suites, +125 new). Docs: `docs/TESTING_SPRINT6_BACKEND.md`, `docs/TESTING_SPRINT6_MOBILE.md`, `docs/SPRINT6_USER_MANUAL.md`. VoIP guide: `docs/brd/VOIP_CALLS.md`. Push guide: `docs/PUSH_NOTIFICATIONS.md`.
+
+**Post-Sprint 6 fixes (committed 2026-06-13, branch `feature/sprint-6-mobile`):**
+- `google-services.json` (Firebase project `homefix-cd142`) placed in `mobile/` + `app.config.js` `android.googleServicesFile` wired. **Requires new EAS APK build** — background FCM token was previously from Expo's Firebase project (mismatch with backend service account).
+- `NEW_MESSAGE` notification tap now routes to `/(app)/booking/job/chat/:id` — fixed in `notifications.tsx` `handlePress` AND `usePushNotifications.ts` response listener (both had the same bug).
+- `CALL_STARTED` notification tap in notification tab now opens Jitsi URL via `WebBrowser.openBrowserAsync` (was routing to job detail).
+- Jitsi hash params added to both `mobile/services/call.service.ts` `buildCallUrl` and `backend/src/modules/calls/call.service.ts` push callUrl: `#config.prejoinPageEnabled=false&config.lobby.enabled=false&config.startWithVideoMuted=true`.
+- `meet.jit.si` limitations: requires Google login to be moderator (since ~2023); lobby cannot be disabled via URL hash. Dev-only for smoke tests. Documented in `docs/brd/VOIP_CALLS.md`.
+- 8x8 JaaS alternative documented: RS256 JWT with `moderator: true` + `features.lobby: false`, no Google login, free 5000 min/month.
+- `(app)/_layout.tsx` Stack now explicitly registers `booking/job/chat/[id]` screen.
+
+**Sprint 6 mobile — architectural decisions:**
+- `reviewStore` (Zustand + AsyncStorage persist) tracks `reviewedJobIds[]` — hides "Leave a Review" CTA after submission across app restarts. On `REVIEW_ALREADY_EXISTS` 409, marks job reviewed locally and navigates back.
+- `usePushNotifications` hook in `hooks/` — mounted in `app/(app)/_layout.tsx` (authenticated shell only). Registers FCM token on every mount (= every login). `Notifications.setNotificationHandler` at module level in `app/_layout.tsx` for foreground display.
+- **Notification routing rules (tap/background):** `CALL_STARTED` + `callUrl` → `WebBrowser.openBrowserAsync(callUrl)`; `NEW_MESSAGE` + `jobId` → `/(app)/booking/job/chat/${jobId}`; all others with `jobId` → `/(app)/booking/job/${jobId}`. Same logic applies in both `usePushNotifications.ts` (OS tap) and `notifications.tsx` `handlePress` (in-app notification tab tap).
+- **FCM token requirement:** `google-services.json` must be present in `mobile/` and `app.config.js` must reference it via `android.googleServicesFile`. Without it, `getDevicePushTokenAsync()` returns a token registered with Expo's Firebase project — backend FCM service account cannot deliver to those tokens. Any change to `google-services.json` requires a new native EAS build (not OTA).
+- **Circular import rule:** `authStore.ts` must NOT import `notificationService` — `apiClient` already imports `authStore`, creating a cycle. Instead, `authStore.logout()` calls `apiClient.delete('/v2/users/me/device-token')` directly.
+- `expo-notifications ~0.32.17` + `expo-device ~8.0.10` added to `mobile/package.json` via `npx expo install`.
+- `app.config.js` — `expo-notifications` plugin with `icon` + `color`; `android.googleServicesFile` pointing to `./google-services.json` (or `GOOGLE_SERVICES_JSON` env for EAS secrets).
 
 ---
 
@@ -180,9 +189,11 @@ Follow these rules for every session:
 | Payment & Commission | `docs/brd/PAYMENT_SYSTEM.md` | REQ-019 to 023 | S5 ✅ |
 | Booking & Discovery | `docs/brd/BOOKING_DISCOVERY.md` | REQ-007 to 014 | S2–S3 |
 | Accessibility | `docs/brd/ACCESSIBILITY.md` | REQ-011 to 013 | S4 |
-| Review System | `docs/brd/REVIEW_SYSTEM.md` | REQ-024 to 026 | S6 ✅ backend |
+| Review System | `docs/brd/REVIEW_SYSTEM.md` | REQ-024 to 026 | S6 ✅ |
 | Profile Completion | `docs/brd/PROFILE_COMPLETION.md` | (cross-cutting) | S5 ✅ |
-| VoIP Calls | `docs/brd/VOIP_CALLS.md` | (in-app communication) | **S6 ← active** |
+| VoIP Calls | `docs/brd/VOIP_CALLS.md` | (in-app communication) | S6 ✅ |
+| Chat Messaging | `docs/brd/CHAT_MESSAGING.md` | (Socket.IO · REST · polling fallback) | S6 ✅ |
+| Push Notifications | `docs/PUSH_NOTIFICATIONS.md` | (FCM, Android active · iOS future) | S6 ✅ |
 
 ---
 

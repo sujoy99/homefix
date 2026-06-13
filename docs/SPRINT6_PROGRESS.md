@@ -1,9 +1,11 @@
 # Sprint 6 — Reviews, Notifications, Real-time & In-App Communication — Progress Tracker
 
 > **Backend Branch:** `feature/sprint-6-backend`
-> **Mobile Branch:** `feature/sprint-6-mobile` (not started)
-> **Last updated:** 2026-06-03
-> **Tests:** 312/312 backend passing (51 new) · All TypeScript checks passing · **Backend sprint complete ✅**
+> **Mobile Branch:** `feature/sprint-6-mobile`
+> **Last updated:** 2026-06-13
+> **Tests:** 312/312 backend passing (51 new) · 246/246 mobile (HF-050: 15 + HF-051: 11 + HF-052: 17 + HF-053: 14 + HF-102: 49 + HF-103: 15 + pre-S6: 125) passing · **Sprint 6 COMPLETE ✅ (backend + mobile)**
+>
+> **Post-ship fixes committed 2026-06-13** — see section at bottom of this file.
 
 ---
 
@@ -23,16 +25,158 @@
 
 | Ticket | Title | Status | Commit |
 |--------|-------|--------|--------|
-| HF-050 | Review & rating screen (star + text, post-payment only) | ⏳ Not Started | — |
-| HF-051 | Push notification setup (expo-notifications, deep linking) | ⏳ Not Started | — |
-| HF-052 | Notification center (bell icon, badge, read/unread) | ⏳ Not Started | — |
-| HF-053 | Provider location tracking (background GPS) | ⏳ Not Started | — |
-| HF-102 | In-app chat screen | ⏳ Not Started | — |
-| HF-103 | In-app voice call (Jitsi) | ⏳ Not Started | — |
+| HF-050 | Review & rating screen (star + text, post-payment only) | ✅ Done | — |
+| HF-051 | Push notification setup (expo-notifications, deep linking) | ✅ Done | — |
+| HF-052 | Notification center (bell icon, badge, read/unread) | ✅ Done | — |
+| HF-053 | Provider location tracking (background GPS) | ✅ Done | — |
+| HF-102 | In-app chat screen (text/image/voice, WebSocket + poll fallback) | ✅ Done | — |
+| HF-103 | In-app voice call (Jitsi via expo-web-browser) | ✅ Done | — |
 
 ---
 
 ## Detailed Step Checklist
+
+### ✅ HF-050 — Review & Rating Screen (post-payment only)
+
+**Architecture:**
+- `reviewService` — `submitReview(jobId, rating, comment?)` → POST `/v2/jobs/:id/review`; `getProviderReviews(providerId, page, limit)` → GET `/v2/providers/:id/reviews`
+- `reviewStore` (Zustand + AsyncStorage) — persists `reviewedJobIds[]` across restarts so the CTA is hidden after a review is submitted
+- Review screen at `app/(app)/booking/job/review/[id].tsx` — 5-star tap input + optional 1000-char comment, `KeyboardAvoidingView + ScrollView`
+- Job detail updated: "Leave a Review" footer CTA shown only when `isResident && isPaid && !hasReviewed(job.id)`
+- Graceful handling of `REVIEW_ALREADY_EXISTS` (409) and `REVIEW_NOT_ALLOWED` (400) — marks job reviewed locally and navigates back with toast
+
+- [x] `services/review.service.ts` — `submitReview`, `getProviderReviews`
+- [x] `store/reviewStore.ts` — Zustand + AsyncStorage, `markJobReviewed`, `hasReviewed`
+- [x] `app/(app)/booking/job/review/[id].tsx` — star input, comment textarea, submit
+- [x] `app/(app)/booking/job/[id].tsx` — `isPaid` flag + "Leave a Review" CTA + `reviewStore` import
+- [x] `i18n/locales/bn.json` + `i18n/locales/en.json` — `review` section (21 keys each)
+- [x] `tests/services/review.service.test.ts` — 10 cases: submit with/without comment, whitespace trim, REVIEW_NOT_ALLOWED, REVIEW_ALREADY_EXISTS, 401; getProviderReviews defaults, custom params, empty, error
+- [x] `tests/store/reviewStore.test.ts` — 5 cases: initial false, mark→true, isolation, idempotent, multi-job
+- [x] All 15 mobile tests passing
+
+---
+
+### ✅ HF-051 — Push Notification Setup (expo-notifications, deep linking)
+
+**Architecture:**
+- `expo-notifications ~0.32` + `expo-device ~8.0` installed (added to `package.json`)
+- `Notifications.setNotificationHandler({...})` called at module level in `app/_layout.tsx` — controls foreground notification display
+- `notificationService` — `registerDeviceToken(token)` → POST `/v2/users/me/device-token`; `unregisterDeviceToken()` → DELETE same endpoint
+- `usePushNotifications` hook (in `hooks/`) — requests permissions, gets native FCM token via `getDevicePushTokenAsync()`, registers with backend on every login, sets up `addNotificationResponseReceivedListener` for deep-link navigation
+- Hook mounted in `app/(app)/_layout.tsx` — only runs when authenticated; re-runs on every login
+- `authStore.logout()` calls `apiClient.delete('/v2/users/me/device-token')` directly (NOT via `notificationService`) to avoid `authStore → notificationService → apiClient → authStore` circular import
+- Deep-link routing (corrected in post-ship fix — see below): `CALL_STARTED` + `callUrl` → `WebBrowser.openBrowserAsync(callUrl)`; `NEW_MESSAGE` + `jobId` → `/(app)/booking/job/chat/${jobId}`; all others (`JOB_ACCEPTED`, `JOB_COMPLETED`, `PAYMENT_RECEIVED`) + `jobId` → `/(app)/booking/job/${jobId}`
+- Simulator guard: `Device.isDevice` checked before calling `getDevicePushTokenAsync()` — silently skips on simulators
+- Cancelled guard: `if (finalStatus !== 'granted' || cancelled) return` before token fetch — prevents unmounted hook from polluting test mock counts
+
+- [x] `expo-notifications ~0.32.17` + `expo-device ~8.0.10` added to `package.json` via `npx expo install`
+- [x] `services/notification.service.ts` — `registerDeviceToken`, `unregisterDeviceToken`
+- [x] `hooks/usePushNotifications.ts` — permissions, token, registration, deep-link listener, cleanup
+- [x] `app/_layout.tsx` — `setNotificationHandler` at module level (all imports first)
+- [x] `app/(app)/_layout.tsx` — `usePushNotifications()` call + `booking/job/review/[id]` Stack.Screen added
+- [x] `store/authStore.ts` — `apiClient.delete('/v2/users/me/device-token')` in `logout()` (fire-and-forget)
+- [x] `app.json` — `expo-notifications` plugin added
+- [x] `tests/services/notification.service.test.ts` — 8 cases: register posts correct body, resolves void, 401/500 rejections; unregister sends DELETE, resolves void, 401/404 rejections
+- [x] `tests/hooks/usePushNotifications.test.ts` — 7 cases: registers when granted, requests+registers, denied (no token call), non-device skip, tap→navigate, no jobId→no nav, unmount removes listener
+- [x] All 151 mobile tests passing (0 regressions)
+
+---
+
+### ✅ HF-052 — Notification Center (bell icon, badge, read/unread)
+
+**Architecture:**
+- `notificationService.getNotifications(page, limit)` → GET `/v2/users/me/notifications?page=&limit=`; returns `{ items, pagination, unread_count }`
+- `notificationService.markAsRead(id)` → PATCH `/v2/users/me/notifications/:id/read`; returns updated notification
+- `useNotificationStore` (Zustand, no persist) — `notifications[]`, `unreadCount`, `page`, `hasMore`, `loading`, `fetchNotifications(reset?)`, `markAsRead(id)`
+- `app/(app)/(tabs)/notifications.tsx` — FlatList with pull-to-refresh, "load more" footer, relative timestamps, unread dot + highlight
+- Bell tab in `tabs/_layout.tsx` — hidden for admin, shows red badge with count when `unreadCount > 0`
+- Tap notification: marks as read, navigates to `/(app)/booking/job/:id` if `data.jobId` present
+- `AppNotification` + `NotificationListResult` types exported from `notification.service.ts`
+- `relativeTime()` helper: just now / Xm ago / Xh ago / Xd ago
+
+- [x] `services/notification.service.ts` — `getNotifications`, `markAsRead`, `AppNotification`, `NotificationListResult` types
+- [x] `store/notificationStore.ts` — Zustand, `fetchNotifications` (reset/append), `markAsRead` with optimistic unreadCount decrement
+- [x] `app/(app)/(tabs)/notifications.tsx` — list screen with relative time, unread UI, load more, pull-to-refresh
+- [x] `app/(app)/(tabs)/_layout.tsx` — Bell tab + red badge; tab hidden for admin role
+- [x] `i18n/locales/en.json` + `i18n/locales/bn.json` — `notifications` section (13 keys each)
+- [x] `tests/services/notification.service.test.ts` — 7 new cases: getNotifications (default params, custom params, response shape, 401); markAsRead (PATCH URL, returns updated, 404)
+- [x] `tests/store/notificationStore.test.ts` — 10 cases: initial state, fetch sets data, reset clears, append load-more, hasMore false, loading resets on error, skip during loading, markAsRead replaces item, decrements unread, no-op when already read
+- [x] All 168 mobile tests passing (17 new, 0 regressions)
+
+---
+
+### ✅ HF-053 — Provider Location Tracking (Background GPS)
+
+**Architecture:**
+- `locationService.updateMyLocation(lat, lon)` → `PUT /v2/providers/me/location`
+- `locationService.getProviderLocation(jobId)` → `GET /v2/jobs/:id/provider-location` → `{ latitude, longitude }`
+- `useLocationTracking(enabled)` hook — uses `expo-location`'s `watchPositionAsync` (foreground) with 15 s / 20 m thresholds; requests foreground permissions on first run; stops automatically on unmount or when `enabled` toggles off
+- Hook mounted in job detail screen: `useLocationTracking(isProvider && job.status === ACTIVE && job.provider_id === userId)` — fires before early returns so hook rules are respected
+- Resident location card: `useQuery(['provider-location', id], ..., { refetchInterval: 15_000, retry: false })` — shows `lat/lon` coordinates when available, "Waiting..." otherwise; only rendered when `isResident && isActive`
+- 4 i18n keys added to `location_tracking` namespace (en + bn)
+
+- [x] `services/location.service.ts` — `updateMyLocation`, `getProviderLocation`, `ProviderLocation` type
+- [x] `hooks/useLocationTracking.ts` — foreground GPS watcher, permission request, 15 s throttle, cleanup on unmount
+- [x] `app/(app)/booking/job/[id].tsx` — `useLocationTracking` hook call + resident location card with polling
+- [x] `i18n/locales/en.json` + `i18n/locales/bn.json` — `location_tracking` section (4 keys each)
+- [x] `tests/services/location.service.test.ts` — 8 cases: updateMyLocation (PUT body, resolves void, 401, 403); getProviderLocation (GET URL, response shape, 403, 404)
+- [x] `tests/hooks/useLocationTracking.test.ts` — 6 cases: disabled no-op, starts when granted, requests+starts, denied no watch, calls updateMyLocation on position, removes watcher on unmount
+- [x] All 182/182 mobile tests passing (14 new, 0 regressions)
+
+---
+
+### ✅ HF-103 — In-App Voice Call (Jitsi via expo-web-browser)
+
+**Architecture:**
+- `services/call.service.ts` — `createRoom(jobId)` → `POST /v2/jobs/:id/call/room`; `buildCallUrl(config)` → constructs Jitsi URL (`${serverUrl}/${roomName}?jwt=${token}`, falls back to `meet.jit.si`)
+- `hooks/useVoiceCall.ts` — `startCall()` + `isCallLoading` state; calls `createRoom`, builds URL, opens via `expo-web-browser` (`openBrowserAsync`); shows error toast on any failure
+- `app/(app)/booking/job/[id].tsx` — phone icon (`Phone` from lucide) in header alongside chat icon; both visible when job is ACTIVE and user is a participant; `isCallLoading` dims the icon and disables the press
+- `expo-web-browser` used instead of `@jitsi/react-native-sdk` — native SDK incompatible with Expo managed workflow; in-app browser provides equivalent UX and returns to app after call
+- `buildCallUrl` appends hash params (corrected in post-ship fix): `#config.prejoinPageEnabled=false&config.lobby.enabled=false&config.startWithVideoMuted=true`
+- Backend `RoomConfig.provider` field preserved for future SDK selection at runtime (Phase 2 Agora)
+- No DB migration — purely frontend + API consumption
+- **Known limitation:** `meet.jit.si` (dev default) requires both participants to be logged into a Google account to be a room moderator. Hash params are ignored server-side on `meet.jit.si`. Production requires self-hosted Jitsi or 8x8 JaaS. See `docs/brd/VOIP_CALLS.md`.
+
+**Test coverage (15 tests):**
+- `tests/services/call.service.test.ts` — 8 cases: `createRoom` (correct URL, returns body, rejects); `buildCallUrl` (serverUrl+no token, serverUrl+token, fallback to meet.jit.si, fallback+token, agora provider)
+- `tests/hooks/useVoiceCall.test.ts` — 7 cases: initial `isCallLoading` false; `startCall` calls `createRoom` with jobId; calls `buildCallUrl` with config; opens browser with built URL; `isCallLoading` true-in-flight/false-after; error toast + reset on `createRoom` throw; error toast + reset on `openBrowserAsync` throw
+
+- [x] `expo-web-browser` installed (`npx expo install expo-web-browser`)
+- [x] `mobile/services/call.service.ts` — `createRoom`, `buildCallUrl`, `RoomConfig` type
+- [x] `mobile/hooks/useVoiceCall.ts` — `startCall`, `isCallLoading`
+- [x] `mobile/app/(app)/booking/job/[id].tsx` — `Phone` icon in header + `useVoiceCall` wired
+- [x] `mobile/i18n/locales/en.json` + `bn.json` — `call` namespace (3 keys each)
+- [x] All 15 tests passing (0 regressions)
+- [x] 246/246 total mobile tests passing
+
+---
+
+### ✅ HF-102 — In-App Chat Screen (text + image + voice)
+
+**Architecture:**
+- `services/message.service.ts` — `list(jobId, before?)`, `send(jobId, content, type)`, `uploadImage(asset)`; `MessageType = 'text' | 'image' | 'audio'`
+- `hooks/useChat.ts` — Socket.IO real-time (`io(SERVER_ROOT, { path: '/socket.io', transports: ['websocket'] })`); 3-second timeout before polling fallback kicks in; deduplicates messages by id; exposes `sendText`, `sendImage`, `sendAudio`, `loadMore`, `refresh`, `isConnected`
+- `app/(app)/booking/job/chat/[id].tsx` — inverted FlatList (newest at bottom); `RecordMode = 'idle' | 'recording' | 'uploading'`; `AudioBubble` inline component with expo-av playback (play/pause, progress bar); header shows Wifi/WifiOff connection indicator
+- `app/(app)/booking/job/[id].tsx` — chat icon in header (`MessageCircle`) when job is ACTIVE and user is a participant
+- Audio upload reuses `messageService.uploadImage` with synthetic asset `{ uri, fileName, mimeType }`
+- Backend: `message.types.ts` + `message.schema.ts` extended with `'audio'` type — no DB migration (varchar(20), no CHECK constraint)
+- Voice note UX: compact inline recorder (not full VoiceRecorder component) — mic button in input bar → timer/pulse dot → stop-and-send or cancel
+
+**Test coverage (49 tests):**
+- `tests/services/message.service.test.ts` — 9 cases: list (default limit, cursor, next_cursor); send (text/image/audio, full object return); uploadImage (multipart post, url return, mime fallback)
+- `tests/hooks/useChat.test.ts` — 14 cases: initial load, messages, hasMore; socket connect/disconnect/message/dedup; sendText/sendImage/sendAudio; loadMore (with cursor, no-op); cleanup (leave_job + disconnect)
+- `tests/screens/chat.test.tsx` — 26 cases: loading/empty states, header; connection indicator; text/image/audio/load-more bubbles; text input send flow; image attach (open picker, upload, cancel, permission denied); voice recording (start→show stop/cancel, permission denied, cancel→idle, stop→upload+sendAudio→idle)
+
+- [x] `backend/src/modules/messages/message.types.ts` — `'audio'` added to `MessageType`
+- [x] `backend/src/modules/messages/message.schema.ts` — Zod enum extended to `['text', 'image', 'audio']`
+- [x] `mobile/services/message.service.ts` — `list`, `send`, `uploadImage`, `MessageType`, `Message`, `MessageListResult`
+- [x] `mobile/hooks/useChat.ts` — Socket.IO + polling fallback, `sendText`, `sendImage`, `sendAudio`, `loadMore`
+- [x] `mobile/app/(app)/booking/job/chat/[id].tsx` — full chat screen + AudioBubble
+- [x] `mobile/app/(app)/booking/job/[id].tsx` — chat icon in header
+- [x] `mobile/i18n/locales/en.json` + `bn.json` — `chat` namespace (17 keys each)
+- [x] All 49 mobile tests passing (0 regressions)
+
+---
 
 ### ✅ HF-101 — Pluggable VoIP Call Service (Jitsi Phase 1)
 
@@ -189,17 +333,51 @@
 
 ---
 
-## Resuming This Session
+---
 
-**Step 1 — Paste `docs/SESSION_CONTEXT.md` as your first message.**
+## Post-Ship Fixes (2026-06-13)
 
-**Step 2 — Then add:**
+These bugs were found during end-to-end testing after Sprint 6 was marked complete. All fixes committed to `feature/sprint-6-mobile`.
 
-> Sprint 6 is in progress on `feature/sprint-6-backend`. See `docs/SPRINT6_PROGRESS.md` for full ticket status and step checklists.
->
-> HF-047 (Review & rating module) is currently in progress. Check the checklist in `SPRINT6_PROGRESS.md` for what's done and what's next.
+### Fix 1 — `google-services.json` missing from EAS build (background push broken)
 
-**Step 3 — Confirm branch:**
-```bash
-git checkout feature/sprint-6-backend
+**Root cause:** `getDevicePushTokenAsync()` was returning a token registered with Expo's shared Firebase project, not the project's own Firebase project (`homefix-cd142`). The backend FCM service account (`homefix-cd142`) cannot deliver to tokens from a different Firebase project. Result: background push notifications never arrived.
+
+**Fix:**
+- `mobile/google-services.json` added (Firebase project `homefix-cd142`, project number `395779812115`)
+- `mobile/app.config.js` updated: `android: { googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json' }`
+- **Requires a new EAS APK build** to bake `google-services.json` into the native layer
+
+### Fix 2 — `NEW_MESSAGE` notification tap went to job detail instead of chat
+
+**Root cause:** Both `usePushNotifications.ts` response listener and `notifications.tsx` `handlePress` routed all `jobId` notifications to `/(app)/booking/job/${jobId}`, regardless of type.
+
+**Fix:** Added `NEW_MESSAGE` type check before the generic `jobId` route in both files:
+- `hooks/usePushNotifications.ts` — OS tap listener
+- `app/(app)/(tabs)/notifications.tsx` — in-app notification tab tap handler
+
+### Fix 3 — `CALL_STARTED` notification tab tap went to job detail instead of call URL
+
+**Root cause:** `notifications.tsx` `handlePress` only checked `jobId` and never read `item.type`. `CALL_STARTED` notifications have a `callUrl` in `data`, not a jobId to navigate.
+
+**Fix:** Added `CALL_STARTED` type + `callUrl` check at the top of `handlePress` — opens via `WebBrowser.openBrowserAsync(callUrl)` and returns early.
+
+### Fix 4 — Jitsi pre-join screen / lobby params
+
+**Fix:** `buildCallUrl` in `mobile/services/call.service.ts` and the push `callUrl` in `backend/src/modules/calls/call.service.ts` now append:
 ```
+#config.prejoinPageEnabled=false&config.lobby.enabled=false&config.startWithVideoMuted=true
+```
+
+**Known limitation:** `meet.jit.si` blocks all `config.*` URL hash overrides server-side. The params are ineffective on `meet.jit.si`; they will work correctly on a self-hosted Jitsi instance or 8x8 JaaS.
+
+### Fix 5 — Stack screen registration for chat route
+
+`app/(app)/_layout.tsx` now explicitly registers `booking/job/chat/[id]` in the Stack so push notification deep links can route to the chat screen correctly.
+
+---
+
+## Sprint Status
+
+**Sprint 6 is CLOSED.** All tickets ✅ complete. Post-ship fixes committed.  
+Next: **Sprint 7 — Web App & Admin Panel** (`feature/sprint-7-web` to be created).
