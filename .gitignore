@@ -45,6 +45,11 @@ mobile/.expo/
 mobile/android/
 mobile/ios/
 mobile/web-build/
+# Stray EAS artifact created when eas CLI is run from repo root instead of mobile/
+app.json
+.expo/
+# Windows alternate data stream metadata (WSL2 exposes these as files)
+*Zone.Identifier
 *.jks
 *.p8
 *.p12
