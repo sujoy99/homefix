@@ -91,6 +91,62 @@ eas login       # authenticates with your expo.dev account
 
 ---
 
+## Updating an Existing Clone (git pull workflow)
+
+Run these every time you pull new commits:
+
+```bash
+git pull                  # get latest code
+npm install               # update all workspace packages (root + backend + mobile + shared)
+```
+
+Then decide what else is needed based on what changed:
+
+| What changed in the pull | Extra step |
+|--------------------------|-----------|
+| `backend/src/**` only (JS/TS) | Nothing — nodemon hot-reloads automatically |
+| `backend/package.json` (new npm package) | `make up` — rebuilds the Docker image with new deps |
+| `backend/src/db/migrations/**` (new migration) | `make migrate` |
+| `mobile/` JS/TS files only | Restart Metro (`r` in Expo terminal) or it hot-reloads |
+| `mobile/package.json` — JS-only package (axios, zustand, etc.) | Restart Metro |
+| `mobile/package.json` — native package (new Expo plugin or native module) | New EAS build required — see below |
+| `mobile/app.config.js` — plugin or `android`/`ios` block changed | New EAS build required |
+| `mobile/google-services.json` changed | New EAS build required |
+| `packages/shared/**` | Restart Metro (shared package is symlinked — changes are picked up automatically) |
+
+### Quick check — did native deps change?
+
+```bash
+git diff HEAD~1 mobile/package.json mobile/app.config.js mobile/google-services.json
+```
+
+If any of those three files changed and the diff includes a new `expo-*` plugin, a new entry in `android`/`ios` config blocks, or a change to `google-services.json` → **you need a new EAS build**.
+
+### Rebuild EAS dev build after native changes
+
+```bash
+cd mobile
+eas build --profile development --platform android
+# Install the new APK on your phone, then start Metro:
+npx expo start --dev-client
+```
+
+### Run new migrations
+
+```bash
+make migrate     # safe to run even if no new migrations — no-op if already applied
+```
+
+### Rebuild backend Docker image (new backend packages)
+
+```bash
+make down && make up     # full rebuild — use when backend/package.json changed
+# OR just:
+make up                  # docker compose builds only if image is stale
+```
+
+---
+
 ## Prerequisites
 
 | Tool | Install |
