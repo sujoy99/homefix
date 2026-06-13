@@ -28,26 +28,6 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      "expo-router",
-      "expo-secure-store",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/icon.png",
-          "color": "#2563EB",
-          "sounds": []
-        }
-      ],
-      [
-        "expo-location",
-        {
-          "locationWhenInUsePermission": "HomeFix uses your location to set your home address and help providers find you.",
-          "locationAlwaysAndWhenInUsePermission": "HomeFix uses your location in the background to track active service visits."
-        }
-      ],
-      "expo-web-browser"
-    ]
+    }
   }
 }

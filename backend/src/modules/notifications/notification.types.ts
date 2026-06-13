@@ -4,6 +4,7 @@ export enum NotificationType {
   PAYMENT_RECEIVED = 'PAYMENT_RECEIVED',
   JOB_CANCELLED = 'JOB_CANCELLED',
   NEW_MESSAGE = 'NEW_MESSAGE',
+  CALL_STARTED = 'CALL_STARTED',
 }
 
 export type DevicePlatform = 'android' | 'ios' | 'web';

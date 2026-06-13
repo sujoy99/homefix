@@ -11,6 +11,7 @@ export default function AppLayout() {
       <Stack.Screen name="provider/[id]" />
       <Stack.Screen name="booking/create" />
       <Stack.Screen name="booking/job/[id]" />
+      <Stack.Screen name="booking/job/chat/[id]" />
       <Stack.Screen name="booking/job/review/[id]" />
       <Stack.Screen name="providers" />
       <Stack.Screen name="payment/[jobId]" />

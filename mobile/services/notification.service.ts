@@ -21,8 +21,8 @@ export interface NotificationListResult {
 }
 
 export const notificationService = {
-  registerDeviceToken: async (token: string): Promise<void> => {
-    await apiClient.post<ApiResponse<void>>('/v2/users/me/device-token', { token });
+  registerDeviceToken: async (token: string, platform: 'android' | 'ios' | 'web'): Promise<void> => {
+    await apiClient.post<ApiResponse<void>>('/v2/users/me/device-token', { token, platform });
   },
 
   unregisterDeviceToken: async (): Promise<void> => {

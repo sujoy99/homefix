@@ -670,7 +670,8 @@
       "JOB_COMPLETED": "কাজ সম্পন্ন হয়েছে",
       "PAYMENT_RECEIVED": "পেমেন্ট গৃহীত হয়েছে",
       "JOB_CANCELLED": "কাজ বাতিল করা হয়েছে",
-      "NEW_MESSAGE": "নতুন বার্তা"
+      "NEW_MESSAGE": "নতুন বার্তা",
+      "CALL_STARTED": "ইনকামিং কল"
     }
   },
   "location_tracking": {
@@ -682,7 +683,10 @@
   "call": {
     "start": "কল শুরু করুন",
     "error_start": "কল শুরু করা যায়নি। আবার চেষ্টা করুন।",
-    "unavailable": "কল অনুপলব্ধ"
+    "unavailable": "কল অনুপলব্ধ",
+    "incoming_title": "ইনকামিং কল",
+    "incoming_body": "আপনার কাজের পার্টনার কল করছেন।",
+    "join": "কলে যোগ দিন"
   },
   "chat": {
     "title": "চ্যাট",

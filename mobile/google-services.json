@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "395779812115",
+    "project_id": "homefix-cd142",
+    "storage_bucket": "homefix-cd142.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:395779812115:android:03eccb54b3373f9d92c8e6",
+        "android_client_info": {
+          "package_name": "com.homefix.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgulmBOiPpJkMchaoAQz7w86AnFqRD2jM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

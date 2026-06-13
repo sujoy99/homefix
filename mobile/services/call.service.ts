@@ -18,6 +18,8 @@ export const callService = {
   buildCallUrl: (config: RoomConfig): string => {
     const base = config.serverUrl ?? 'https://meet.jit.si';
     const url = `${base}/${config.roomName}`;
-    return config.token ? `${url}?jwt=${config.token}` : url;
+    const withToken = config.token ? `${url}?jwt=${config.token}` : url;
+    // Skip the Jitsi pre-join screen and lobby so both participants join instantly
+    return `${withToken}#config.prejoinPageEnabled=false&config.lobby.enabled=false&config.startWithVideoMuted=true`;
   },
 };

@@ -670,7 +670,8 @@
       "JOB_COMPLETED": "Job Completed",
       "PAYMENT_RECEIVED": "Payment Received",
       "JOB_CANCELLED": "Job Cancelled",
-      "NEW_MESSAGE": "New Message"
+      "NEW_MESSAGE": "New Message",
+      "CALL_STARTED": "Incoming Call"
     }
   },
   "location_tracking": {
@@ -682,7 +683,10 @@
   "call": {
     "start": "Start Call",
     "error_start": "Could not start call. Please try again.",
-    "unavailable": "Call unavailable"
+    "unavailable": "Call unavailable",
+    "incoming_title": "Incoming Call",
+    "incoming_body": "Your job partner is calling you.",
+    "join": "Join Call"
   },
   "chat": {
     "title": "Chat",

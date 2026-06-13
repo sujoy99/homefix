@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Bell } from 'lucide-react-native';
@@ -90,9 +91,18 @@ export default function NotificationsScreen() {
           toast.error(t('notifications.mark_read_error'));
         }
       }
+      const callUrl = item.data?.callUrl as string | undefined;
+      if (item.type === 'CALL_STARTED' && callUrl) {
+        await WebBrowser.openBrowserAsync(callUrl);
+        return;
+      }
       const jobId = item.data?.jobId as string | undefined;
       if (jobId) {
-        router.push(`/(app)/booking/job/${jobId}` as never);
+        if (item.type === 'NEW_MESSAGE') {
+          router.push(`/(app)/booking/job/chat/${jobId}` as never);
+        } else {
+          router.push(`/(app)/booking/job/${jobId}` as never);
+        }
       }
     },
     [markAsRead, router, t],

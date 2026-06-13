@@ -2,9 +2,60 @@ import React, { useEffect, useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Text } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
-import { Navigation } from 'lucide-react-native';
+import { Navigation, MapPinOff } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { theme } from '@/theme';
+
+// Catches native crashes from MapView when the Google Maps API key is absent.
+// Without the key, Maps SDK throws at render time on Android; this boundary
+// downgrades to a "Map unavailable" placeholder so the rest of the form still works.
+class MapErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { crashed: boolean }
+> {
+  state = { crashed: false };
+  static getDerivedStateFromError() { return { crashed: true }; }
+  render() {
+    if (this.state.crashed) {
+      return (
+        <View style={mapFallbackStyles.box}>
+          <MapPinOff size={32} color={theme.colors.textMuted} />
+          <Text style={mapFallbackStyles.title}>Map unavailable</Text>
+          <Text style={mapFallbackStyles.hint}>
+            Google Maps API key not configured.{'\n'}
+            Use the GPS button or type your address below.
+          </Text>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const mapFallbackStyles = StyleSheet.create({
+  box: {
+    height: 240,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.layout.radius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginBottom: theme.spacing.sm,
+    gap: theme.spacing.sm,
+  },
+  title: {
+    ...theme.typography.body2,
+    color: theme.colors.textMuted,
+    fontWeight: '600',
+  },
+  hint: {
+    ...theme.typography.caption,
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+    paddingHorizontal: theme.spacing.lg,
+  },
+});
 
 interface LocationPickerProps {
   latitude: number;
@@ -62,27 +113,29 @@ export function LocationPicker({ latitude, longitude, onLocationChange, autoDete
           <Text style={styles.loadingText}>{t('auth.location_loading')}</Text>
         </View>
       ) : (
-        <MapView
-          style={styles.map}
-          region={mapRegion}
-          onRegionChangeComplete={(region) => setMapRegion(region)}
-          onPress={(e) => {
-            const { latitude: lat, longitude: lng } = e.nativeEvent.coordinate;
-            onLocationChange(lat, lng);
-          }}
-          showsUserLocation
-          showsMyLocationButton={false}
-        >
-          <Marker
-            coordinate={markerCoords}
-            draggable
-            onDragEnd={(e) => {
+        <MapErrorBoundary>
+          <MapView
+            style={styles.map}
+            region={mapRegion}
+            onRegionChangeComplete={(region) => setMapRegion(region)}
+            onPress={(e) => {
               const { latitude: lat, longitude: lng } = e.nativeEvent.coordinate;
               onLocationChange(lat, lng);
             }}
-            pinColor={theme.colors.primary}
-          />
-        </MapView>
+            showsUserLocation
+            showsMyLocationButton={false}
+          >
+            <Marker
+              coordinate={markerCoords}
+              draggable
+              onDragEnd={(e) => {
+                const { latitude: lat, longitude: lng } = e.nativeEvent.coordinate;
+                onLocationChange(lat, lng);
+              }}
+              pinColor={theme.colors.primary}
+            />
+          </MapView>
+        </MapErrorBoundary>
       )}
 
       {hasLocation && (
