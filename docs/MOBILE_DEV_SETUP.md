@@ -1,7 +1,93 @@
 # HomeFix — Mobile Dev Setup & Testing Guide
 
 > **Environment:** WSL2 on Windows · Expo SDK 54 · React Native · Expo Go or Dev Build
-> **Last updated:** 2026-06-07
+> **Last updated:** 2026-06-13
+
+---
+
+## New Machine Setup Checklist
+
+Use this section when setting up from scratch. Skip to **Method 1** below once the one-time steps are done.
+
+### Step 1 — Install prerequisites (Windows host)
+
+| Tool | How |
+|------|-----|
+| Git | [git-scm.com](https://git-scm.com) |
+| Docker Desktop | [docker.com](https://www.docker.com/products/docker-desktop/) — includes Docker + Compose |
+| WSL2 | `wsl --install` in PowerShell (Admin), then reboot |
+| Node 20 LTS | Inside WSL2: `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh \| bash && nvm install 20 && nvm use 20` |
+| EAS CLI | Inside WSL2: `npm install -g eas-cli` |
+| Expo Go app | [Android](https://play.google.com/store/apps/details?id=host.exp.exponent) · [iOS](https://apps.apple.com/app/expo-go/id982107779) |
+
+### Step 2 — Enable WSL2 mirrored networking (one-time, eliminates port-forwarding)
+
+Add to `C:\Users\<your-username>\.wslconfig` on Windows:
+
+```ini
+[wsl2]
+networkingMode=mirrored
+```
+
+Then run in PowerShell: `wsl --shutdown`, reopen WSL2. This is permanent — no repeat needed after reboots. With mirrored networking, your phone on WiFi can reach WSL2 services directly at your Windows IP — no `netsh` port proxy needed.
+
+> **If you can't use mirrored networking** (e.g. managed/locked Windows machine), use the `netsh` portproxy approach in Method 2 below instead.
+
+### Step 3 — Clone and install
+
+```bash
+git clone <repo-url>
+cd homefix
+npm install      # installs all workspaces (backend, mobile, packages/shared) in one command
+```
+
+### Step 4 — Configure backend secrets
+
+```bash
+cp backend/.env.sample backend/.env.development
+ln -sf backend/.env.development .env    # repo-root symlink — required for docker compose
+```
+
+Fill in `backend/.env.development`:
+
+| Variable | How to get it |
+|----------|--------------|
+| `JWT_ACCESS_SECRET` | `openssl rand -hex 32` (run in WSL2) |
+| `JWT_REFRESH_SECRET` | `openssl rand -hex 32` |
+| `DEFAULT_ADMIN_MOBILE` | e.g. `00000000000` |
+| `DEFAULT_ADMIN_PASSWORD` | e.g. `Admin@1234` |
+| `DEFAULT_ADMIN_NAME` | e.g. `HomeFix Admin` |
+| `GOOGLE_MAPS_API_KEY` | Google Cloud Console → APIs & Services → Credentials → Maps SDK for Android key |
+| `FCM_SERVICE_ACCOUNT_JSON` | Firebase Console → Project Settings → Service accounts → Generate new private key → paste full JSON as one line. **Omit entirely to use stub provider** (app works, push disabled). |
+| `JITSI_*` | Optional — omit for dev (falls back to `meet.jit.si` tokenless) |
+
+### Step 5 — Start the backend
+
+```bash
+make up        # builds Docker images, starts postgres, runs all migrations automatically
+make seed      # one-time: roles, permissions, service categories, admin user (idempotent)
+make restart   # reloads the RBAC permission cache after seeding (otherwise all protected routes return 403)
+make logs      # verify backend started and migrations ran cleanly
+```
+
+### Step 6 — Run the mobile app
+
+`google-services.json` is already committed to the repo — no extra step needed.
+
+```bash
+cd mobile
+npx expo start --tunnel     # simplest for first run — works on any network
+```
+
+Scan the QR with **Expo Go** on your phone. All features work except FCM push notifications (Expo Go SDK 53+ restriction — see "Testing push notifications" section below).
+
+### Step 7 — EAS login (for cloud builds only)
+
+Only needed when you want to build an APK via EAS:
+
+```bash
+eas login       # authenticates with your expo.dev account
+```
 
 ---
 
@@ -9,7 +95,7 @@
 
 | Tool | Install |
 |------|---------|
-| Node 20+ | via nvm in WSL2 |
+| Node 20+ | via nvm in WSL2 (see New Machine Setup above) |
 | Docker Desktop for Windows | [docker.com](https://www.docker.com/products/docker-desktop/) — enables `make start` |
 | Expo Go (phone) | [Android](https://play.google.com/store/apps/details?id=host.exp.exponent) · [iOS](https://apps.apple.com/app/expo-go/id982107779) |
 | Android Studio (optional) | Only needed for a local dev build (push notifications) |
