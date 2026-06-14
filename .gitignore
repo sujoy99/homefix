@@ -46,8 +46,8 @@ mobile/android/
 mobile/ios/
 mobile/web-build/
 # Stray EAS artifact created when eas CLI is run from repo root instead of mobile/
-app.json
-.expo/
+/app.json
+/.expo/
 # Windows alternate data stream metadata (WSL2 exposes these as files)
 *Zone.Identifier
 # Firebase Android config — contains API key; use EAS secret GOOGLE_SERVICES_JSON for builds
